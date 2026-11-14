@@ -1,6 +1,7 @@
 import { Button, toast } from "@/components/ui";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
+import QuantityField from "@/components/QuantityField";
 
 interface QtyInputProps {
   quantity: number;
@@ -9,6 +10,10 @@ interface QtyInputProps {
   step?: number;
   max?: number;
   stock?: number | null;
+  id?: string;
+  label?: string;
+  disabled?: boolean;
+  compact?: boolean;
 }
 
 const QtyInput: FC<QtyInputProps> = ({
@@ -16,10 +21,15 @@ const QtyInput: FC<QtyInputProps> = ({
   setQuantity,
   min = 1,
   step = 1,
-  max = 9999,
-  stock = 9999,
+  max = 999,
+  stock,
+  id,
+  label,
+  disabled = false,
+  compact = false,
 }) => {
   const { t } = useTranslation();
+  const maximum = max > 0 ? Math.min(max, 999) : 999;
 
   const handleChange = (newQty: number) => {
     if (newQty < min) {
@@ -31,10 +41,10 @@ const QtyInput: FC<QtyInputProps> = ({
       return;
     }
 
-    if (newQty > max) {
+    if (newQty > maximum) {
       toast({
         title: t("max_quantity_error_title"),
-        description: t("max_quantity_error_description", { max }),
+        description: t("max_quantity_error_description", { max: maximum }),
         color: "danger",
       });
       return;
@@ -66,8 +76,7 @@ const QtyInput: FC<QtyInputProps> = ({
 
   return (
     <div
-      id="qty-input"
-      className="inline-flex h-10 items-center overflow-hidden rounded-medium border border-divider bg-content1"
+      className={`inline-flex items-center overflow-hidden rounded-medium border border-divider bg-content1 ${compact ? "h-8" : "h-10"}`}
     >
       <Button
         isIconOnly
@@ -76,16 +85,21 @@ const QtyInput: FC<QtyInputProps> = ({
         onPress={decrement}
         size="sm"
         aria-label={t("decrease_quantity", "Decrease quantity")}
-        isDisabled={quantity <= min}
-        className="h-full min-w-10 rounded-none bg-transparent p-0 text-foreground shadow-none hover:bg-content2 disabled:text-foreground/30"
+        isDisabled={disabled || quantity <= min}
+        className={`h-full rounded-none bg-transparent p-0 text-foreground shadow-none hover:bg-content2 disabled:text-foreground/30 ${compact ? "min-w-7" : "min-w-10"}`}
       >
         <span aria-hidden="true" className="text-lg font-semibold leading-none">
           −
         </span>
       </Button>
-      <span className="min-w-9 text-center text-sm font-bold tabular-nums text-foreground">
-        {quantity}
-      </span>
+      <QuantityField
+        id={id}
+        label={label ?? t("wholesale.quantity", "Quantity")}
+        quantity={quantity}
+        onCommit={handleChange}
+        disabled={disabled}
+        className={compact ? "h-6 w-10" : "h-8 w-12"}
+      />
       <Button
         isIconOnly
         color="default"
@@ -93,7 +107,8 @@ const QtyInput: FC<QtyInputProps> = ({
         onPress={increment}
         size="sm"
         aria-label={t("increase_quantity", "Increase quantity")}
-        className="h-full min-w-10 rounded-none bg-transparent p-0 text-foreground shadow-none hover:bg-content2"
+        isDisabled={disabled}
+        className={`h-full rounded-none bg-transparent p-0 text-foreground shadow-none hover:bg-content2 ${compact ? "min-w-7" : "min-w-10"}`}
       >
         <span aria-hidden="true" className="text-lg font-semibold leading-none">
           +

@@ -4,7 +4,8 @@ import { handleOfflineAddToCart } from "@/helpers/functionalHelpers";
 import { isVariantInStock, stockLimit } from "@/helpers/stock";
 import { updateCartData } from "@/helpers/updators";
 import type { RootState } from "@/lib/redux/store";
-import { addToCart } from "@/services/cart";
+import { addCartItems } from "@/services/cart";
+import WholesaleTiers from "./WholesaleTiers";
 import type { Product, ProductVariant } from "@/types/catalog";
 import { Icon } from "@iconify/react";
 import { useRef, useState } from "react";
@@ -71,7 +72,7 @@ export default function WholesaleOrderTable({
     const minimum = Math.max(1, Number(group.minimum_order_quantity) || 1);
     const remaining = Math.max(0, minimum - combined);
     const stepRemainder = Math.max(0, combined - minimum) % quantityStep;
-    return { id: group.id, rows, selected, inBucket, subtotal, tiers, activeTier, minimum, remaining, stepRemainder };
+    return { group, rows, selected, inBucket, combined, subtotal, minimum, remaining, stepRemainder };
   });
 
   const selectedRows = groups.flatMap((group) => group.rows).filter((row) => row.quantity > 0);
@@ -81,55 +82,45 @@ export default function WholesaleOrderTable({
   const invalidQuantity = selectedRows.some(({ available, customizable, quantity, limit }) =>
     !available || customizable || !Number.isSafeInteger(quantity) || quantity > limit,
   );
-  const canAdd = totalQuantity > 0 && !exceedsMaximum && !invalidQuantity;
+  const meetsMinimum = groups.every((group) => group.selected === 0 || group.remaining === 0);
+  const canAdd = totalQuantity > 0 && meetsMinimum && !exceedsMaximum && !invalidQuantity;
 
   async function addSelection() {
     if (!canAdd || submitting.current) return;
     submitting.current = true;
     setIsAdding(true);
-    const added = new Set<number>();
-    const failed: string[] = [];
-
     try {
-      for (const { variant, quantity } of selectedRows) {
-        const result = isLoggedIn
-          ? await addToCart({ product_variant_id: variant.id, store_id: variant.store_id, quantity })
-          : handleOfflineAddToCart({ product, variant, quantity, renderToast: false });
-
-        if (result.success) {
-          added.add(variant.id);
-        } else {
-          failed.push(`${variant.title}: ${result.message || t("cart.add_failed_description")}`);
+      if (isLoggedIn) {
+        const result = await addCartItems(selectedRows.map(({ variant, quantity }) => ({
+          product_variant_id: variant.id,
+          store_id: variant.store_id,
+          quantity,
+        })));
+        if (!result.success) {
+          toast({
+            title: t("cart.add_failed_title"),
+            description: result.message || t("cart.add_failed_description"),
+            color: "danger",
+          });
+          return;
+        }
+        await updateCartData(false, true, 0, false);
+        document.getElementById("specific-product-refetch")?.click();
+      } else {
+        for (const { variant, quantity } of selectedRows) {
+          handleOfflineAddToCart({ product, variant, quantity, renderToast: false, groupMinimumValidated: true });
         }
       }
-    } finally {
-      if (added.size) {
-        setQuantities((previous) =>
-          Object.fromEntries(Object.entries(previous).filter(([id]) => !added.has(Number(id)))),
-        );
-        if (isLoggedIn) {
-          await updateCartData(false, true, 0, false);
-          if (!failed.length) document.getElementById("specific-product-refetch")?.click();
-        }
-      }
-      setIsAdding(false);
-      submitting.current = false;
-    }
 
-    if (failed.length) {
-      toast({
-        title: added.size
-          ? t("wholesale.partialAdd", "Some variants were added to your bucket")
-          : t("cart.add_failed_title"),
-        description: failed.join(" · "),
-        color: "danger",
-      });
-    } else {
+      setQuantities({});
       toast({
         title: t("wholesale.addedToBucket", "{{count}} units added to your bucket", { count: totalQuantity }),
         description: isLoggedIn ? undefined : t("cart.login_required"),
         color: "success",
       });
+    } finally {
+      setIsAdding(false);
+      submitting.current = false;
     }
   }
 
@@ -151,7 +142,7 @@ export default function WholesaleOrderTable({
             </tr>
           </thead>
           {groups.map((group) => (
-            <tbody key={group.id}>
+            <tbody key={group.group.id}>
               <tr className="border-t border-divider bg-content2">
                 <th scope="rowgroup" colSpan={2} className="px-3 py-2 text-start text-xs font-semibold">
                   <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
@@ -164,33 +155,8 @@ export default function WholesaleOrderTable({
                 </th>
               </tr>
               <tr>
-                <td colSpan={2} className="px-2 pb-1 pt-2">
-                  <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,9rem),1fr))] gap-1">
-                    {group.tiers.map((tier, index) => {
-                      const nextTier = group.tiers[index + 1];
-                      const isActive = group.activeTier === tier;
-                      const range = nextTier
-                        ? `${tier.min_quantity}–${nextTier.min_quantity - 1}`
-                        : `${tier.min_quantity}+`;
-                      const unitPrice = tier.formatted || formatPrice(tier.unit_price);
-                      return (
-                        <li
-                          key={tier.min_quantity}
-                          className={`rounded-small border px-2 py-1.5 text-center text-xs ${isActive
-                            ? "border-blue-200 bg-blue-50 font-semibold text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200"
-                            : "border-divider"}`}
-                        >
-                          {isActive && (
-                            <>
-                              <span className="sr-only">{t("wholesale.appliedTier", "Applied tier")}. </span>
-                              <span aria-hidden="true" className="me-1">✓</span>
-                            </>
-                          )}
-                          {t("wholesale.tierRangePrice", "{{range}} units · {{price}}/unit", { range, price: unitPrice })}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                <td colSpan={2} className="px-3 py-3">
+                  <WholesaleTiers group={group.group} quantity={group.combined} showMinimum={false} />
                 </td>
               </tr>
               {group.rows.map(({ variant, available, customizable, limit, quantity }) => {
@@ -248,7 +214,9 @@ export default function WholesaleOrderTable({
                   <td colSpan={2} className="space-y-1 px-3 py-2">
                     {group.inBucket > 0 && <p>{t("wholesale.alreadyInBucket", "{{count}} already in your bucket", { count: group.inBucket })}</p>}
                     {group.selected > 0 && (group.remaining > 0 ? (
-                      <p>{t("wholesale.unitsToMinimum", "Add {{count}} more to this group to meet the checkout minimum.", { count: group.remaining })}</p>
+                      <p className="text-danger" role="status">
+                        {t("wholesale.unitsToAddMinimum", "Select {{count}} more to add this group to your bucket.", { count: group.remaining })}
+                      </p>
                     ) : group.stepRemainder > 0 && (
                       <p>{t("wholesale.unitsToStep", "Add {{count}} more to this group to meet the checkout increment.", { count: quantityStep - group.stepRemainder })}</p>
                     ))}

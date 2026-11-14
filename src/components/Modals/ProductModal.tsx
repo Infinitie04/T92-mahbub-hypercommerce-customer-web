@@ -1,3 +1,4 @@
+import QtyInput from "@/components/Products/ProductDetailPage/QtyInput";
 import WholesaleTiers from "@/components/Products/ProductDetailPage/WholesaleTiers";
 import { FC, useState, useEffect } from "react";
 import {
@@ -14,7 +15,7 @@ import {
   RadioGroup,
   Radio,
 } from "@heroui/react";
-import { ShoppingCart, Plus, Minus, Star, Users } from "lucide-react";
+import { ShoppingCart, Star, Users } from "lucide-react";
 import RatingStars from "../RatingStars";
 import {
   Product,
@@ -79,7 +80,7 @@ const SimpleProductModal: FC<ProductModalProps> = ({
   const usesGroups = product.pricing_groups?.some((group) => group.tiers.length > 0);
   const stepSize = usesGroups ? 1 : product.quantity_step_size || 1;
   const minQuantity = usesGroups ? 1 : product.minimum_order_quantity || 1;
-  const initialQuantity = stepSize > 1 ? stepSize : minQuantity;
+  const initialQuantity = minQuantity;
   const [quantity, setQuantity] = useState(initialQuantity);
   const [selectedAttributes, setSelectedAttributes] = useState<
     Record<string, string>
@@ -150,9 +151,7 @@ const SimpleProductModal: FC<ProductModalProps> = ({
         const cartItem = cartData?.items?.find(
           (item) => item.product_variant_id === matchingVariant.id,
         );
-        const newQuantity =
-          cartItem?.quantity ||
-          initialQuantity;
+        const newQuantity = editingQuantity ?? cartItem?.quantity ?? initialQuantity;
         setQuantity(() =>
           Math.min(
             newQuantity,
@@ -164,7 +163,7 @@ const SimpleProductModal: FC<ProductModalProps> = ({
         );
       }
     }
-  }, [selectedAttributes, cartData, product]);
+  }, [selectedAttributes, cartData, product, editingQuantity, initialQuantity]);
 
   if (!selectedVariant) return null;
 
@@ -186,95 +185,6 @@ const SimpleProductModal: FC<ProductModalProps> = ({
     hasFiniteStock(stock) &&
     stock > 0 &&
     stock <= lowStockLimit;
-
-  const maxQuantity = stockLimit(
-    selectedVariant.stock,
-    product.total_allowed_quantity || 9999,
-  );
-
-  const handleQuantityDecrease = () => {
-    const newQuantity = quantity - stepSize;
-
-    if (newQuantity < minQuantity) {
-      addToast({
-        title: t("min_quantity_error_title"),
-        description: t("min_quantity_error_description", {
-          min: minQuantity,
-        }),
-        color: "danger",
-      });
-      return;
-    }
-
-    if (stepSize > 1) {
-      if (newQuantity % stepSize !== 0) {
-        addToast({
-          title: t("step_error_title"),
-          description: t("step_error_description", { step: stepSize }),
-          color: "danger",
-        });
-        return;
-      }
-    } else if ((newQuantity - minQuantity) % stepSize !== 0) {
-      addToast({
-        title: t("step_error_title"),
-        description: t("step_error_description", { step: stepSize }),
-        color: "danger",
-      });
-      return;
-    }
-
-    setQuantity(Math.max(newQuantity, stepSize > 1 ? stepSize : minQuantity));
-  };
-
-  const handleQuantityIncrease = () => {
-    const newQuantity = quantity + stepSize;
-
-    if (newQuantity > maxQuantity) {
-      addToast({
-        title: t("max_quantity_error_title"),
-        description: t("max_quantity_error_description", {
-          max: maxQuantity,
-        }),
-        color: "danger",
-      });
-      return;
-    }
-
-    if (
-      hasFiniteStock(selectedVariant.stock) &&
-      newQuantity > selectedVariant.stock
-    ) {
-      addToast({
-        title: t("stock_limit_error_title"),
-        description: t("stock_limit_error_description", {
-          stock: selectedVariant.stock,
-        }),
-        color: "danger",
-      });
-      return;
-    }
-
-    if (stepSize > 1) {
-      if (newQuantity % stepSize !== 0) {
-        addToast({
-          title: t("step_error_title"),
-          description: t("step_error_description", { step: stepSize }),
-          color: "danger",
-        });
-        return;
-      }
-    } else if ((newQuantity - minQuantity) % stepSize !== 0) {
-      addToast({
-        title: t("step_error_title"),
-        description: t("step_error_description", { step: stepSize }),
-        color: "danger",
-      });
-      return;
-    }
-
-    setQuantity(Math.min(newQuantity, maxQuantity));
-  };
 
   const AddToCart = async () => {
     // Validate required addon groups
@@ -354,7 +264,6 @@ const SimpleProductModal: FC<ProductModalProps> = ({
       console.error("Add to cart failed:", error);
     } finally {
       setLoading(false);
-      onClose();
     }
   };
 
@@ -525,7 +434,7 @@ const SimpleProductModal: FC<ProductModalProps> = ({
             </div>
           </div>
 
-          <WholesaleTiers group={pricingGroup} />
+          <WholesaleTiers group={pricingGroup} quantity={quantity} />
 
           {product.variants &&
             product.variants.length > 1 &&
@@ -590,33 +499,16 @@ const SimpleProductModal: FC<ProductModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
-                <Button
-                  isIconOnly
-                  aria-label={t("a11y.decrease_quantity")}
-                  size="sm"
-                  variant="flat"
-                  isDisabled={loading || !isVariantInStock(selectedVariant)}
-                  onPress={handleQuantityDecrease}
-                  className="w-8 h-8 min-w-8"
-                >
-                  <Minus size={14} />
-                </Button>
-                <span className="w-8 text-center text-sm font-medium">
-                  {quantity}
-                </span>
-                <Button
-                  isIconOnly
-                  aria-label={t("a11y.increase_quantity")}
-                  size="sm"
-                  variant="flat"
-                  isDisabled={loading || !isVariantInStock(selectedVariant)}
-                  onPress={handleQuantityIncrease}
-                  className="w-8 h-8 min-w-8"
-                >
-                  <Plus size={14} />
-                </Button>
-              </div>
+              <QtyInput
+                quantity={quantity}
+                setQuantity={setQuantity}
+                min={minQuantity}
+                step={stepSize}
+                max={product.total_allowed_quantity}
+                stock={selectedVariant.stock}
+                disabled={loading || !isVariantInStock(selectedVariant)}
+                compact
+              />
             </div>
           </div>
 

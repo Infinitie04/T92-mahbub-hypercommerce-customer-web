@@ -1,3 +1,4 @@
+import QtyInput from "@/components/Products/ProductDetailPage/QtyInput";
 import React, { FC } from "react";
 import {
   Button,
@@ -78,89 +79,6 @@ const OfflineCartDrawer: FC<OfflineCartDrawerProps> = ({ isOpen, onClose }) => {
     document.getElementById("login-btn")?.click();
   };
 
-  const getStepSize = (stepSize?: number) => {
-    if (typeof stepSize === "number" && stepSize > 0) {
-      return stepSize;
-    }
-    return 1;
-  };
-
-  const handleQuantityChange = (
-    id: string,
-    currentQuantity: number,
-    step: number,
-    direction: "inc" | "dec",
-    minQuantity?: number,
-    maxQuantity?: number,
-    stock?: number | null,
-  ) => {
-    const delta = direction === "inc" ? step : -step;
-    const newQuantity = currentQuantity + delta;
-    const minQty = Number(minQuantity) || 1;
-    const maxLimit = Number(maxQuantity) || 99999;
-
-    // Check minimum quantity
-    if (newQuantity < minQty) {
-      toast({
-        title: t("min_quantity_error_title"),
-        description: t("min_quantity_error_description", {
-          min: minQty,
-        }),
-        color: "danger",
-      });
-      return;
-    }
-
-    // Check stock limit
-    if (hasFiniteStock(stock) && newQuantity > stock) {
-      toast({
-        title: t("stock_limit_error_title"),
-        description: t("stock_limit_error_description", {
-          stock: stock,
-        }),
-        color: "danger",
-      });
-      return;
-    }
-
-    // Check maximum quantity
-    if (newQuantity > maxLimit) {
-      toast({
-        title: t("max_quantity_error_title"),
-        description: t("max_quantity_error_description", {
-          max: maxLimit,
-        }),
-        color: "danger",
-      });
-      return;
-    }
-
-    // Check step size
-    if (step > 1) {
-      if (newQuantity % step !== 0) {
-        toast({
-          title: t("step_error_title"),
-          description: t("step_error_description", { step: step }),
-          color: "danger",
-        });
-        return;
-      }
-    } else if ((newQuantity - minQty) % step !== 0) {
-      toast({
-        title: t("step_error_title"),
-        description: t("step_error_description", { step: step }),
-        color: "danger",
-      });
-      return;
-    }
-
-    dispatch(
-      updateOfflineCartItemQuantity({
-        id,
-        quantity: newQuantity,
-      }),
-    );
-  };
   const handleRemoveItem = () => {
     if (!selectedItemId) return;
 
@@ -372,67 +290,20 @@ const OfflineCartDrawer: FC<OfflineCartDrawerProps> = ({ isOpen, onClose }) => {
                         )}
 
                         <div className="mt-3 flex items-center justify-between gap-2 border-t border-divider pt-3">
-                          <div className="inline-flex h-9 items-center overflow-hidden rounded-medium border border-divider bg-content1">
-                            <Button
-                              isIconOnly
-                              size="sm"
-                              variant="light"
-                              aria-label={t(
-                                "decrease_quantity",
-                                "Decrease quantity",
-                              )}
-                              className="h-full min-w-9 rounded-none bg-transparent p-0 text-foreground"
-                              onPress={() =>
-                                handleQuantityChange(
-                                  item.id,
-                                  item.quantity,
-                                  getStepSize(item.stepSize),
-                                  "dec",
-                                  item.minQuantity,
-                                  item.maxQuantity,
-                                  item.stock,
-                                )
-                              }
-                            >
-                              <span
-                                aria-hidden="true"
-                                className="text-lg font-semibold leading-none"
-                              >
-                                −
-                              </span>
-                            </Button>
-                            <span className="min-w-8 text-center text-sm font-bold tabular-nums">
-                              {item.quantity}
-                            </span>
-                            <Button
-                              isIconOnly
-                              size="sm"
-                              variant="light"
-                              aria-label={t(
-                                "increase_quantity",
-                                "Increase quantity",
-                              )}
-                              className="h-full min-w-9 rounded-none bg-transparent p-0 text-foreground"
-                              onPress={() =>
-                                handleQuantityChange(
-                                  item.id,
-                                  item.quantity,
-                                  getStepSize(item.stepSize),
-                                  "inc",
-                                  item.minQuantity,
-                                  item.maxQuantity,
-                                  item.stock,
-                                )
-                              }
-                            >
-                              <span
-                                aria-hidden="true"
-                                className="text-lg font-semibold leading-none"
-                              >
-                                +
-                              </span>
-                            </Button>
-                          </div>
+                          <QtyInput
+                            label={t("wholesale.variantQuantity", "Quantity for {{variant}}", {
+                              variant: itemWithVariant.variantTitle || item.name,
+                            })}
+                            quantity={item.quantity}
+                            setQuantity={(quantity) =>
+                              dispatch(updateOfflineCartItemQuantity({ id: item.id, quantity }))
+                            }
+                            min={item.minQuantity || 1}
+                            max={item.maxQuantity}
+                            step={item.stepSize || 1}
+                            stock={item.stock}
+                            compact
+                          />
 
                           <Button
                             size="sm"

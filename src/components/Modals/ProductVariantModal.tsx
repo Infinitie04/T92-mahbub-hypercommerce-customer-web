@@ -1,3 +1,4 @@
+import QtyInput from "@/components/Products/ProductDetailPage/QtyInput";
 import WholesaleTiers from "@/components/Products/ProductDetailPage/WholesaleTiers";
 import { FC, useState, useEffect } from "react";
 import {
@@ -16,7 +17,7 @@ import {
   RadioGroup,
   Radio,
 } from "@heroui/react";
-import { ShoppingCart, Plus, Minus, Star, Users } from "lucide-react";
+import { ShoppingCart, Star, Users } from "lucide-react";
 import RatingStars from "../RatingStars";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, ProductVariant, AddonGroup } from "@/types/ApiResponse";
@@ -37,7 +38,6 @@ import { trackProductView } from "@/lib/analytics";
 import {
   hasFiniteStock,
   isVariantInStock,
-  stockLimit,
 } from "@/helpers/stock";
 
 const Lightbox = dynamic(() => import("yet-another-react-lightbox"), {
@@ -89,9 +89,7 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
   const [selectedAddons, setSelectedAddons] = useState<
     Record<number, number[]>
   >({});
-  const [quantity, setQuantity] = useState(
-    stepSize > 1 ? stepSize : minQuantity,
-  );
+  const [quantity, setQuantity] = useState(minQuantity);
   const [loading, setLoading] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
 
@@ -114,13 +112,12 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
     }
 
     setSelectedAddons(initialSelectedAddons);
-    const defaultQty = stepSize > 1 ? stepSize : minQuantity;
-    setQuantity(editingQuantity ?? defaultQty);
+    setQuantity(editingQuantity ?? minQuantity);
     setLightboxOpen(false);
 
     const initialQtys: Record<number, number> = {};
     product.variants.forEach((v) => {
-      initialQtys[v.id] = defaultQty;
+      initialQtys[v.id] = minQuantity;
     });
     setVariantQuantities(initialQtys);
 
@@ -854,7 +851,7 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
                                   {!group && formatPrice(price)}
                                 </span>
                               </div>
-                              <WholesaleTiers group={group} />
+                              <WholesaleTiers group={group} quantity={qty} />
                               <div className="flex flex-col gap-1 mt-1">
                                 <div className="flex items-center gap-2">
                                   <p className="text-xs text-foreground/50">
@@ -917,51 +914,19 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
                                 <span className="text-xs text-foreground/50 hidden sm:block">
                                   {t("product_modal.qty")}:
                                 </span>
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    isIconOnly
-                                    aria-label={t("a11y.decrease_quantity")}
-                                    size="sm"
-                                    variant="flat"
-                                    onPress={() =>
-                                      setVariantQuantities((p) => ({
-                                        ...p,
-                                        [v.id]: Math.max(
-                                          stepSize > 1 ? stepSize : minQuantity,
-                                          qty - stepSize,
-                                        ),
-                                      }))
-                                    }
-                                    className="w-7 h-7 min-w-7"
-                                  >
-                                    <Minus size={12} />
-                                  </Button>
-                                  <span className="w-8 text-center text-sm font-medium">
-                                    {qty}
-                                  </span>
-                                  <Button
-                                    isIconOnly
-                                    aria-label={t("a11y.increase_quantity")}
-                                    size="sm"
-                                    variant="flat"
-                                    onPress={() =>
-                                      setVariantQuantities((p) => ({
-                                        ...p,
-                                        [v.id]: Math.min(
-                                          stockLimit(
-                                            v.stock,
-                                            product.total_allowed_quantity ||
-                                              9999,
-                                          ),
-                                          qty + stepSize,
-                                        ),
-                                      }))
-                                    }
-                                    className="w-7 h-7 min-w-7"
-                                  >
-                                    <Plus size={12} />
-                                  </Button>
-                                </div>
+                                <QtyInput
+                                  quantity={qty}
+                                  setQuantity={(value) =>
+                                    setVariantQuantities((previous) => ({ ...previous, [v.id]: value }))
+                                  }
+                                  label={t("wholesale.variantQuantity", "Quantity for {{variant}}", { variant: v.title })}
+                                  min={minQuantity}
+                                  step={stepSize}
+                                  max={product.total_allowed_quantity}
+                                  stock={v.stock}
+                                  disabled={loading || isUnavailable}
+                                  compact
+                                />
                               </div>
                               <Button
                                 color="primary"
@@ -1013,48 +978,16 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
                         {formatPrice(totalPrice)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        isIconOnly
-                        aria-label={t("a11y.decrease_quantity")}
-                        size="sm"
-                        variant="flat"
-                        onPress={() =>
-                          setQuantity((q) =>
-                            Math.max(
-                              stepSize > 1 ? stepSize : minQuantity,
-                              q - stepSize,
-                            ),
-                          )
-                        }
-                        className="w-8 h-8 min-w-8"
-                      >
-                        <Minus size={14} />
-                      </Button>
-                      <span className="w-8 text-center text-sm font-semibold">
-                        {quantity}
-                      </span>
-                      <Button
-                        isIconOnly
-                        aria-label={t("a11y.increase_quantity")}
-                        size="sm"
-                        variant="flat"
-                        onPress={() =>
-                          setQuantity((q) =>
-                            Math.min(
-                              stockLimit(
-                                selectedVariant?.stock,
-                                product.total_allowed_quantity || 9999,
-                              ),
-                              q + stepSize,
-                            ),
-                          )
-                        }
-                        className="w-8 h-8 min-w-8"
-                      >
-                        <Plus size={14} />
-                      </Button>
-                    </div>
+                    <QtyInput
+                      quantity={quantity}
+                      setQuantity={setQuantity}
+                      min={minQuantity}
+                      step={stepSize}
+                      max={product.total_allowed_quantity}
+                      stock={selectedVariant?.stock}
+                      disabled={loading || !selectedVariant || !isVariantInStock(selectedVariant)}
+                      compact
+                    />
                   </div>
                   <Button
                     color="primary"

@@ -302,6 +302,7 @@ export const handleOfflineAddToCart = (params: {
   quantity: number;
   onClose?: () => void;
   renderToast?: boolean;
+  groupMinimumValidated?: boolean;
   addons?: {
     addon_group_id: number;
     addon_item_id: number;
@@ -321,6 +322,21 @@ export const handleOfflineAddToCart = (params: {
   const pricingGroup = product.pricing_groups?.find(
     (group) => group.id === variant.pricing_group_id && group.tiers.length > 0,
   );
+  if (pricingGroup && !params.groupMinimumValidated) {
+    const inBucket = store.getState().offlineCart.items.reduce(
+      (total, item) => item.pricingGroup?.id === pricingGroup.id ? total + item.quantity : total,
+      0,
+    );
+    const minimum = pricingGroup.minimum_order_quantity;
+    if (quantity + inBucket < minimum) {
+      const message = i18n.t("wholesale.unitsToAddMinimum", {
+        count: minimum - quantity - inBucket,
+        defaultValue: "Select {{count}} more to add this group to your bucket.",
+      });
+      if (renderToast) addToast({ title: message, color: "danger" });
+      return { success: false, data: null, message };
+    }
+  }
   const minQuantity = pricingGroup ? 1 : product.minimum_order_quantity || 1;
   const stepSize = pricingGroup ? 1 : product.quantity_step_size || 1;
   const maxAllowed = product.total_allowed_quantity || (pricingGroup ? Number.MAX_SAFE_INTEGER : 1);

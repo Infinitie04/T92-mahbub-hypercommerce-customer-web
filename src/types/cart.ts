@@ -56,7 +56,7 @@ export interface FailedCartItem {
 }
 
 export interface CartSyncData {
-  cart: CartResponse;
+  cart: CartResponse | null;
   synced_items: {
     store_id: number;
     product_variant_id: number;

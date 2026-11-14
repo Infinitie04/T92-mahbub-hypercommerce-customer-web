@@ -36,6 +36,7 @@ const ProductDetailPageView: FC<ProductPageProps> = ({
   initialReviews,
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [customizationQuantity, setCustomizationQuantity] = useState<number>();
   // Get initial variant
   const getInitialVariant = () => {
     if (initialProduct?.variants && initialProduct.variants.length > 0) {
@@ -178,7 +179,10 @@ const ProductDetailPageView: FC<ProductPageProps> = ({
             <ProductDetailSection
               initialProduct={initialProduct}
               onVariantChange={handleVariantChange}
-              onOpenModal={onOpen}
+              onOpenModal={(quantity) => {
+                setCustomizationQuantity(quantity);
+                onOpen();
+              }}
             />
           )}
         </div>
@@ -208,6 +212,7 @@ const ProductDetailPageView: FC<ProductPageProps> = ({
           onClose={onClose}
           product={initialProduct}
           selectedVariant={selectedVariant}
+          editingQuantity={customizationQuantity}
         />
       )}
     </div>

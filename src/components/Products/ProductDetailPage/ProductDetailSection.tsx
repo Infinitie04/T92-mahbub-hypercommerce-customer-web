@@ -27,7 +27,7 @@ import {
 interface ProductDetailSectionProps {
   initialProduct: Product;
   onVariantChange?: (variant: ProductVariant) => void;
-  onOpenModal?: () => void;
+  onOpenModal?: (quantity?: number) => void;
 }
 
 const ProductDetailSection: FC<ProductDetailSectionProps> = ({
@@ -43,7 +43,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
       initialProduct.variants?.some((variant) => variant.pricing_group_id === group.id),
   );
   const lineStep = initialProduct.quantity_step_size || 1;
-  const lineMinimum = lineStep > 1 ? lineStep : initialProduct.minimum_order_quantity || 1;
+  const lineMinimum = initialProduct.minimum_order_quantity || 1;
   const [quantity, setQuantity] = useState(lineMinimum);
   const [loading, setLoading] = useState({ buyNow: false, add: false });
   const router = useRouter();
@@ -168,7 +168,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
       const hasAddons =
         selectedVariant.addon_groups && selectedVariant.addon_groups.length > 0;
       if (hasAddons) {
-        onOpenModal?.();
+        onOpenModal?.(quantity);
         return;
       }
 
@@ -412,12 +412,14 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
               {t("quantity")}
             </label>
             <QtyInput
+              id="qty-input"
               quantity={quantity}
               setQuantity={setQuantity}
               min={lineMinimum}
               step={lineStep}
               max={initialProduct.total_allowed_quantity || 9999}
               stock={selectedVariant?.stock}
+              disabled={loading.add || loading.buyNow}
             />
           </div>
         </div>

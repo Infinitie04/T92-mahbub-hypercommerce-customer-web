@@ -10,6 +10,7 @@ import { setCartLoading } from "@/lib/redux/slices/cartSlice";
 import { RootState } from "@/lib/redux/store";
 import { useTranslation } from "react-i18next";
 import { hasFiniteStock } from "@/helpers/stock";
+import QuantityField from "@/components/QuantityField";
 
 interface CartQuantityControlProps {
   item: CartItem;
@@ -31,6 +32,7 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
   const { t } = useTranslation();
   const [localQuantity, setLocalQuantity] = useState<number>(item.quantity);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const maximum = maxQuantity > 0 ? Math.min(maxQuantity, 999) : 999;
   const dispatch = useDispatch();
   const isLoading = useSelector((state: RootState) => state.cart.isLoading);
 
@@ -69,15 +71,15 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
             color: "danger",
           });
         } finally {
+          await updateCartData(true, true);
           setIsUpdating(false);
-          updateCartData(true, true);
         }
       }, debounceDelay),
     [item, debounceDelay, dispatch, t]
   );
 
   const handleQuantityChange = useCallback(
-    (newQuantity: number) => {
+    (newQuantity: number, commitImmediately = false) => {
       if (newQuantity < minQuantity) {
         addToast({
           title: t("min_quantity_error_title"),
@@ -89,11 +91,11 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
         return;
       }
 
-      if (newQuantity > maxQuantity) {
+      if (newQuantity > maximum) {
         addToast({
           title: t("max_quantity_error_title"),
           description: t("max_quantity_error_description", {
-            max: maxQuantity,
+            max: maximum,
           }),
           color: "danger",
         });
@@ -120,11 +122,12 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
 
       setLocalQuantity(newQuantity);
       debouncedUpdateQuantity(item.id, newQuantity);
+      if (commitImmediately) debouncedUpdateQuantity.flush();
     },
     [
       item.id,
       minQuantity,
-      maxQuantity,
+      maximum,
       stock,
       quantityStep,
       debouncedUpdateQuantity,
@@ -164,10 +167,16 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
         <Minus size={14} />
       </button>
 
-      <div
-        className={`text-xs min-w-5 text-center ${isUpdating ? "opacity-60" : ""}`}
-      >
-        {localQuantity}
+      <div className="flex items-center">
+        <QuantityField
+          label={t("wholesale.variantQuantity", "Quantity for {{variant}}", {
+            variant: item.variant.title || item.product.name,
+          })}
+          quantity={localQuantity}
+          onCommit={(quantity) => handleQuantityChange(quantity, true)}
+          disabled={isUpdating || isLoading}
+          className="h-8 w-12"
+        />
         {isUpdating && (
           <span className="ms-1 inline-block animate-spin">⏳</span>
         )}
