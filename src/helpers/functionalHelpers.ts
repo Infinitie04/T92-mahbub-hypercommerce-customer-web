@@ -323,7 +323,7 @@ export const handleOfflineAddToCart = (params: {
   );
   const minQuantity = pricingGroup ? 1 : product.minimum_order_quantity || 1;
   const stepSize = pricingGroup ? 1 : product.quantity_step_size || 1;
-  const maxAllowed = product.total_allowed_quantity || 1;
+  const maxAllowed = product.total_allowed_quantity || (pricingGroup ? Number.MAX_SAFE_INTEGER : 1);
   const stock = variant.stock;
   const maxQuantity = stockLimit(stock, maxAllowed);
   const finalPrice = pricingGroup?.tiers[0]?.unit_price ?? Number(variant.price);
@@ -404,7 +404,7 @@ export const handleUpdateOfflineCartItem = (params: {
   );
   const minQuantity = pricingGroup ? 1 : product.minimum_order_quantity || 1;
   const stepSize = pricingGroup ? 1 : product.quantity_step_size || 1;
-  const maxAllowed = product.total_allowed_quantity || 1;
+  const maxAllowed = product.total_allowed_quantity || (pricingGroup ? Number.MAX_SAFE_INTEGER : 1);
   const stock = variant.stock;
   const maxQuantity = stockLimit(stock, maxAllowed);
   const finalPrice = pricingGroup?.tiers[0]?.unit_price ?? Number(variant.price);

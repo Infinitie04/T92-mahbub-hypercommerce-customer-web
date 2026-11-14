@@ -2,7 +2,7 @@ import { Button, Card, Chip, Divider, Link, toast } from "@/components/ui";
 import { Icon } from "@iconify/react";
 import { FC, useEffect, useState } from "react";
 import QtyInput from "./QtyInput";
-import WholesaleTiers from "./WholesaleTiers";
+import WholesaleOrderTable from "./WholesaleOrderTable";
 import { Product, ProductVariant } from "@/types/ApiResponse";
 import {
   handleAddToCart,
@@ -38,9 +38,12 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
   const [selectedAttributes, setSelectedAttributes] = useState<
     Record<string, string>
   >({});
-  const usesGroups = initialProduct.pricing_groups?.some((group) => group.tiers.length > 0);
-  const lineStep = usesGroups ? 1 : initialProduct.quantity_step_size || 1;
-  const lineMinimum = usesGroups ? 1 : lineStep > 1 ? lineStep : initialProduct.minimum_order_quantity || 1;
+  const usesGroups = initialProduct.pricing_groups?.some(
+    (group) => group.tiers.length > 0 &&
+      initialProduct.variants?.some((variant) => variant.pricing_group_id === group.id),
+  );
+  const lineStep = initialProduct.quantity_step_size || 1;
+  const lineMinimum = lineStep > 1 ? lineStep : initialProduct.minimum_order_quantity || 1;
   const [quantity, setQuantity] = useState(lineMinimum);
   const [loading, setLoading] = useState({ buyNow: false, add: false });
   const router = useRouter();
@@ -72,19 +75,16 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
   } = initialProduct;
 
   const { formatPrice, systemSettings } = useSettings();
-  const isOutOfStock = selectedVariant
+  const isOutOfStock = !usesGroups && selectedVariant
     ? !isVariantInStock(selectedVariant)
     : false;
 
   const deliveryBy = isOutOfStock
     ? null
-    : formatDeliveryByDate(selectedVariant?.delivery_eta === undefined
+    : formatDeliveryByDate(usesGroups || selectedVariant?.delivery_eta === undefined
         ? delivery_eta
         : selectedVariant.delivery_eta);
 
-  const pricingGroup = initialProduct.pricing_groups?.find(
-    (group) => group.id === selectedVariant?.pricing_group_id && group.tiers.length > 0,
-  );
   const price = Number(selectedVariant?.price) || 0;
   const hasVariantOptions =
     variants?.length > 1 && Boolean(initialProduct.attributes?.length);
@@ -103,7 +103,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
 
   // Initialize selected attributes and variant when product changes
   useEffect(() => {
-    if (variants && variants.length > 0) {
+    if (!usesGroups && variants && variants.length > 0) {
       const defaultVariant = variants.find((v) => v.is_default) || variants[0];
 
       if (defaultVariant) {
@@ -111,11 +111,11 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
         setSelectedAttributes(defaultVariant.attributes || {});
       }
     }
-  }, [variants]);
+  }, [usesGroups, variants]);
 
   // Find variant based on selected attributes
   useEffect(() => {
-    if (variants && Object.keys(selectedAttributes).length > 0) {
+    if (!usesGroups && variants && Object.keys(selectedAttributes).length > 0) {
       const matchingVariant = variants.find((variant) => {
         return Object.entries(selectedAttributes).every(([key, value]) => {
           return variant.attributes && variant.attributes[key] === value;
@@ -139,6 +139,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
       }
     }
   }, [
+    usesGroups,
     selectedAttributes,
     variants,
     onVariantChange,
@@ -294,7 +295,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
       )}
 
       {/* Price */}
-      {!pricingGroup && <div className="mt-1 flex flex-wrap items-baseline gap-2.5">
+      {!usesGroups && <div className="mt-1 flex flex-wrap items-baseline gap-2.5">
         <span className="text-2xl font-bold text-foreground md:text-3xl">
           {formatPrice(price)}
         </span>
@@ -305,8 +306,19 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
 
       <Divider className="my-1" />
 
+      {usesGroups && (
+        <WholesaleOrderTable
+          key={initialProduct.id}
+          product={initialProduct}
+          onCustomize={(variant) => {
+            onVariantChange?.(variant);
+            onOpenModal?.();
+          }}
+        />
+      )}
+
       {/* Variant / attribute selection */}
-      {variants && variants.length > 1 && initialProduct.attributes && (
+      {!usesGroups && variants && variants.length > 1 && initialProduct.attributes && (
         <div className="space-y-4 py-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-bold text-foreground">
@@ -357,7 +369,8 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
       )}
 
       {/* Stock and order info for single variant products */}
-      {variants &&
+      {!usesGroups &&
+        variants &&
         variants.length === 1 &&
         selectedVariant &&
         (isLowStock ||
@@ -386,10 +399,8 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
           </div>
         )}
 
-      <WholesaleTiers group={pricingGroup} />
-
       {/* Quantity */}
-      {!isOutOfStock && (
+      {!usesGroups && !isOutOfStock && (
         <div
           className={clsx(
             "flex flex-wrap items-center gap-3 pt-4",
@@ -420,7 +431,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
       )}
 
       {/* Actions */}
-      {isOutOfStock ? (
+      {!usesGroups && (isOutOfStock ? (
         <Card shadow="none" className="border border-divider p-3">
           <div className="flex items-start gap-3">
             <Icon
@@ -438,7 +449,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
           </div>
         </Card>
       ) : (
-        <div className={clsx("grid grid-cols-1 gap-2", !usesGroups && "xs:grid-cols-2")}>
+        <div className="grid grid-cols-1 gap-2 xs:grid-cols-2">
           <Button
             variant="bordered"
             color="default"
@@ -454,7 +465,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
           >
             {t("addToBucket")}
           </Button>
-          {!usesGroups && <Button
+          <Button
             color="default"
             className="w-full bg-primary font-semibold text-primary-foreground shadow-none hover:bg-primary-600"
             isLoading={loading.buyNow}
@@ -462,9 +473,9 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
             onPress={() => AddToCart(true)}
           >
             {t("buyNow")}
-          </Button>}
+          </Button>
         </div>
-      )}
+      ))}
 
       {/* Trust row */}
       {!isOutOfStock && (
