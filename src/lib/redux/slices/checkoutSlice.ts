@@ -4,7 +4,6 @@ import { Address } from "@/types/ApiResponse";
 export interface CheckoutState {
   selectedAddress: Address | null;
   orderNote: string;
-  useWallet: boolean;
   promoCode: string;
   idempotencyKey: string;
 }
@@ -12,7 +11,6 @@ export interface CheckoutState {
 const initialState: CheckoutState = {
   selectedAddress: null,
   orderNote: "",
-  useWallet: false,
   promoCode: "",
   idempotencyKey: "",
 };
@@ -27,9 +25,6 @@ const checkoutSlice = createSlice({
     setOrderNote: (state, action: PayloadAction<string>) => {
       state.orderNote = action.payload;
     },
-    setUseWallet: (state, action: PayloadAction<boolean>) => {
-      state.useWallet = action.payload;
-    },
     setPromoCode: (state, action: PayloadAction<string>) => {
       state.promoCode = action.payload;
     },
@@ -42,7 +37,6 @@ const checkoutSlice = createSlice({
 export const {
   setSelectedAddress,
   setOrderNote,
-  setUseWallet,
   setPromoCode,
   setIdempotencyKey,
 } = checkoutSlice.actions;

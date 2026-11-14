@@ -1544,7 +1544,7 @@
       "errorDescription": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
       "emptyTitle": "अभी तक कोई सूचना नहीं",
       "emptyDescription": "आप पूरी तरह अपडेट हैं! बाद में देखें।",
-      "subtitle": "अपने ऑर्डर, वॉलेट और अधिक से अपडेट रहें",
+      "subtitle": "ऑर्डर और खाते की गतिविधि की जानकारी पाएं",
       "unreadCount": "{{count}} अपठित",
       "totalCount": "कुल {{count}}",
       "newCount": "{{count}} नए",

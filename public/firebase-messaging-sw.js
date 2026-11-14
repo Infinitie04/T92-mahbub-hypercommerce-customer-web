@@ -148,7 +148,7 @@ function getNotificationUrl(data) {
     case "withdrawal":
     case "withdrawal_request":
     case "withdrawal_process":
-      return "/my-account/wallet";
+      return "/my-account/";
     case "product":
     case "product_update":
     case "product_launch":

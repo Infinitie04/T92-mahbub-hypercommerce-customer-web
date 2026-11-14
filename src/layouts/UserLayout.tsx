@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/redux/store";
-import { useSettings } from "@/contexts/SettingsContext";
 
 const LogoutModal = dynamic(() => import("@/components/Modals/LogoutModal"), {
   ssr: false,
@@ -26,7 +25,6 @@ interface UserLayoutProps {
 const UserLayout: FC<UserLayoutProps> = ({ children, activeTab }) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { systemSettings } = useSettings();
   const user = useSelector((state: RootState) => state.auth.user);
   const {
     isOpen: isLogoutOpen,
@@ -39,18 +37,10 @@ const UserLayout: FC<UserLayoutProps> = ({ children, activeTab }) => {
     { label: t("userLayout.myOrders"), icon: "solar:box-linear", href: "/my-account/orders", key: "orders" },
     { label: t("userLayout.addresses"), icon: "solar:map-point-linear", href: "/my-account/addresses", key: "addresses" },
     { label: t("userLayout.myWishlists"), icon: "solar:heart-linear", href: "/my-account/wishlists", key: "wishlists" },
-    { label: t("userLayout.wallet"), icon: "solar:wallet-linear", href: "/my-account/wallet", key: "wallet" },
     { label: t("userLayout.transactions"), icon: "solar:bill-list-linear", href: "/my-account/transactions", key: "transactions" },
     { label: t("userLayout.notifications", "Notifications"), icon: "solar:bell-linear", href: "/my-account/notifications", key: "notifications" },
     { label: t("userLayout.support", "Support"), icon: "solar:chat-round-dots-linear", href: "/my-account/support", key: "support" },
-    {
-      label: t("userLayout.referAndEarn"),
-      icon: "solar:gift-linear",
-      href: "/my-account/refer-and-earn",
-      key: "refer-and-earn",
-      hidden: systemSettings?.referEarnStatus === false,
-    },
-  ].filter((item) => !item.hidden);
+  ];
 
   const go = (href: string) => {
     if (router.asPath !== href) router.push(href);

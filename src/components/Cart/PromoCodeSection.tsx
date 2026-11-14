@@ -35,7 +35,12 @@ const PromoCodeSection: FC = () => {
         delivery_charge: cartData?.payment_summary.delivery_charges,
       });
 
-      if (response.success) {
+      if (response.data?.promo_details?.promo_mode === "cashback") {
+        toast({
+          title: t("promoCode.cannotApply", "This promo code cannot be applied"),
+          color: "warning",
+        });
+      } else if (response.success) {
         dispatch(setPromoCode(code));
         toast({ title: t("promoCode.appliedSuccess", { defaultValue: "Promo code applied successfully" }), color: "success" });
         updateCartData(true, false);
@@ -155,7 +160,12 @@ const PromoCodeSection: FC = () => {
             delivery_charge: cartData?.payment_summary.delivery_charges,
           })
             .then((response) => {
-              if (response.success) {
+              if (response.data?.promo_details?.promo_mode === "cashback") {
+                toast({
+                  title: t("promoCode.cannotApply", "This promo code cannot be applied"),
+                  color: "warning",
+                });
+              } else if (response.success) {
                 dispatch(setPromoCode(promoCode));
                 if (selectedAddress?.id) {
                   toast({ title: t("promoCode.appliedSuccess"), color: "success" });

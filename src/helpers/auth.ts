@@ -93,12 +93,10 @@ export const handleGoogleLogin = async ({
     const user: User = result.user;
 
     const idToken = await user.getIdToken();
-    const friends_code = (getCookie("friend_code") as string) || undefined;
 
     const res: ApiResponse<userData> = await googleLogin({
       idToken: idToken || "",
       device_type: "web",
-      friends_code,
     });
 
     if (res.success && res.data) {
@@ -198,12 +196,10 @@ export const handleAppleLogin = async ({
     const user: User = result.user;
 
     const idToken = await user.getIdToken();
-    const friends_code = (getCookie("friend_code") as string) || undefined;
 
     const res: ApiResponse<userData> = await appleLogin({
       idToken: idToken || "",
       device_type: "web",
-      friends_code,
     });
 
     if (res.success && res.data) {

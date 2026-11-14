@@ -162,7 +162,13 @@ export const validatePromoCode = async (
     promo_code?: string;
     delivery_charge?: string | number;
   } = {},
-): Promise<ApiResponse<{ promo_code: string; discount: string }>> => {
+): Promise<
+  ApiResponse<{
+    promo_code: string;
+    discount: number;
+    promo_details?: PromoCode | null;
+  }>
+> => {
   try {
     const response = await api.get("/user/promos/validate", { params });
     return response.data;

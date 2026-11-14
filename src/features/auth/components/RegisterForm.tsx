@@ -62,7 +62,6 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin, compact = false }: RegisterF
   const [phone, setPhone] = useState<PhoneState | null>(null);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [referral, setReferral] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -102,7 +101,6 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin, compact = false }: RegisterF
           country: phone.country,
           password,
           password_confirmation: confirm,
-          friends_code: referral.trim() || undefined,
         },
         dispatch,
       );
@@ -201,13 +199,6 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin, compact = false }: RegisterF
             setConfirm(v);
             setErrors((p) => ({ ...p, confirm: undefined }));
           }}
-        />
-
-        <Input
-          label={`${t("auth.referral_code")} (${t("auth.optional")})`}
-          placeholder={t("auth.referral_code_placeholder")}
-          value={referral}
-          onValueChange={setReferral}
         />
 
         <Button className="w-full" color="primary" isLoading={isLoading} type="submit">

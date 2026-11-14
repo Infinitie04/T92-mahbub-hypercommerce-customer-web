@@ -48,7 +48,9 @@ const PromoCodeModal: React.FC<PromoCodeModalProps> = ({
     onOpenChange(false);
   };
 
-  const activePromoCodes = promoCodes.filter((promo) => !promo.deleted_at);
+  const activePromoCodes = promoCodes.filter(
+    (promo) => !promo.deleted_at && promo.promo_mode !== "cashback",
+  );
   const availablePromoCodes = activePromoCodes.filter(
     (promo) => new Date(promo.end_date) >= new Date()
   );

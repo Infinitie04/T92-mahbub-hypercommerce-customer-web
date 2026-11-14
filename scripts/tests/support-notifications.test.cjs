@@ -37,7 +37,7 @@ test('unrelated notification destinations keep their existing behavior', () => {
     const background = worker();
     for (const [data, expected] of [
         [{type: 'order_update', order_slug: 'order-12'}, '/my-account/orders/order-12'],
-        [{type: 'wallet_transaction'}, '/my-account/wallet'],
+        [{type: 'wallet_transaction'}, '/my-account/'],
         [{type: 'product', product_slug: 'tea'}, '/products/tea'],
         [{url: 'https://example.com/promotion'}, 'https://example.com/promotion'],
         [{type: 'unknown'}, null],

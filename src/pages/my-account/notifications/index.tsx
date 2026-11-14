@@ -394,7 +394,7 @@ const NotificationsPage: NextPageWithLayout = () => {
             title={t("userLayout.notifications", "Notifications")}
             subtitle={t(
               "pages.notifications.subtitle",
-              "Stay updated with your orders, wallet, and more",
+              "Stay updated with orders and account activity",
             )}
             highlightText={
               unreadCount > 0

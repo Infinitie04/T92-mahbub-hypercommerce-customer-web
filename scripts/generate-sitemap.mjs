@@ -201,7 +201,6 @@ const main = async () => {
     ["/return-refund-policy/", "0.4"],
     ["/shipping-policy/", "0.4"],
     ["/terms-and-conditions/", "0.4"],
-    ["/watch-and-buy/", "0.8"],
   ]
     .forEach(([path, priority]) => {
       core.add(urlEntry(canonical(path), today, priority));
@@ -387,37 +386,11 @@ const main = async () => {
   images.close();
   if (web.merchantFeedEnabled) appendFileSync(feedPath, "</channel></rss>\n");
 
-  const videos = new ChunkedSitemap(
-    "videos",
-    ' xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"',
-  );
-  let cursor = null;
-  const seenCursors = new Set();
-  do {
-    const response = await axios.get(`${apiUrl}/api/watch-and-buy/reels`, {
-      params: { ...params, per_page: 50, ...(cursor ? { cursor } : {}) },
-    });
-    const data = response.data?.data || {};
-    for (const reel of data.items || []) {
-      if (!reel.slug || !reel.video_url || !reel.cover_url) continue;
-      const link = canonical(`/watch-and-buy/${reel.slug}`);
-      videos.add(
-        `  <url>\n    <loc>${xml(link)}</loc>\n    <video:video>\n      <video:thumbnail_loc>${xml(absolute(reel.cover_url))}</video:thumbnail_loc>\n      <video:title>${xml(reel.caption || `Watch & Buy with ${reel.profile?.username || "seller"}`)}</video:title>\n      <video:description>${xml(reel.caption || "Shoppable product video")}</video:description>\n      <video:content_loc>${xml(absolute(reel.video_url))}</video:content_loc>\n      <video:publication_date>${xml(isoDate(reel.published_at))}</video:publication_date>\n${reel.duration_ms ? `      <video:duration>${Math.max(1, Math.round(reel.duration_ms / 1000))}</video:duration>\n` : ""}    </video:video>\n  </url>\n`,
-      );
-    }
-    const nextCursor = data.meta?.next_cursor || null;
-    if (!nextCursor || seenCursors.has(nextCursor)) break;
-    seenCursors.add(nextCursor);
-    cursor = nextCursor;
-  } while (cursor);
-  videos.close();
-
   const sitemapFiles = [
     ...core.files,
     ...collections.files,
     ...products.files,
     ...images.files,
-    ...videos.files,
   ];
   writeFileSync(
     join(publicDir, "sitemap.xml"),

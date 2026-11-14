@@ -1,18 +1,15 @@
 import { openBankTransfer } from "@/lib/redux/slices/cartNoticeSlice";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { formatDeliveryByDate } from "@/helpers/delivery";
 import { CartResponse } from "@/types/ApiResponse";
-import { Button, Switch, toast, Divider, Alert } from "@/components/ui";
+import { Button, toast, Divider, Alert } from "@/components/ui";
 import { Icon } from "@iconify/react";
 import PaymentMethods from "@/components/PaymentMethods";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/redux/store";
 import { updateCartData } from "@/helpers/updators";
-import {
-  setPromoCode,
-  setUseWallet,
-} from "@/lib/redux/slices/checkoutSlice";
+import { setPromoCode } from "@/lib/redux/slices/checkoutSlice";
 import { clearCart } from "@/routes/api";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useRouter } from "next/router";
@@ -27,12 +24,9 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [paymentChoice, setSelectedPayment] = useState("");
-  const { paymentSettings } = useSettings();
-  const isWalletEnabled = paymentSettings?.wallet || false;
-
   const [showClearCartModal, setShowClearCartModal] = useState(false);
   const router = useRouter();
-  const { formatPrice, systemSettings } = useSettings();
+  const { formatPrice, paymentSettings, systemSettings } = useSettings();
   const { payment_summary, items } = cart;
   const selectedAddress = useSelector(
     (state: RootState) => state.checkout.selectedAddress,
@@ -66,15 +60,6 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const dispatch = useDispatch();
 
   const isLoading = useSelector((state: RootState) => state.cart.isLoading);
-  const [isWalletUse, setIsWalletUse] = useState(payment_summary.use_wallet);
-
-  const handleUseWalletSwitchToggle = async (checked: boolean) => {
-    setIsWalletUse(checked);
-    dispatch(setUseWallet(checked));
-    setTimeout(() => {
-      updateCartData(true, false);
-    }, 500);
-  };
 
   // Attachment guard shared by both checkout paths.
   const attachmentsMissing = (): boolean => {
@@ -125,26 +110,21 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
 
     if (shippingBlocked || wholesaleBlocked || attachmentsMissing()) return;
 
-    const walletCoversAll =
-      payment_summary.payable_amount === 0 && isWalletUse;
-
     // Bank transfer opens its own dedicated modal.
-    if (!walletCoversAll && selectedPayment === "directBankTransfer") {
+    if (selectedPayment === "directBankTransfer") {
       dispatch(openBankTransfer());
       return;
     }
 
-    if (!walletCoversAll && !selectedPayment) {
+    if (!selectedPayment) {
       toast({ title: t("please_select_payment_method"), color: "warning" });
       return;
     }
 
-    const method = walletCoversAll ? "wallet" : selectedPayment;
-
     setLoading(true);
     try {
-      ensureIdempotencyKey(method);
-      const res = await handleCheckout(method, {});
+      ensureIdempotencyKey(selectedPayment);
+      const res = await handleCheckout(selectedPayment, {});
 
       if (!res?.success) {
         if (!res?.data?.cart) updateCartData(true, false);
@@ -152,7 +132,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
       }
 
       const slug = res?.data?.slug;
-      if (method === "cod" || method === "wallet") {
+      if (selectedPayment === "cod") {
         dispatch(setPromoCode(""));
         await router.push(
           slug ? `/my-account/orders/${slug}` : "/my-account/orders",
@@ -173,29 +153,12 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
     }
   };
 
-  useEffect(() => {
-    if (
-      (payment_summary.wallet_balance === 0 && payment_summary.use_wallet) ||
-      (!isWalletEnabled && payment_summary.use_wallet)
-    ) {
-      setTimeout(() => {
-        setIsWalletUse(false);
-        dispatch(setUseWallet(false));
-      }, 0);
-      setTimeout(() => {
-        updateCartData(true, false);
-      }, 500);
-    } // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payment_summary, dispatch]);
-
   const promo = Array.isArray(payment_summary?.promo_applied)
     ? null
     : payment_summary?.promo_applied || null;
 
   const isFreeShipping = promo?.discount_type === "free_shipping";
-  const promo_mode = promo?.promo_mode;
-  const isInstantPromo = promo_mode === "instant";
-  const isCashbackPromo = promo_mode === "cashback";
+  const isInstantPromo = promo?.promo_mode === "instant";
 
   // Validation checks based on system settings
   const validationErrors: string[] = [];
@@ -457,65 +420,12 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
                   </div>
                 )}
 
-              {payment_summary.promo_applied &&
-                payment_summary.promo_discount > 0 &&
-                isCashbackPromo && (
-                  <div className="rounded-lg bg-secondary-50 p-3">
-                    <div className="flex items-start justify-between text-secondary-700">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <Icon
-                            icon="solar:wallet-linear"
-                            className="text-base"
-                          />
-                          <span className="font-medium">
-                            {t("checkout.promo")}: {payment_summary?.promo_code}
-                          </span>
-                        </div>
-                        <p className="text-xs italic text-secondary-600">
-                          {t("cashbackPendingNote")}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {isFreeShipping && (
-                          <span className="whitespace-nowrap font-semibold text-success">
-                            {t("checkout.freeShipping")}
-                          </span>
-                        )}
-                        <span className="whitespace-nowrap font-semibold text-secondary-600">
-                          + {formatPrice(payment_summary.promo_discount)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
               {payment_summary.promo_error && (
                 <div className="flex items-center gap-2 text-xs text-danger">
                   <Icon icon="solar:tag-linear" className="text-sm" />
                   <span>{payment_summary.promo_error}</span>
                 </div>
               )}
-            </>
-          ) : null}
-
-          {isWalletUse && payment_summary.wallet_amount_used > 0 ? (
-            <>
-              <div className="flex justify-between text-success">
-                <span>{t("checkout.walletAmountUsed")}</span>
-                <span>
-                  {formatPrice(-payment_summary.wallet_amount_used)}
-                </span>
-              </div>
-              <div className="flex justify-between text-secondary-600">
-                <span>{t("checkout.remainingWalletBalance")}</span>
-                <span>
-                  {formatPrice(
-                    Number(payment_summary?.wallet_balance ?? 0) -
-                      Number(payment_summary?.wallet_amount_used ?? 0),
-                  )}
-                </span>
-              </div>
             </>
           ) : null}
 
@@ -558,33 +468,6 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
               isLoading={loading || isLoading}
             />
           </div>
-
-          {isWalletEnabled && (
-            <div className="mt-1 flex items-center justify-between border-t border-divider pt-3">
-              <div className="flex items-center gap-3">
-                <Icon
-                  icon="solar:wallet-money-linear"
-                  className="text-xl text-foreground/70"
-                />
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {t("checkout.useWalletBalance")}
-                  </p>
-                  <p className="text-xs text-success">
-                    {formatPrice(payment_summary.wallet_balance || 0)}{" "}
-                    {t("checkout.available", { defaultValue: "available" })}
-                  </p>
-                </div>
-              </div>
-              <Switch
-                isSelected={isWalletUse}
-                isDisabled={isLoading || payment_summary.wallet_balance == 0}
-                onValueChange={handleUseWalletSwitchToggle}
-                size="sm"
-                color="success"
-              />
-            </div>
-          )}
         </div>
       )}
 

@@ -152,6 +152,20 @@ const safeUrl = (value: unknown): string | null => {
   return url.startsWith("/") || /^https?:\/\//i.test(url) ? url : null;
 };
 
+const visibleLinkUrl = (value: unknown): string | null => {
+  const url = safeUrl(value);
+  if (!url) return null;
+
+  try {
+    const pathname = new URL(url, "https://storefront.invalid").pathname;
+    const hiddenPath =
+      /^\/(?:watch-and-buy|my-account\/(?:wallet|refer-and-earn))(?:\/|$)/i;
+    return hiddenPath.test(decodeURIComponent(pathname)) ? null : url;
+  } catch {
+    return null;
+  }
+};
+
 const safeIcon = (value: unknown): string | null => {
   const icon = optionalText(value);
   return icon && /^[a-z0-9-]+:[a-z0-9-]+$/i.test(icon) ? icon : null;
@@ -164,7 +178,7 @@ const resolveNavigationItems = (value: unknown): HeaderNavigationItem[] => {
     if (!item || typeof item !== "object") return [];
     const candidate = item as Partial<HeaderNavigationItem>;
     const label = optionalText(candidate.label);
-    const url = safeUrl(candidate.url);
+    const url = visibleLinkUrl(candidate.url);
     if (!label || !url) return [];
 
     return [
@@ -188,7 +202,7 @@ const resolveActionItems = (value: unknown): HeaderActionItem[] => {
       if (!item || typeof item !== "object") return [];
       const candidate = item as Partial<HeaderActionItem>;
       const label = optionalText(candidate.label);
-      const url = safeUrl(candidate.url);
+      const url = visibleLinkUrl(candidate.url);
       if (!label || !url) return [];
 
       return [
@@ -317,7 +331,7 @@ export const resolveHeaderSettings = (
     navigationItems: resolveNavigationItems(settings.navigationItems),
     announcementEnabled: settings.announcementEnabled === true,
     announcementText: optionalText(settings.announcementText),
-    announcementUrl: safeUrl(settings.announcementUrl),
+    announcementUrl: visibleLinkUrl(settings.announcementUrl),
     announcementBackgroundColor: optionalText(
       settings.announcementBackgroundColor,
     ),

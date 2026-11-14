@@ -1544,7 +1544,7 @@
       "errorDescription": "Something went wrong. Please try again.",
       "emptyTitle": "No notifications yet",
       "emptyDescription": "You're all caught up! Check back later.",
-      "subtitle": "Stay updated with your orders, wallet, and more",
+      "subtitle": "Stay updated with orders and account activity",
       "unreadCount": "{{count}} unread",
       "totalCount": "{{count}} Total",
       "newCount": "{{count}} new",

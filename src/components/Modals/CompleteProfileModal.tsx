@@ -6,7 +6,6 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  Input,
   addToast,
   InputOtp,
 } from "@heroui/react";
@@ -17,7 +16,6 @@ import { useDispatch } from "react-redux";
 import { sendOtp, verifyOtp } from "@/routes/api";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setUserDataRedux } from "@/lib/redux/slices/authSlice";
-import { getCookie } from "@/lib/cookies";
 import { FirebaseInstance } from "@/lib/firebase";
 import {
   handleSignUp,
@@ -39,7 +37,6 @@ export const CompleteProfileModal: FC = () => {
   const [step, setStep] = useState<Step>("phone");
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [friendsCode, setFriendsCode] = useState("");
   const [isResendingOtp, setIsResendingOtp] = useState(false);
   const cooldown = useResendCooldown();
   const [fieldErrors, setFieldErrors] = useState({ phone: "" });
@@ -59,9 +56,6 @@ export const CompleteProfileModal: FC = () => {
     const handleOpen = () => {
       setIsOpen(true);
       setStep("phone");
-      // Check for friend code in cookie
-      const cookieCode = getCookie("friend_code");
-      if (cookieCode) setFriendsCode(cookieCode as string);
     };
 
     window.addEventListener("open-complete-profile", handleOpen);
@@ -167,14 +161,12 @@ export const CompleteProfileModal: FC = () => {
         response = await handlePhoneLogin({
           idToken,
           dispatch,
-          friends_code: friendsCode || undefined,
           renderToast: false,
         });
       } else {
         response = await verifyOtp({
           mobile: phoneNumber,
           otp: val,
-          friends_code: friendsCode || undefined,
         });
       }
 
@@ -261,13 +253,6 @@ export const CompleteProfileModal: FC = () => {
                   {fieldErrors.phone}
                 </div>
               )}
-              <Input
-                label="Friend Code (Optional)"
-                placeholder="Enter referral code if any"
-                value={friendsCode}
-                onValueChange={setFriendsCode}
-                variant="flat"
-              />
             </div>
           )}
 

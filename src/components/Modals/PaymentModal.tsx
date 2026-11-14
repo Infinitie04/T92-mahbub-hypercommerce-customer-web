@@ -45,7 +45,7 @@ const PaymentModal: FC<PaymentModalProps> = ({ open, onOpenChange }) => {
       const slug = res?.data?.slug;
       onOpenChange(false);
 
-      if (selectedPayment === "cod" || selectedPayment === "wallet") {
+      if (selectedPayment === "cod") {
         await router.push(
           slug ? `/my-account/orders/${slug}` : "/my-account/orders",
         );

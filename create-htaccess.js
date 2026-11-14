@@ -37,6 +37,10 @@ function generateHtaccess() {
   <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+
+    # Hide legacy storefront features on the static host.
+    RewriteRule ^watch-and-buy(?:/.*)?$ / [R=302,L,QSD]
+    RewriteRule ^my-account/(?:wallet|refer-and-earn)(?:/.*)?$ /my-account/ [R=302,L,QSD]
      
     # Dynamic routes (Index pages)
     RewriteRule ^brands/?$ brands/index.html [L]

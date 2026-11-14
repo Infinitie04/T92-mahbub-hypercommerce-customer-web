@@ -13,6 +13,7 @@ This is the Hypercommerce customer storefront adapted for T92, a single-vendor w
 ## Single-vendor storefront
 
 - Treat the storefront as single-vendor on every render, including before settings load. Redirect legacy marketplace pages and keep them out of sitemaps. The Laravel API retains `system.systemVendorType` for existing API clients.
+- Hide Wallet, Watch & Buy, and Refer & Earn, including direct routes. Cart pricing and order submission must keep wallet use disabled.
 - Hide seller onboarding, marketplace store discovery, seller attribution, and seller feedback. Use **Branch** when customers need fulfillment context. Keep existing API fields such as `store_id` when the backend contract requires them.
 - Follow the backend's checkout rules. A single vendor can have multiple branches. Show branch-specific validation messages if checkout is configured to require one branch.
 - Keep seller IDs and ownership decisions on the backend. Build wholesale pricing, quotation, and billing UI against backend rules and responses as those endpoints become available.

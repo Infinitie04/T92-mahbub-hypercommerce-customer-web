@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui";
-import { useSettings } from "@/contexts/SettingsContext";
 import { userData } from "@/types/ApiResponse";
 
 interface AccountOverviewViewProps {
@@ -17,7 +16,6 @@ interface QuickLink {
   href: string;
   icon: string;
   label: string;
-  hidden?: boolean;
 }
 
 /**
@@ -27,7 +25,6 @@ interface QuickLink {
  */
 const AccountOverviewView: FC<AccountOverviewViewProps> = ({ user }) => {
   const { t } = useTranslation();
-  const { systemSettings } = useSettings();
 
   const name = user?.name || "";
   const email = user?.email || "";
@@ -36,17 +33,9 @@ const AccountOverviewView: FC<AccountOverviewViewProps> = ({ user }) => {
   const quickLinks: QuickLink[] = [
     { key: "orders", href: "/my-account/orders", icon: "solar:box-linear", label: t("userLayout.myOrders") },
     { key: "addresses", href: "/my-account/addresses", icon: "solar:map-point-linear", label: t("userLayout.addresses") },
-    { key: "wallet", href: "/my-account/wallet", icon: "solar:wallet-linear", label: t("userLayout.wallet") },
     { key: "wishlists", href: "/my-account/wishlists", icon: "solar:heart-linear", label: t("userLayout.myWishlists") },
     { key: "shoppingList", href: "/shopping-list", icon: "solar:checklist-linear", label: t("userLayout.shoppingList") },
-    {
-      key: "refer",
-      href: "/my-account/refer-and-earn",
-      icon: "solar:gift-linear",
-      label: t("userLayout.referAndEarn"),
-      hidden: systemSettings?.referEarnStatus === false,
-    },
-  ].filter((q) => !q.hidden);
+  ];
 
   return (
     <div className="w-full flex flex-col gap-5">

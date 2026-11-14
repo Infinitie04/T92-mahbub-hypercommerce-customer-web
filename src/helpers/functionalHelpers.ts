@@ -30,7 +30,6 @@ import {
   setIdempotencyKey,
   setPromoCode,
   setSelectedAddress,
-  setUseWallet,
 } from "@/lib/redux/slices/checkoutSlice";
 import { updateCartData } from "./updators";
 import {
@@ -487,7 +486,6 @@ export const ensureIdempotencyKey = (paymentMethod: string): string => {
 
 export const resetCheckOutState = () => {
   store.dispatch(setPromoCode(""));
-  store.dispatch(setUseWallet(false));
   store.dispatch(setSelectedAddress(null));
   store.dispatch(setIdempotencyKey(""));
   // Clear attachments from window
@@ -500,11 +498,12 @@ export const handleCheckout = async (
   payment_type: string = "cod",
   extra_params: object,
 ) => {
+  if (payment_type === "wallet") return fallbackApiRes;
+
   try {
     const state = store.getState();
     const address_id = state?.checkout?.selectedAddress?.id || "";
     const order_note = state?.checkout?.orderNote || "";
-    const use_wallet = state?.checkout?.useWallet || false;
     const promo_code = state?.checkout?.promoCode || "";
 
     if (!address_id) {
@@ -529,7 +528,6 @@ export const handleCheckout = async (
     formData.append("promo_code", promo_code);
     formData.append("gift_card", "");
     formData.append("gift_card_discount", "");
-    formData.append("use_wallet", use_wallet ? "1" : "0");
     formData.append("address_id", address_id.toString());
     formData.append("order_note", order_note);
     formData.append(
@@ -541,6 +539,8 @@ export const handleCheckout = async (
     Object.entries(extra_params).forEach(([key, value]) => {
       formData.append(key, value as string);
     });
+
+    formData.set("use_wallet", "0");
 
     // Add attachments if any
     Object.entries(attachments).forEach(

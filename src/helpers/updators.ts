@@ -37,11 +37,10 @@ export const updateCartData = async (
 
     store.dispatch(setCartLoading(true));
     const state = store.getState();
-    const use_wallet = state?.checkout?.useWallet || false;
     const promo_code = state?.checkout?.promoCode || "";
     const cartRes: ApiResponse<CartResponse> = await getCart({
       address_id: customAddress ? customAddress : passAddress ? address_id : "",
-      use_wallet,
+      use_wallet: false,
       promo_code,
     });
 
