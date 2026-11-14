@@ -8,11 +8,13 @@ import { addCartItems } from "@/services/cart";
 import WholesaleTiers from "./WholesaleTiers";
 import type { Product, ProductVariant } from "@/types/catalog";
 import { Icon } from "@iconify/react";
+import { Minus, Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 
 const requestQuantityLimit = 999;
+const quantityButtonClass = "grid size-8 shrink-0 place-items-center text-foreground hover:bg-content2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-40 disabled:hover:bg-transparent";
 
 export default function WholesaleOrderTable({
   product,
@@ -78,12 +80,22 @@ export default function WholesaleOrderTable({
   const selectedRows = groups.flatMap((group) => group.rows).filter((row) => row.quantity > 0);
   const totalQuantity = groups.reduce((sum, group) => sum + group.selected, 0);
   const subtotal = groups.reduce((sum, group) => sum + group.subtotal, 0);
+  const atProductMaximum = productMaximum > 0 && bucketQuantity + totalQuantity >= productMaximum;
   const exceedsMaximum = productMaximum > 0 && bucketQuantity + totalQuantity > productMaximum;
   const invalidQuantity = selectedRows.some(({ available, customizable, quantity, limit }) =>
     !available || customizable || !Number.isSafeInteger(quantity) || quantity > limit,
   );
   const meetsMinimum = groups.every((group) => group.selected === 0 || group.remaining === 0);
   const canAdd = totalQuantity > 0 && meetsMinimum && !exceedsMaximum && !invalidQuantity;
+
+  function stepQuantity(variantId: number, delta: -1 | 1, limit: number) {
+    setQuantities((previous) => {
+      const current = Number(previous[variantId] || 0);
+      const next = current + delta;
+      if (next < 0 || (delta === 1 && next > limit)) return previous;
+      return { ...previous, [variantId]: String(next) };
+    });
+  }
 
   async function addSelection() {
     if (!canAdd || submitting.current) return;
@@ -138,7 +150,7 @@ export default function WholesaleOrderTable({
           <thead>
             <tr className="text-xs font-semibold">
               <th scope="col" className="px-3 py-2 text-start">{t("wholesale.variant", "Variant")}</th>
-              <th scope="col" className="w-28 px-3 py-2 text-end sm:w-36">{t("wholesale.quantity", "Quantity")}</th>
+              <th scope="col" className="w-32 px-3 py-2 text-end sm:w-36">{t("wholesale.quantity", "Quantity")}</th>
             </tr>
           </thead>
           {groups.map((group) => (
@@ -180,24 +192,44 @@ export default function WholesaleOrderTable({
                         </Button>
                       ) : (
                         <>
-                          <input
-                            aria-label={t("wholesale.variantQuantity", "Quantity for {{variant}}", { variant: label })}
-                            aria-invalid={overLimit}
-                            aria-describedby={overLimit ? `wholesale-limit-${variant.id}` : undefined}
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={quantities[variant.id] ?? ""}
-                            placeholder="0"
-                            disabled={isAdding || (limit === 0 && quantity === 0)}
-                            onChange={(event) => {
-                              const value = event.currentTarget.value;
-                              if (/^\d{0,9}$/.test(value)) {
-                                setQuantities((previous) => ({ ...previous, [variant.id]: value }));
-                              }
-                            }}
-                            className="h-8 w-full rounded-small border border-divider bg-content1 px-2 text-end text-sm tabular-nums focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 disabled:opacity-50 aria-invalid:border-danger"
-                          />
+                          <div className={`flex h-8 items-center overflow-hidden rounded-small border bg-content1 ${overLimit ? "border-danger" : "border-divider"}`}>
+                            <button
+                              type="button"
+                              aria-label={t("wholesale.decreaseVariantQuantity", "Decrease quantity for {{variant}}", { variant: label })}
+                              disabled={isAdding || quantity === 0}
+                              onClick={() => stepQuantity(variant.id, -1, limit)}
+                              className={quantityButtonClass}
+                            >
+                              <Minus className="size-3.5" aria-hidden="true" />
+                            </button>
+                            <input
+                              aria-label={t("wholesale.variantQuantity", "Quantity for {{variant}}", { variant: label })}
+                              aria-invalid={overLimit}
+                              aria-describedby={overLimit ? `wholesale-limit-${variant.id}` : undefined}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={quantities[variant.id] ?? ""}
+                              placeholder="0"
+                              disabled={isAdding || (limit === 0 && quantity === 0)}
+                              onChange={(event) => {
+                                const value = event.currentTarget.value;
+                                if (/^\d{0,9}$/.test(value)) {
+                                  setQuantities((previous) => ({ ...previous, [variant.id]: value }));
+                                }
+                              }}
+                              className="h-full min-w-0 flex-1 bg-transparent text-center text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-inset focus:ring-blue-600 disabled:opacity-50"
+                            />
+                            <button
+                              type="button"
+                              aria-label={t("wholesale.increaseVariantQuantity", "Increase quantity for {{variant}}", { variant: label })}
+                              disabled={isAdding || quantity >= limit || atProductMaximum}
+                              onClick={() => stepQuantity(variant.id, 1, limit)}
+                              className={quantityButtonClass}
+                            >
+                              <Plus className="size-3.5" aria-hidden="true" />
+                            </button>
+                          </div>
                           {(overLimit || limit === 0) && (
                             <span id={`wholesale-limit-${variant.id}`} className="mt-1 block text-xs text-danger">
                               {t("wholesale.availableToAdd", "{{count}} available to add", { count: limit })}
