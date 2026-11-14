@@ -1,30 +1,19 @@
-export const PRODUCT_CARD_STYLES = [
-  "standard",
-  "compact",
-  "minimal",
-  "showcase",
-] as const;
+export const PRODUCT_CARD_STYLES = ["photo_first", "pricing_first"] as const;
 
 export type ProductCardStyle = (typeof PRODUCT_CARD_STYLES)[number];
 
-export const DEFAULT_PRODUCT_CARD_STYLE: ProductCardStyle = "minimal";
+export const DEFAULT_PRODUCT_CARD_STYLE: ProductCardStyle = "photo_first";
 
 export const PRODUCT_CARD_GRID_CLASSES: Record<ProductCardStyle, string> = {
-  standard:
+  photo_first:
     "grid-cols-1 xs:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]",
-  compact:
-    "grid-cols-1 xs:grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(230px,1fr))]",
-  minimal:
-    "grid-cols-1 xs:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]",
-  showcase:
-    "grid-cols-1 xs:grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]",
+  pricing_first:
+    "grid-cols-1 xs:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(230px,1fr))]",
 };
-
-export const isProductCardStyle = (value: unknown): value is ProductCardStyle =>
-  typeof value === "string" &&
-  PRODUCT_CARD_STYLES.includes(value as ProductCardStyle);
 
 export const resolveProductCardStyle = (
   value?: string | null,
 ): ProductCardStyle =>
-  isProductCardStyle(value) ? value : DEFAULT_PRODUCT_CARD_STYLE;
+  value === "pricing_first" || value === "compact" || value === "showcase"
+    ? "pricing_first"
+    : DEFAULT_PRODUCT_CARD_STYLE;

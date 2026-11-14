@@ -58,6 +58,7 @@ const WishlistProductCard: React.FC<WishlistProductCardProps> = ({
   return (
     <ProductCard
       product={product}
+      legacy
       showAddToCart
       onWishlistRemove={onRemove}
       isWishlistRemoving={removing}

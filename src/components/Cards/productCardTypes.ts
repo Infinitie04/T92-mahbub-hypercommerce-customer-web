@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 
-import type { Product, ProductVariant } from "@/types/catalog";
+import type { Product } from "@/types/catalog";
 
 export interface ProductCardPricing {
   current: string;
@@ -10,12 +10,9 @@ export interface ProductCardPricing {
 
 export interface ProductCardLayoutProps {
   product: Product;
-  defaultVariant: ProductVariant;
   productHref: string;
   images: string[];
   pricing: ProductCardPricing;
-  shortDescription: string;
-  detailTags: string[];
   rating: number;
   hasRating: boolean;
   isFavorited: boolean;
@@ -27,6 +24,5 @@ export interface ProductCardLayoutProps {
   productRef: RefObject<HTMLDivElement | null>;
   onProductClick: () => void;
   onToggleFavorite: () => void;
-  onShare: () => void;
   onAddToCart: () => void;
 }

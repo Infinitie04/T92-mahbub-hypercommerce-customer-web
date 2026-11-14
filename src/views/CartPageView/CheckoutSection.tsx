@@ -1,4 +1,3 @@
-import { openBankTransfer } from "@/lib/redux/slices/cartNoticeSlice";
 import { FC, useState } from "react";
 import { formatDeliveryByDate } from "@/helpers/delivery";
 import { CartResponse } from "@/types/ApiResponse";
@@ -33,7 +32,11 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   );
 
   const codAvailable = Boolean(selectedAddress?.id && paymentSettings?.cod && payment_summary.cod_available);
-  const selectedPayment = paymentChoice === "cod" && !codAvailable ? "" : paymentChoice;
+  const selectedPayment =
+    (paymentChoice === "cod" && codAvailable) ||
+    (paymentChoice === "razorpayPayment" && paymentSettings?.razorpayPayment)
+      ? paymentChoice
+      : "";
   const codFee = selectedPayment === "cod"
     ? payment_summary.eligible_cod_fee ?? payment_summary.cod_fee
     : 0;
@@ -109,12 +112,6 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
     }
 
     if (shippingBlocked || wholesaleBlocked || attachmentsMissing()) return;
-
-    // Bank transfer opens its own dedicated modal.
-    if (selectedPayment === "directBankTransfer") {
-      dispatch(openBankTransfer());
-      return;
-    }
 
     if (!selectedPayment) {
       toast({ title: t("please_select_payment_method"), color: "warning" });

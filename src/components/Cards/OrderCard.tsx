@@ -18,7 +18,7 @@ interface OrderCardProps {
 
 /**
  * Order list row — amber redesign. A single clickable row (image · order id +
- * date · status · total), matching the `/redesign/account?tab=orders` pane.
+ * date · quantity and unit price · status · line subtotal).
  * Inline actions (reorder / cancel / return) live on the order detail screen.
  */
 const OrderCard: FC<OrderCardProps> = ({ item }) => {
@@ -54,7 +54,7 @@ const OrderCard: FC<OrderCardProps> = ({ item }) => {
       ? "bg-danger-50"
       : "bg-primary-50";
   const orderSlug = item.order?.slug || item.slug;
-  const productImage = item.product?.image || item.variant?.image || null;
+  const productImage = item.variant?.image || item.product?.image || null;
   const productName = item.product?.name || item.title;
   const orderDate = getFormattedDate(item.order?.order_date || item.created_at);
 
@@ -90,6 +90,14 @@ const OrderCard: FC<OrderCardProps> = ({ item }) => {
             {orderDate}
             {productName ? ` · ${productName}` : ""}
           </div>
+          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xs text-default-500 tabular-nums">
+            <span>{t("qty")}: {item.quantity}</span>
+            <span>
+              {t("orderLine.pricePerPiece", "{{price}} / pc (excl. tax)", {
+                price: formatPrice(item.price),
+              })}
+            </span>
+          </div>
           {item.store?.name && (
             <div className="truncate text-[11px] text-default-400">
               {item.store.name}
@@ -106,21 +114,25 @@ const OrderCard: FC<OrderCardProps> = ({ item }) => {
           )}
         </div>
 
-        {/* Status */}
-        <Chip
-          size="sm"
-          radius="full"
-          variant="flat"
-          color={statusColor}
-          classNames={{ content: "text-[11px] font-semibold" }}
-          title={statusLabel}
-        >
-          {statusLabel}
-        </Chip>
-
-        {/* Total */}
-        <div className="min-w-[70px] shrink-0 text-end text-sm font-bold text-foreground">
-          {formatPrice(item.subtotal)}
+        <div className="flex max-w-[45%] shrink-0 flex-col items-end gap-1.5 sm:max-w-none sm:flex-row sm:items-center sm:gap-3.5">
+          <Chip
+            size="sm"
+            radius="full"
+            variant="flat"
+            color={statusColor}
+            classNames={{ base: "max-w-full", content: "truncate text-[11px] font-semibold" }}
+            title={statusLabel}
+          >
+            {statusLabel}
+          </Chip>
+          <div className="text-end">
+            <div className="text-xs text-default-500">
+              {t("orderLine.subtotal", "Line subtotal")}
+            </div>
+            <div className="text-sm font-bold text-foreground tabular-nums">
+              {formatPrice(item.subtotal)}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -14,13 +14,12 @@ interface ProductCardMediaProps {
   product: Product;
   productHref: string;
   images: string[];
-  cardStyle: ProductCardStyle;
+  cardStyle: ProductCardStyle | "minimal";
   isFavorited: boolean;
   isWishlistMode: boolean;
   isFavoriteLoading: boolean;
   onProductClick: () => void;
   onToggleFavorite: () => void;
-  onShare: () => void;
 }
 
 const ProductCardMedia: FC<ProductCardMediaProps> = ({
@@ -33,13 +32,12 @@ const ProductCardMedia: FC<ProductCardMediaProps> = ({
   isFavoriteLoading,
   onProductClick,
   onToggleFavorite,
-  onShare,
 }) => {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const swiperRef = useRef<SwiperType | null>(null);
   const hasCarousel = images.length > 1;
-  const showShare = cardStyle === "standard" || cardStyle === "showcase";
+  const pricingFirst = cardStyle === "pricing_first";
   const badge = product.badge;
 
   const badgeStyle: CSSProperties | undefined = badge
@@ -52,12 +50,10 @@ const ProductCardMedia: FC<ProductCardMediaProps> = ({
 
   const imageClass = clsx(
     "absolute inset-0 h-full w-full",
-    cardStyle !== "standard" && product.image_fit === "cover"
+    product.image_fit === "cover"
       ? "object-cover object-top"
       : "object-contain",
-    cardStyle === "standard" && "p-3",
-    cardStyle === "compact" && "p-2",
-    cardStyle === "showcase" && "p-3",
+    pricingFirst && product.image_fit !== "cover" && "p-2",
   );
 
   const renderSlide = (src: string, eager: boolean) => (
@@ -81,9 +77,8 @@ const ProductCardMedia: FC<ProductCardMediaProps> = ({
   return (
     <div
       className={clsx(
-        "relative aspect-square w-full overflow-hidden bg-content2",
-        (cardStyle === "compact" || cardStyle === "showcase") &&
-          "rounded-medium",
+        "relative w-full overflow-hidden bg-content2",
+        pricingFirst ? "aspect-[16/10] rounded-medium" : "aspect-square",
       )}
     >
       {images.length === 0 ? (
@@ -150,22 +145,6 @@ const ProductCardMedia: FC<ProductCardMediaProps> = ({
             />
           </Button>
         </Tooltip>
-
-        {showShare ? (
-          <Tooltip content={t("a11y.share_product")}>
-            <Button
-              isIconOnly
-              aria-label={t("a11y.share_product")}
-              className="h-8 w-8 min-w-8 bg-content1 text-default-600 shadow-sm"
-              radius="full"
-              size="sm"
-              variant="light"
-              onPress={onShare}
-            >
-              <Icon icon="solar:share-linear" className="text-lg" />
-            </Button>
-          </Tooltip>
-        ) : null}
       </div>
 
       {hasCarousel ? (

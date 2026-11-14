@@ -46,7 +46,8 @@ interface OrderDetailPageViewProps {
 /* Small building blocks                                                       */
 /* -------------------------------------------------------------------------- */
 
-function Thumb({ item, size = 64 }: { item: OrderItem; size?: number }) {  const img = item.product?.image || item.variant?.image || null;
+function Thumb({ item, size = 64 }: { item: OrderItem; size?: number }) {
+  const img = item.variant?.image || item.product?.image || null;
   return (
     <div
       className="shrink-0 overflow-hidden rounded-medium bg-primary-50 flex items-center justify-center"
@@ -283,8 +284,18 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
                     : `${t("qty")}: ${selected.quantity}`}
                 </div>
                 <ItemQuantityDetails item={selected} />
-                <div className="mt-1 text-sm font-bold">
-                  {formatPrice(selected.subtotal)}
+                <div className="mt-1 text-xs text-default-500">
+                  {t("orderLine.pricePerPiece", "{{price}} / pc (excl. tax)", {
+                    price: formatPrice(selected.price),
+                  })}
+                </div>
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                  <span className="text-xs text-default-500">
+                    {t("orderLine.subtotal", "Line subtotal")}
+                  </span>
+                  <span className="text-sm font-bold tabular-nums">
+                    {formatPrice(selected.subtotal)}
+                  </span>
                 </div>
                 {addons.length > 0 && (
                   <div className="mt-2 border-t border-divider pt-2">

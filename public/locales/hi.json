@@ -1,4 +1,5 @@
 {
+  "orderLine": {"pricePerPiece":"{{price}} प्रति पीस (कर के बिना)","subtotal":"आइटम का उप-योग"},
   "orderUpdates": {"adjustments":"आइटम अपडेट","deliveryQuantity":"डिलीवरी · मात्रा: {{count}}","quantityProgress":"{{total}} में से {{count}}"},
   "orderTimeline": {"confirmed":"ऑर्डर की पुष्टि हुई","return_requested":"वापसी का अनुरोध किया गया","return_approved":"वापसी स्वीकृत","return_picked_up":"वापसी का सामान ले लिया गया","return_received":"विक्रेता को सामान वापस मिला","return_cancelled":"वापसी का अनुरोध रद्द","return_declined":"वापसी का अनुरोध अस्वीकृत","refunded":"रिफ़ंड वॉलेट में भेजा गया","preparing":"तैयारी जारी है","shipped":"भेज दिया गया","delivered":"डिलीवर हुआ","cancelled":"रद्द","shipmentCancelled":"शिपमेंट रद्द"},
   "orderCancellation": {"quantity":"रद्द की जाने वाली मात्रा: {{count}}","hint":"केवल इस आइटम की पात्र इकाइयाँ रद्द होंगी। भेजी गई इकाइयाँ अपरिवर्तित रहेंगी।"},

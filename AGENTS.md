@@ -6,7 +6,7 @@ This is the Hypercommerce customer storefront adapted for T92, a single-vendor w
 - Follow the T92 Home Builder configuration and hide home category tabs. Hide marketplace seller discovery and onboarding, wallet, Shiprocket-specific controls, and any other modules identified as unused for T92. Keep shared Hypercommerce code and data during the initial rollout.
 - Display quantity-based wholesale prices and use backend pricing for cart and order totals. Support **Default** and **Quotation** checkout, with Indian and NRI billing.
 - In quotation checkout, collect products, quantities, and proposed prices. Show the admin decision to the customer. After admin creates an order from an accepted quote, display its payment link in the customer's order details.
-- Show COD only when the backend confirms eligibility for the products, destination, and order. Display advance payment or agreed payment terms for international wholesale orders.
+- Offer Razorpay and COD for new orders. Show COD only when the backend confirms eligibility for the products, destination, and order. Display advance payment or agreed payment terms for international wholesale orders.
 - Show the shipping methods, rates, and estimates returned by the backend for the buyer's destination. For large international orders, offer a shipping quote request and show that the shipping charge is pending until agreed.
 - Before buyer confirmation, display the final quotation or proforma invoice with shipping, customs duties, import taxes, and other destination charges as separate lines. Show the agreed Incoterm and identify charges payable separately by the buyer.
 

@@ -1,4 +1,5 @@
 {
+  "orderLine": {"pricePerPiece":"{{price}} / pc (excl. tax)","subtotal":"Line subtotal"},
   "orderUpdates": {"adjustments":"Item updates","deliveryQuantity":"Delivery · Qty: {{count}}","quantityProgress":"{{count}} of {{total}}"},
   "orderTimeline": {"confirmed":"Order confirmed","return_requested":"Return requested","return_approved":"Return approved","return_picked_up":"Return picked up","return_received":"Received back by seller","return_cancelled":"Return request cancelled","return_declined":"Return request declined","refunded":"Refund sent to wallet","preparing":"Preparing","shipped":"Shipped","delivered":"Delivered","cancelled":"Cancelled","shipmentCancelled":"Shipment cancelled"},
   "orderCancellation": {"quantity":"Quantity to cancel: {{count}}","hint":"Only the eligible units of this item will be cancelled. Shipped units stay unchanged."},

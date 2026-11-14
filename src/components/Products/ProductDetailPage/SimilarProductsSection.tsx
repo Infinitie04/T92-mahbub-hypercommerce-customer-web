@@ -30,7 +30,7 @@ const SimilarProductsSection: FC<SimilarProductProps> = ({
     return initialSimilarProducts.map((product) => (
       <SwiperSlide key={product.id}>
         <div className="py-0.5">
-          <ProductCard product={product} showAddToCart={cartPage} />
+          <ProductCard product={product} legacy showAddToCart={cartPage} />
         </div>
       </SwiperSlide>
     ));
@@ -40,7 +40,7 @@ const SimilarProductsSection: FC<SimilarProductProps> = ({
     return Array.from({ length: 7 }).map((_, index) => (
       <SwiperSlide key={index}>
         <div className="py-0.5">
-          <ProductCardSkeleton />
+          <ProductCardSkeleton legacy />
         </div>
       </SwiperSlide>
     ));

@@ -1,4 +1,5 @@
 {
+  "orderLine": {"pricePerPiece":"{{price}} للقطعة (غير شامل الضريبة)","subtotal":"المجموع الفرعي للصنف"},
   "orderUpdates": {"adjustments":"تحديثات المنتج","deliveryQuantity":"التوصيل · الكمية: {{count}}","quantityProgress":"{{count}} من {{total}}"},
   "orderTimeline": {"confirmed":"تم تأكيد الطلب","return_requested":"تم طلب الإرجاع","return_approved":"تمت الموافقة على الإرجاع","return_picked_up":"تم استلام المرتجع للشحن","return_received":"استلم البائع المرتجع","return_cancelled":"تم إلغاء طلب الإرجاع","return_declined":"تم رفض طلب الإرجاع","refunded":"تم إرسال المبلغ إلى المحفظة","preparing":"قيد التجهيز","shipped":"تم الشحن","delivered":"تم التسليم","cancelled":"ملغى","shipmentCancelled":"تم إلغاء الشحنة"},
   "orderCancellation": {"quantity":"الكمية المراد إلغاؤها: {{count}}","hint":"سيتم إلغاء الوحدات المؤهلة لهذا المنتج فقط. الوحدات المشحونة لن تتغير."},

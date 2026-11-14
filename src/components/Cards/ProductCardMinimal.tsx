@@ -21,7 +21,6 @@ const ProductCardMinimal: FC<ProductCardLayoutProps> = (props) => {
     productRef,
     onProductClick,
     onToggleFavorite,
-    onShare,
     onAddToCart,
   } = props;
 
@@ -37,7 +36,6 @@ const ProductCardMinimal: FC<ProductCardLayoutProps> = (props) => {
           {...props}
           cardStyle="minimal"
           onProductClick={onProductClick}
-          onShare={onShare}
           onToggleFavorite={onToggleFavorite}
         />
       </CardBody>

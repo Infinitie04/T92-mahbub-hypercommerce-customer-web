@@ -85,46 +85,12 @@ const HomeSectionRenderer: FC<HomeSectionRendererProps> = ({
 
   const products = content?.products ?? [];
   const productCardStyle = resolveProductCardStyle(style);
-  const productSlider =
-    productCardStyle === "compact"
-      ? {
-          slidesPerView: 1,
-          breakpoints: {
-            375: { slidesPerView: 2, spaceBetween: 10 },
-            640: { slidesPerView: 2.4, spaceBetween: 14 },
-            1024: { slidesPerView: 3.2, spaceBetween: 16 },
-            1280: { slidesPerView: 4, spaceBetween: 16 },
-          },
-        }
-      : productCardStyle === "showcase"
-        ? {
-            slidesPerView: 1,
-            breakpoints: {
-              375: { slidesPerView: 2, spaceBetween: 10 },
-              640: { slidesPerView: 2.1, spaceBetween: 14 },
-              1024: { slidesPerView: 2.8, spaceBetween: 16 },
-              1280: { slidesPerView: 3.4, spaceBetween: 16 },
-            },
-          }
-        : productCardStyle === "minimal"
-          ? {
-              slidesPerView: 1,
-              breakpoints: {
-                375: { slidesPerView: 2.3, spaceBetween: 10 },
-                640: { slidesPerView: 3.3, spaceBetween: 14 },
-                1024: { slidesPerView: 4, spaceBetween: 16 },
-                1280: { slidesPerView: 4.8, spaceBetween: 16 },
-              },
-            }
-          : {
-              slidesPerView: 1,
-              breakpoints: {
-                375: { slidesPerView: 2, spaceBetween: 10 },
-                640: { slidesPerView: 2.5, spaceBetween: 14 },
-                1024: { slidesPerView: 3.3, spaceBetween: 16 },
-                1280: { slidesPerView: 4.1, spaceBetween: 16 },
-              },
-            };
+  const productSliderBreakpoints = {
+    375: { slidesPerView: 2, spaceBetween: 10 },
+    640: { slidesPerView: 2.5, spaceBetween: 14 },
+    1024: { slidesPerView: 3.3, spaceBetween: 16 },
+    1280: { slidesPerView: productCardStyle === "pricing_first" ? 4 : 4.5, spaceBetween: 16 },
+  };
   const categories = content?.categories ?? [];
   const brands = content?.brands ?? [];
   const items = content?.items ?? [];
@@ -153,9 +119,9 @@ const HomeSectionRenderer: FC<HomeSectionRendererProps> = ({
         ? wrap(
             config?.orientation === "horizontal" ? (
               <CardSlider
-                slidesPerView={productSlider.slidesPerView}
+                slidesPerView={1}
                 spaceBetween={10}
-                breakpoints={productSlider.breakpoints}
+                breakpoints={productSliderBreakpoints}
                 slides={products.map((p) => (
                   <ProductCard
                     key={p.id}
