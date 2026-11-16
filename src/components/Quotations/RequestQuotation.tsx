@@ -39,7 +39,15 @@ export default function RequestQuotation({
 
   return (
     <>
-      <Button type="button" color="primary" fullWidth className="font-semibold" onPress={open} isDisabled={isDisabled || !lines.length}>
+      <Button
+        type="button"
+        color="primary"
+        variant={source === "cart" ? "bordered" : "solid"}
+        fullWidth
+        className="font-semibold"
+        onPress={open}
+        isDisabled={isDisabled || !lines.length}
+      >
         {t("quotation.request")}
       </Button>
       <Modal isOpen={modalDraft !== null} onOpenChange={(open) => { if (!open) setModalDraft(null); }}

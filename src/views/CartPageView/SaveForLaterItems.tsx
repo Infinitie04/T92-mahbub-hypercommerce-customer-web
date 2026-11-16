@@ -1,6 +1,8 @@
-import { FC, useState } from "react";
-import { toast, Button, Image } from "@/components/ui";
+import { useState } from "react";
+import { toast, Button } from "@/components/ui";
 import { Icon } from "@iconify/react";
+import { ImageIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { getSaveForLaterItems, removeItemFromCart } from "@/routes/api";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
@@ -10,29 +12,66 @@ import { RootState } from "@/lib/redux/store";
 import { useTranslation } from "react-i18next";
 import useSWR from "swr";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Scrollbar } from "swiper/modules";
-import { handleAddToCart, isRTL } from "@/helpers/functionalHelpers";
-import { CartItem } from "@/types/ApiResponse";
+import { handleAddToCart } from "@/helpers/functionalHelpers";
+import { cartLineTotal } from "@/helpers/cartPricing";
+import type { CartItem } from "@/types/cart";
 import Lightbox from "yet-another-react-lightbox";
 import CartAddonList from "@/components/Cart/CartAddonList";
 
-const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
-  moreProductsInline = false,
-}) => {
-  const { t, i18n } = useTranslation();
-  const currentLang = i18n.resolvedLanguage || i18n.language;
-  const rtl = isRTL(currentLang);
-  const { formatPrice } = useSettings();
+function SavedItemThumbnail({ item, onPreview }: {
+  item: CartItem;
+  onPreview: (src: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [failed, setFailed] = useState<string[]>([]);
+  const src = [item.variant.image, item.product.image]
+    .map((url) => url?.trim())
+    .find((url) => url && !failed.includes(url));
+  const frame = "grid size-16 place-items-center overflow-hidden rounded-medium bg-content2";
+
+  if (!src) {
+    return (
+      <span className={frame} aria-hidden="true">
+        <ImageIcon className="size-5 text-default-500" />
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={`${frame} focus-visible:outline-2 focus-visible:outline-primary`}
+      aria-label={t("cart.previewVariant", "Preview {{variant}}", {
+        variant: item.variant.title || item.product.name,
+      })}
+      onClick={() => onPreview(src)}
+    >
+      <Image
+        key={src}
+        src={src}
+        alt=""
+        width={64}
+        height={64}
+        unoptimized
+        className="size-16 object-contain"
+        onError={() => setFailed((previous) => [...previous, src])}
+      />
+    </button>
+  );
+}
+
+export default function SaveForLaterItems() {
+  const { t } = useTranslation();
+  const { formatPrice, market } = useSettings();
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const isLoading = useSelector((state: RootState) => state?.cart?.isLoading);
-  const [moveLoading, setMoveLoading] = useState(false);
+  const [movingItemId, setMovingItemId] = useState<number | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ src: string }[]>([]);
 
   const isLoggedIn = useSelector((state: RootState) => state?.auth?.isLoggedIn);
 
-  const swrKey = isLoggedIn ? "/save-for-later" : null;
+  const swrKey = isLoggedIn ? ["/save-for-later", market?.code] : null;
 
   const {
     data: itemsData,
@@ -77,9 +116,8 @@ const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
     }
   };
 
-  // 🟩 Placeholder: Move item to cart logic
   const handleMoveToCart = async (item: CartItem) => {
-    setMoveLoading(true);
+    setMovingItemId(item.id);
     try {
       const res = await handleAddToCart({
         product_variant_id: item.product_variant_id,
@@ -88,9 +126,13 @@ const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
         store_id: item.store_id,
         renderToast: false,
         replace_quantity: true,
+        addons: item.addons?.map(({ addon_group_id, addon_item_id }) => ({
+          addon_group_id,
+          addon_item_id,
+        })),
       });
 
-      if (res && typeof res !== "string" && "success" in res && "data" in res) {
+      if (res?.success) {
         toast({
           title: t("saveForLater.moveSuccess.title"),
           description: t("saveForLater.moveSuccess.description"),
@@ -98,11 +140,10 @@ const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
         });
 
         mutate();
-        updateCartData(true, false);
       } else {
         toast({
           title: t("saveForLater.moveFailed.title"),
-          description: t("saveForLater.moveFailed.description"),
+          description: res?.message || t("saveForLater.moveFailed.description"),
           color: "danger",
         });
       }
@@ -114,7 +155,7 @@ const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
         color: "danger",
       });
     } finally {
-      setMoveLoading(false);
+      setMovingItemId(null);
     }
   };
 
@@ -123,112 +164,80 @@ const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
   }
 
   return (
-    <div className="w-full">
-      <h2 className="mb-4 text-lg font-bold text-foreground">
-        {t("saveForLater.title") || "Saved for Later"}
+    <section className="w-full" aria-labelledby="saved-items-title">
+      <h2 id="saved-items-title" className="mb-3 text-lg font-bold text-foreground">
+        {t("saveForLater.title")}
       </h2>
 
-      <Swiper
-        key={rtl ? "rtl-sfl" : "ltr-sfl"}
-        dir={rtl ? "rtl" : "ltr"}
-        modules={[Scrollbar]}
-        scrollbar={{ draggable: true }}
-        spaceBetween={16}
-        slidesPerView={1}
-        breakpoints={{
-          375: { slidesPerView: 2, spaceBetween: 10 },
-          640: { slidesPerView: moreProductsInline ? 4 : 3 },
-          768: { slidesPerView: moreProductsInline ? 5 : 4 },
-          1024: { slidesPerView: moreProductsInline ? 6 : 5 },
-          1440: { slidesPerView: moreProductsInline ? 7 : 6 },
-        }}
-        className="pb-4"
-      >
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
-          const image = item.variant.image || item.product.image;
+          const name = item.product.name || item.variant.title;
+          const variant = item.variant.title !== name ? item.variant.title : null;
 
           return (
-            <SwiperSlide key={item.id} className="h-auto">
-              <div className="flex h-full flex-col rounded-large border border-divider bg-content1 p-2.5 transition-colors hover:border-default-300">
-                <div className="relative aspect-square w-full overflow-hidden rounded-medium bg-content2">
-                  <Image
-                    loading="lazy"
-                    src={image}
-                    alt={item.variant.title || ""}
-                    removeWrapper
-                    radius="none"
-                    className="absolute inset-0 h-full w-full cursor-pointer object-contain"
-                    onClick={() => {
-                      setLightboxImages([{ src: image }]);
-                      setLightboxOpen(true);
-                    }}
-                  />
+            <li key={item.id} className="flex h-full flex-col overflow-hidden rounded-large border border-divider bg-content1">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-3 sm:p-4">
+                <SavedItemThumbnail item={item} onPreview={(src) => {
+                  setLightboxImages([{ src }]);
+                  setLightboxOpen(true);
+                }} />
 
+                <div className="min-w-0 space-y-1">
+                  <h3 className="break-words text-sm font-semibold leading-snug text-foreground">
+                    <Link href={`/products/${item.product.slug}`} className="hover:text-primary hover:underline">
+                      {name}
+                    </Link>
+                  </h3>
+                  {(variant || item.store?.name) && (
+                    <p className="break-words text-xs text-default-600">
+                      {[variant, item.store?.name].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                  <p className="text-xs tabular-nums text-default-600">
+                    <bdi>{item.quantity} × {formatPrice(item.unit_price ?? item.variant.price)}</bdi>
+                  </p>
+                  {Boolean(item.addons?.length) && <CartAddonList addons={item.addons ?? []} />}
+                </div>
+              </div>
+
+              <div className="mt-auto border-t border-divider px-3 py-3 sm:px-4">
+                <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                  <span className="text-xs text-default-600">{t("orderLine.subtotal")}</span>
+                  <bdi className="text-sm font-semibold tabular-nums text-foreground">
+                    {formatPrice(cartLineTotal(item))}
+                  </bdi>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    color="default"
+                    variant="bordered"
+                    className="min-w-0 flex-1 text-sm font-semibold text-foreground"
+                    startContent={<Icon icon="solar:cart-plus-linear" className="shrink-0 text-base" aria-hidden="true" />}
+                    isLoading={movingItemId === item.id}
+                    isDisabled={isLoading || movingItemId !== null}
+                    onPress={() => handleMoveToCart(item)}
+                  >
+                    {t("saveForLater.moveToCart")}
+                  </Button>
                   <Button
                     title={t("remove_item")}
                     aria-label={t("remove_item")}
-                    className="absolute right-2 top-2 z-20 h-8 w-8 min-w-0 rounded-full bg-content1 text-danger shadow-sm"
-                    size="sm"
+                    color="danger"
                     variant="light"
-                    radius="full"
-                    isDisabled={isLoading}
+                    size="sm"
+                    isDisabled={isLoading || movingItemId !== null}
                     isIconOnly
                     onPress={() => setSelectedItemId(item.id)}
                   >
-                    <Icon
-                      icon="solar:trash-bin-trash-linear"
-                      className="text-base"
-                    />
-                  </Button>
-                </div>
-
-                <div className="mt-2 flex flex-1 flex-col">
-                  <h3 className="line-clamp-2 min-h-[2.4em] text-[13px] font-medium leading-snug text-foreground">
-                    <Link
-                      href={`/products/${item.product.slug}`}
-                      title={item.variant.title || ""}
-                    >
-                      {item.variant.title}
-                    </Link>
-                  </h3>
-
-                  {item.addons && item.addons.length > 0 && (
-                    <CartAddonList
-                      addons={item.addons}
-                      className="mt-1"
-                      showGroupTitle={false}
-                    />
-                  )}
-
-                  <p className="mt-1 flex items-baseline gap-2">
-                    <span className="text-sm font-bold text-foreground">
-                      {formatPrice(
-                        item.total_item_price ?? item.unit_price ?? item.variant.price,
-                      )}
-                    </span>
-                  </p>
-
-                  <Button
-                    size="sm"
-                    isDisabled={moveLoading}
-                    color="primary"
-                    className="mt-2 h-8 w-full min-w-0 gap-1 whitespace-nowrap px-2 text-xs font-medium"
-                    startContent={
-                      <Icon
-                        icon="solar:cart-plus-linear"
-                        className="shrink-0 text-sm"
-                      />
-                    }
-                    onPress={() => handleMoveToCart(item)}
-                  >
-                    <span className="truncate">{t("saveForLater.moveToCart")}</span>
+                    <Icon icon="solar:trash-bin-trash-linear" className="text-base" />
                   </Button>
                 </div>
               </div>
-            </SwiperSlide>
+            </li>
           );
         })}
-      </Swiper>
+      </ul>
 
       <ConfirmationModal
         isOpen={!!selectedItemId}
@@ -249,8 +258,6 @@ const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
         slides={lightboxImages}
         render={{ buttonPrev: () => null, buttonNext: () => null }}
       />
-    </div>
+    </section>
   );
-};
-
-export default SaveForLaterItems;
+}

@@ -32,6 +32,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import AttachmentUploader from "@/components/Cart/AttachmentUploader";
 import type { AttachmentFile } from "@/components/Cart/AttachmentUploader";
 import CartAddonList from "@/components/Cart/CartAddonList";
+import { cartLineTotal } from "@/helpers/cartPricing";
 
 interface CartItemsProps {
   items: CartItem[];
@@ -39,16 +40,13 @@ interface CartItemsProps {
   checkout?: boolean;
 }
 
-const cartLineTotal = (item: CartItem) =>
-  item.total ?? Number(item.total_item_price ?? item.unit_price ?? item.variant.price) * item.quantity;
-
 const CartItems: FC<CartItemsProps> = ({
   items = [],
   pricingGroups = [],
   checkout = false,
 }) => {
   const { t } = useTranslation();
-  const { formatPrice, systemSettings } = useSettings();
+  const { formatPrice, market, systemSettings } = useSettings();
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const isLoading = useSelector((state: RootState) => state.cart.isLoading);
   // Local state for attachments: Record<productId, AttachmentFile[]>
@@ -145,7 +143,7 @@ const CartItems: FC<CartItemsProps> = ({
     try {
       const res = await saveCartItemToSaveForLater(itemId, quantity);
       if (res.success) {
-        mutate("/save-for-later");
+        mutate(["/save-for-later", market?.code]);
         updateCartData(true, false);
         toast({
           title: t("saveForLater.movedMessage"),

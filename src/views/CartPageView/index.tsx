@@ -35,7 +35,7 @@ const CartPageView: FC = () => {
     return (
       <div className="flex flex-col gap-2">
         <CartPageEmpty />
-        <SaveForLaterItems moreProductsInline={true} />
+        <SaveForLaterItems />
       </div>
     );
   }
@@ -55,7 +55,7 @@ const CartPageView: FC = () => {
         </div>
       </div>
 
-      <SaveForLaterItems moreProductsInline={false} />
+      <SaveForLaterItems />
 
       <SimilarProductsSection
         initialSimilarProducts={productsData?.data?.data || []}
