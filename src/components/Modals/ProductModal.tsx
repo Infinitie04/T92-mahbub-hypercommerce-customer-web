@@ -1,3 +1,4 @@
+import RequestQuotation from "@/components/Quotations/RequestQuotation";
 import QtyInput from "@/components/Products/ProductDetailPage/QtyInput";
 import WholesaleTiers from "@/components/Products/ProductDetailPage/WholesaleTiers";
 import { FC, useState, useEffect } from "react";
@@ -861,7 +862,18 @@ const SimpleProductModal: FC<ProductModalProps> = ({
           )}
         </ModalBody>
 
-        <ModalFooter>
+        <ModalFooter className="flex-col">
+          {!editingCartItemId && selectedVariant?.store_id && (
+              <RequestQuotation compact source="item" lines={[{
+                product_variant_id: selectedVariant.id,
+                store_id: selectedVariant.store_id,
+                quantity,
+                label: [product.title, selectedVariant.title].filter(Boolean).join(" · "),
+                addons: Object.entries(selectedAddons).flatMap(([groupId, itemIds]) =>
+                  itemIds.map((itemId) => ({ addon_group_id: Number(groupId), addon_item_id: itemId })),
+                ),
+              }]} />
+            )}
           <div className="flex gap-2 w-full">
             <Button
               variant="bordered"

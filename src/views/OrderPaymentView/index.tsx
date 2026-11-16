@@ -49,12 +49,12 @@ const OrderPaymentView: FC = () => {
         return;
       }
       if (o.payment_status === "completed") {
-        dispatch(setIdempotencyKey(""));
+        if (!o.quotation_id) dispatch(setIdempotencyKey(""));
         router.replace(`/my-account/orders/${slug}`);
         return;
       }
       setOrder(o);
-      setPhase(returnedFromHostedGateway ? "waiting" : "pay");
+      setPhase(o.payment_status === "failed" || o.status === "cancelled" ? "failed" : returnedFromHostedGateway ? "waiting" : "pay");
     })();
     return () => {
       active = false;
@@ -93,7 +93,7 @@ const OrderPaymentView: FC = () => {
           }),
           color: "warning",
         });
-        router.push("/my-account/orders");
+        router.push(order?.quotation_id ? `/my-account/quotations/${order.quotation_id}` : "/my-account/orders");
         return;
       }
       timer = setTimeout(poll, 3000);
@@ -110,7 +110,7 @@ const OrderPaymentView: FC = () => {
   // Success → order detail.
   useEffect(() => {
     if (phase !== "success") return;
-    dispatch(setIdempotencyKey(""));
+    if (!order?.quotation_id) dispatch(setIdempotencyKey(""));
     toast({
       title: t("checkout.paymentConfirmed", { defaultValue: "Payment confirmed" }),
       color: "success",
@@ -123,7 +123,7 @@ const OrderPaymentView: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, slug]);
 
-  const cancel = () => router.push("/cart/checkout");
+  const cancel = () => router.push(order?.quotation_id ? `/my-account/quotations/${order.quotation_id}` : "/cart/checkout");
 
   // ---------- Loading ----------
   if (phase === "loading" || !order) {

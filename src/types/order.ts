@@ -82,6 +82,7 @@ export interface OrderRefund {
 }
 
 export interface Order {
+  quotation_id?: number | null;
   order_summary?: OrderSummarySnapshot | null;
   refunds?: OrderRefund[];
   id: number;

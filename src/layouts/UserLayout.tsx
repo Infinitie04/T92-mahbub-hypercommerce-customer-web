@@ -35,6 +35,7 @@ const UserLayout: FC<UserLayoutProps> = ({ children, activeTab }) => {
   const menuItems = [
     { label: t("userLayout.myAccount"), icon: "solar:user-circle-linear", href: "/my-account", key: "my-account" },
     { label: t("userLayout.myOrders"), icon: "solar:box-linear", href: "/my-account/orders", key: "orders" },
+    { label: "Quotations", icon: "solar:document-text-linear", href: "/my-account/quotations", key: "quotations" },
     { label: t("userLayout.addresses"), icon: "solar:map-point-linear", href: "/my-account/addresses", key: "addresses" },
     { label: t("userLayout.myWishlists"), icon: "solar:heart-linear", href: "/my-account/wishlists", key: "wishlists" },
     { label: t("userLayout.transactions"), icon: "solar:bill-list-linear", href: "/my-account/transactions", key: "transactions" },

@@ -1,3 +1,4 @@
+import RequestQuotation from "@/components/Quotations/RequestQuotation";
 import { Button, Card, Chip, Divider, Link, toast } from "@/components/ui";
 import { Icon } from "@iconify/react";
 import { FC, useEffect, useState } from "react";
@@ -478,6 +479,15 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
           </Button>
         </div>
       ))}
+
+      {!usesGroups && selectedVariant?.store_id && !selectedVariant.addon_groups?.length && (
+        <RequestQuotation source="item" lines={[{
+          product_variant_id: selectedVariant.id,
+          store_id: selectedVariant.store_id,
+          quantity,
+          label: [initialProduct.title, selectedVariant.title].filter(Boolean).join(" · "),
+        }]} />
+      )}
 
       {/* Trust row */}
       {!isOutOfStock && (

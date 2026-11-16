@@ -14,13 +14,14 @@ import { resolveMarketForCountry } from "@/helpers/market";
 
 type AddressSectionProps = {
   onAddAddressModalOpen: () => void;
+  onAddressSelected?: (address: Address) => void;
 };
 
-const AddressSection: FC<AddressSectionProps> = ({ onAddAddressModalOpen }) => {
+const AddressSection: FC<AddressSectionProps> = ({ onAddAddressModalOpen, onAddressSelected }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const { t } = useTranslation();
   const { cartData } = useSelector((state: RootState) => state.cart);
-  const zone_id = cartData?.delivery_zone?.zone_id || "";
+  const zone_id = (!onAddressSelected && cartData?.delivery_zone?.zone_id) || "";
 
   const dispatch = useDispatch();
   const selectedAddress = useSelector(
@@ -174,8 +175,12 @@ const AddressSection: FC<AddressSectionProps> = ({ onAddAddressModalOpen }) => {
     // The delivery address is authoritative for the market on checkout: switch
     // currency to the address's country, then recompute the cart in that market.
     await resolveMarketForCountry(selectedAddr.country_code);
-    await updateCartData(false, false, selectedAddr.id?.toString() || "");
-  }, [tempSelectedId, allAddresses, dispatch, onOpenChange]);
+    if (onAddressSelected) {
+      onAddressSelected(selectedAddr);
+    } else {
+      await updateCartData(false, false, selectedAddr.id?.toString() || "");
+    }
+  }, [tempSelectedId, allAddresses, dispatch, onOpenChange, onAddressSelected]);
 
   const getAddressTypeColor = (type: string) => {
     switch (type.toLowerCase()) {

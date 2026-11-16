@@ -12,41 +12,34 @@ interface SimilarProductProps {
   initialSimilarProducts: Product[];
   isLoading: boolean;
   title?: string;
-  page?: "productDetail" | "cart";
 }
 
 const SimilarProductsSection: FC<SimilarProductProps> = ({
   initialSimilarProducts = [],
   isLoading,
   title,
-  page = "productDetail",
 }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.resolvedLanguage || i18n.language;
   const rtl = isRTL(currentLang);
-  const cartPage = page === "cart";
   // Memoize the product slides
   const slides = useMemo(() => {
     return initialSimilarProducts.map((product) => (
-      <SwiperSlide key={product.id}>
-        <div className="py-0.5">
-          <ProductCard product={product} legacy showAddToCart={cartPage} />
-        </div>
+      <SwiperSlide key={product.id} className="!h-auto py-0.5">
+        <ProductCard product={product} />
       </SwiperSlide>
     ));
-  }, [initialSimilarProducts, cartPage]);
+  }, [initialSimilarProducts]);
 
   const skeletonSlides = useMemo(() => {
     return Array.from({ length: 7 }).map((_, index) => (
-      <SwiperSlide key={index}>
-        <div className="py-0.5">
-          <ProductCardSkeleton legacy />
-        </div>
+      <SwiperSlide key={index} className="!h-auto py-0.5">
+        <ProductCardSkeleton />
       </SwiperSlide>
     ));
   }, []);
 
-  if (initialSimilarProducts.length == 0) {
+  if (!isLoading && initialSimilarProducts.length === 0) {
     return null;
   }
 
@@ -62,12 +55,13 @@ const SimilarProductsSection: FC<SimilarProductProps> = ({
         dir={rtl ? "rtl" : "ltr"}
         slidesPerView={1}
         spaceBetween={16}
+        breakpointsBase="container"
         breakpoints={{
           375: { slidesPerView: 2 },
-          640: { slidesPerView: cartPage ? 4 : 3 },
-          1024: { slidesPerView: cartPage ? 3 : 4 },
-          1280: { slidesPerView: cartPage ? 3 : 5 },
-          1440: { slidesPerView: cartPage ? 5 : 7 },
+          640: { slidesPerView: 3 },
+          880: { slidesPerView: 4 },
+          1120: { slidesPerView: 5 },
+          1360: { slidesPerView: 6 },
         }}
         lazyPreloadPrevNext={0}
         modules={[Navigation]}

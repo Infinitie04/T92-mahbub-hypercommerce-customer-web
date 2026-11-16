@@ -46,6 +46,7 @@ type AppPropsWithLayout = AppProps & {
 // Maps a /my-account/* pathname to its nav-rail key so the account shell can be
 // rendered ONCE (persistent) and only its content pane swaps on navigation.
 const accountTabForPath = (pathname: string): string => {
+  if (pathname.startsWith("/my-account/quotations")) return "quotations";
   if (pathname.startsWith("/my-account/orders")) return "orders";
   if (pathname.startsWith("/my-account/addresses")) return "addresses";
   if (pathname.startsWith("/my-account/wishlists")) return "wishlists";

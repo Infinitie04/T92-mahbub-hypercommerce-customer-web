@@ -9,8 +9,7 @@ interface WishlistProductCardProps {
 }
 
 /**
- * Wishlist card = the storefront ProductCard, reused as-is, plus an Add-to-Cart
- * button. The wishlist API returns a leaner shape than a catalog Product (a
+ * The wishlist API returns a leaner shape than a catalog Product (a
  * single image, one variant, no rating/badge/category), so we adapt it to the
  * Product shape ProductCard expects. Fields with no wishlist equivalent are
  * left empty and ProductCard hides them (rating, badge, carousel, discount).
@@ -58,8 +57,6 @@ const WishlistProductCard: React.FC<WishlistProductCardProps> = ({
   return (
     <ProductCard
       product={product}
-      legacy
-      showAddToCart
       onWishlistRemove={onRemove}
       isWishlistRemoving={removing}
     />

@@ -1,3 +1,4 @@
+import RequestQuotation from "@/components/Quotations/RequestQuotation";
 import { Button, Image, toast } from "@/components/ui";
 import { useSettings } from "@/contexts/SettingsContext";
 import { handleOfflineAddToCart } from "@/helpers/functionalHelpers";
@@ -180,7 +181,19 @@ export default function WholesaleOrderTable({
                     <th scope="row" className="px-3 py-1.5 text-start font-medium">
                       <div className="flex items-center gap-3">
                         {source && <Image src={source} alt="" className="size-9 shrink-0 rounded-small object-cover" />}
-                        <span className="break-words">{label}</span>
+                        <div>
+                          <span className="break-words">{label}</span>
+                          {variant.store_id && !customizable && (
+                            <div>
+                              <RequestQuotation compact source="item" lines={[{
+                                product_variant_id: variant.id,
+                                store_id: variant.store_id,
+                                quantity: quantity || group.minimum,
+                                label: [product.title, label].filter(Boolean).join(" · "),
+                              }]} />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </th>
                     <td className="px-3 py-1.5 text-end">

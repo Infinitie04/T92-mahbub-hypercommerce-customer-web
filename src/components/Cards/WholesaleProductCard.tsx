@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
 import ProductCardMedia from "@/components/Cards/ProductCardMedia";
-import type { ProductCardLayoutProps } from "@/components/Cards/productCardTypes";
+import type { ProductCardBaseProps } from "@/components/Cards/productCardTypes";
 import { Card } from "@/components/ui";
 import type { ProductCardStyle } from "@/config/productCard";
 
-interface WholesaleProductCardProps extends ProductCardLayoutProps {
+interface WholesaleProductCardProps extends ProductCardBaseProps {
   cardStyle: ProductCardStyle;
   unitPrice: string;
   groupCount: number;

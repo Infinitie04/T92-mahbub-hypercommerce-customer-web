@@ -70,6 +70,15 @@ function generateHtaccess() {
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^my-account/orders/([^/]+)/?$ my-account/orders/[slug]/index.html [L]
 
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^my-account/quotations/([0-9]+)/checkout/?$ my-account/quotations/[id]/checkout/index.html [L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^my-account/quotations/([0-9]+)/?$ my-account/quotations/[id]/index.html [L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^payment/([^/]+)/?$ payment/[slug]/index.html [L]
+
     # Exclude 'search' from products slug rule
     RewriteCond %{REQUEST_URI} !^/products/search
     RewriteCond %{REQUEST_FILENAME} !-f

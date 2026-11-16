@@ -210,6 +210,11 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
       />
       <PageHead pageTitle={`${t("order")} #${order?.id || ""}`} />
 
+      {order.quotation_id && (
+        <Link href={`/my-account/quotations/${order.quotation_id}`} className="mb-3 inline-block text-sm text-primary hover:underline">
+          Quotation #{order.quotation_id}
+        </Link>
+      )}
       {/* Back + order id */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">

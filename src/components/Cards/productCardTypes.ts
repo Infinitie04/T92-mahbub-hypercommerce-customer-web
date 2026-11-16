@@ -8,21 +8,24 @@ export interface ProductCardPricing {
   discountPercentage: number;
 }
 
-export interface ProductCardLayoutProps {
+export interface ProductCardBaseProps {
   product: Product;
   productHref: string;
   images: string[];
-  pricing: ProductCardPricing;
   rating: number;
   hasRating: boolean;
   isFavorited: boolean;
   isWishlistMode: boolean;
   isFavoriteLoading: boolean;
-  isAddingToCart: boolean;
-  isOutOfStock: boolean;
-  showAddToCart: boolean;
   productRef: RefObject<HTMLDivElement | null>;
   onProductClick: () => void;
   onToggleFavorite: () => void;
+}
+
+export interface ProductCardLayoutProps extends ProductCardBaseProps {
+  pricing: ProductCardPricing;
+  isAddingToCart: boolean;
+  isOutOfStock: boolean;
+  showAddToCart: boolean;
   onAddToCart: () => void;
 }
