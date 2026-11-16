@@ -5,6 +5,7 @@ import DynamicSEO from "@/SEO/DynamicSEO";
 import MyBreadcrumbs from "@/components/custom/MyBreadcrumbs";
 import { Skeleton } from "@/components/ui";
 import { useSettings } from "@/contexts/SettingsContext";
+import { siteConfig } from "@/config/site";
 import { SellerLandingSectionRenderer } from "@/features/seller-landing/components/SellerLandingSections";
 import { resolveSellerLanding } from "@/features/seller-landing/types";
 import { getSellerLandingPage } from "@/services/sellerLanding";
@@ -63,7 +64,7 @@ export default function SellerLandingView({
   const logo =
     webSettings?.siteHeaderLogo ||
     webSettings?.siteHeaderDarkLogo ||
-    "https://placehold.co/160x40?text=Logo";
+    siteConfig.logo;
 
   if (!configuration && !liveConfiguration && (isLoading || isValidating)) {
     return <SellerLandingLoading />;
@@ -89,7 +90,7 @@ export default function SellerLandingView({
             section={section}
             previousType={page.sections[index - 1]?.type}
             logo={logo}
-            siteName={webSettings?.siteName || "HyperCommerce"}
+            siteName={webSettings?.siteName || siteConfig.name}
           />
         ))}
       </div>

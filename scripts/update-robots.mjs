@@ -19,15 +19,10 @@ try {
     const robotsPath = join(process.cwd(), 'public', 'robots.txt');
     let robotsContent = readFileSync(robotsPath, 'utf8');
 
-    // Replace the placeholder with actual site URL
-    robotsContent = robotsContent.replaceAll('{{SITE_URL}}', siteUrl);
-
-    // The file is written in place, so a previous build already consumed the
-    // placeholder — rewrite the absolute Sitemap line too.
-    robotsContent = robotsContent.replace(
-        /^Sitemap: \S+$/m,
-        `Sitemap: ${siteUrl.replace(/\/$/, '')}/sitemap.xml`,
-    );
+    const sitemap = `Sitemap: ${siteUrl.replace(/\/+$/, '')}/sitemap.xml`;
+    robotsContent = /^Sitemap: /m.test(robotsContent)
+        ? robotsContent.replace(/^Sitemap: .*$/m, sitemap)
+        : `${robotsContent.trimEnd()}\n\n${sitemap}\n`;
 
     // Write back to robots.txt
     writeFileSync(robotsPath, robotsContent, 'utf8');

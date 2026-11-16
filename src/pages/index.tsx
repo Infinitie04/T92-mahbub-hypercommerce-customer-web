@@ -42,7 +42,7 @@ const HomePage: NextPageWithLayout<HomePageProps> = ({
   const siteName = webSettings?.siteName || siteConfig.name;
   const siteDescription =
     webSettings?.metaDescription || siteConfig.metaDescription;
-  const siteLogo = webSettings?.siteHeaderDarkLogo || "/logo.png";
+  const siteLogo = webSettings?.siteHeaderDarkLogo || "/default-logo.png";
   const seoBaseUrl = webSettings?.customerWebUrl;
 
   const organizationSchema = webSettings

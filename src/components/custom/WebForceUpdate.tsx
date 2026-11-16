@@ -1,5 +1,6 @@
 import { motion, Variants } from "framer-motion";
 import Head from "next/head";
+import { siteConfig } from "@/config/site";
 import { NextPageWithLayout } from "@/types";
 
 export interface WebForceUpdateProps {
@@ -22,7 +23,7 @@ const WebForceUpdate: NextPageWithLayout<WebForceUpdateProps> = ({
   return (
     <>
       <Head>
-        <title>Updating HyperCommerce</title>
+        <title>Updating {siteConfig.name}</title>
         <meta
           name="description"
           content="We are upgrading your experience with new features and optimizations."

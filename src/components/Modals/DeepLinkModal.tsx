@@ -7,6 +7,7 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { useSettings } from "@/contexts/SettingsContext";
+import { siteConfig } from "@/config/site";
 import { useRouter } from "next/router";
 import { getCookie } from "@/lib/cookies";
 import { useSelector } from "react-redux";
@@ -206,7 +207,7 @@ const DeepLinkModal: FC = () => {
   if (!isMobile) return null;
 
   // Get first letter of site name for the icon
-  const siteName = webSettings?.siteName || "HyperCommerce";
+  const siteName = webSettings?.siteName || siteConfig.name;
   const iconLetter = siteName.charAt(0).toUpperCase();
 
   return (

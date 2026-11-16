@@ -21,6 +21,9 @@ interface CartQuantityControlProps {
   stock?: number | null;
 }
 
+const quantityButtonClass =
+  "grid size-8 shrink-0 place-items-center text-foreground hover:bg-content2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus disabled:opacity-40 disabled:hover:bg-transparent";
+
 const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
   item,
   debounceDelay = 500,
@@ -153,18 +156,15 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
   }, [debouncedUpdateQuantity]);
 
   return (
-    <div className="flex items-center gap-2 md:gap-4">
+    <div className="flex h-8 items-center overflow-hidden rounded-small border border-divider bg-content1" aria-busy={isUpdating}>
       <button
-        className={`p-0.5 bg-slate-100 dark:bg-gray-700 rounded-full transition ${
-          isUpdating
-            ? "opacity-50 cursor-not-allowed"
-            : "active:bg-slate-300 hover:bg-slate-200 dark:hover:bg-gray-600"
-        }`}
+        type="button"
+        className={quantityButtonClass}
         onClick={handleDecrement}
         disabled={isUpdating || isLoading}
         aria-label={t("decrease_quantity")}
       >
-        <Minus size={14} />
+        <Minus className="size-3.5" aria-hidden="true" />
       </button>
 
       <div className="flex items-center">
@@ -175,7 +175,7 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
           quantity={localQuantity}
           onCommit={(quantity) => handleQuantityChange(quantity, true)}
           disabled={isUpdating || isLoading}
-          className="h-8 w-12"
+          className="h-8 w-11"
         />
         {isUpdating && (
           <span className="ms-1 inline-block animate-spin">⏳</span>
@@ -183,16 +183,13 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
       </div>
 
       <button
-        className={`p-0.5 bg-slate-100 dark:bg-gray-700 rounded-full transition ${
-          isUpdating
-            ? "opacity-50 cursor-not-allowed"
-            : "active:bg-slate-300 hover:bg-slate-200 dark:hover:bg-gray-600"
-        }`}
+        type="button"
+        className={quantityButtonClass}
         onClick={handleIncrement}
         disabled={isUpdating || isLoading}
         aria-label={t("increase_quantity")}
       >
-        <Plus size={14} />
+        <Plus className="size-3.5" aria-hidden="true" />
       </button>
     </div>
   );

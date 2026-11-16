@@ -4,8 +4,9 @@ import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
-import { Chip, Image } from "@/components/ui";
+import { Image } from "@/components/ui";
 import { useSettings } from "@/contexts/SettingsContext";
+import { siteConfig } from "@/config/site";
 
 /** Inline brand glyphs — rendered directly so they never depend on a runtime
  *  icon fetch. `currentColor` lets them follow the button's hover colour. */
@@ -57,15 +58,14 @@ const LinkColumn = ({
 const Footer: FC = () => {
   const { webSettings } = useSettings();
   const { t } = useTranslation();
-  const version = process.env.NEXT_PUBLIC_APP_VERSION || "0";
 
   const {
-    siteName = "",
+    siteName = siteConfig.name,
     shortDescription = "",
     siteCopyright = "",
     supportEmail = "",
     supportNumber = "",
-    siteHeaderDarkLogo = "https://placehold.co/160x40?text=Logo",
+    siteHeaderDarkLogo,
     facebookLink = null,
     instagramLink = null,
     xLink = null,
@@ -115,7 +115,7 @@ const Footer: FC = () => {
                 alt={siteName}
                 classNames={{ img: "h-16 w-auto object-contain", wrapper: "cursor-pointer" }}
                 radius="none"
-                src={siteHeaderDarkLogo}
+                src={siteHeaderDarkLogo || siteConfig.darkLogo}
               />
             </Link>
             <p className="text-xs text-ink-foreground/70 leading-relaxed mt-4 max-w-xs">
@@ -180,13 +180,6 @@ const Footer: FC = () => {
             <span>
               &copy; {new Date().getFullYear()} {siteCopyright}
             </span>
-            <Chip
-              className="h-5 px-2 text-[10px] bg-white/10 text-ink-foreground border-none"
-              radius="sm"
-              size="sm"
-            >
-              {`V ${version}`}
-            </Chip>
           </div>
         </div>
       </div>

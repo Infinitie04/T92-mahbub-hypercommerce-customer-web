@@ -48,7 +48,7 @@ const CartPageView: FC = () => {
 
       <div className="flex w-full flex-col gap-4 md:flex-row md:items-start">
         <div className="w-full md:w-[60%] lg:w-[65%]">
-          <CartItems items={cartData.items} pricingGroups={cartData.pricing_groups} layout="cart" />
+          <CartItems items={cartData.items} pricingGroups={cartData.pricing_groups} />
         </div>
         <div className="w-full md:w-[40%] lg:w-[35%] md:max-w-md">
           <CartSummary cart={cartData} />

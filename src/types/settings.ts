@@ -201,6 +201,11 @@ export type NotificationSettings = {
 
 export type WebSettings = {
   siteName: string;
+  pwaName?: string;
+  pwaDescription?: string;
+  pwaLogo144x144?: string;
+  pwaLogo192x192?: string;
+  pwaLogo512x512?: string;
   customerWebUrl: string;
   siteCopyright: string;
   supportNumber: string;

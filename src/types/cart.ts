@@ -118,6 +118,7 @@ export interface CartItem {
     stock: number | null;
     sku: string;
     is_addons?: boolean;
+    variant?: string[];
     /** Structured option map for variant products, e.g. { finish: "Walnut" }. */
     attributes?: Record<string, string> | null;
   };

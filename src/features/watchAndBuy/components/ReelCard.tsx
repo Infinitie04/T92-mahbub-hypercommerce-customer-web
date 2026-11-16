@@ -262,7 +262,7 @@ const ReelCard = ({
             src={reel.profile.photo_url ?? undefined}
             alt=""
             radius="full"
-            fallbackSrc="/logo.png"
+            fallbackSrc="/default-logo.png"
             className="size-8 shrink-0 border border-shell-divider object-cover"
           />
           <span className="truncate text-sm font-bold drop-shadow-sm">

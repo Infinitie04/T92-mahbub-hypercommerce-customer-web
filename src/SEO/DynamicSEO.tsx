@@ -115,7 +115,7 @@ const DynamicSEO: React.FC<SEOProps> = ({
     ""
   ).trim();
   const siteLogo = ensureAbsoluteUrl(
-    webSettings?.defaultSeoImage || webSettings?.siteHeaderLogo || "/logo.png",
+    webSettings?.defaultSeoImage || webSettings?.siteHeaderLogo || "/default-logo.png",
     baseUrl,
   );
 

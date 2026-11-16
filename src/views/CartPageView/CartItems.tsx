@@ -1,11 +1,9 @@
-import { FC, Fragment, useState, useMemo, ReactNode } from "react";
+import { FC, useState, ReactNode } from "react";
 import { CartItem, CartPricingGroup, Product, ProductVariant } from "@/types/ApiResponse";
 import {
   toast,
   Button,
-  Divider,
   Image,
-  ScrollShadow,
   useDisclosure,
 } from "@/components/ui";
 import { Icon } from "@iconify/react";
@@ -38,15 +36,7 @@ import CartAddonList from "@/components/Cart/CartAddonList";
 interface CartItemsProps {
   items: CartItem[];
   pricingGroups?: CartPricingGroup[];
-  /** Cap height and scroll internally (checkout summary). Off = flows with page (cart page). */
-  scrollable?: boolean;
-  /**
-   * "cart" renders the full-width cart-page item cards (redesign); "default" is
-   * the compact list reused by the checkout summary. Cart page only.
-   */
-  layout?: "default" | "cart";
-  /** Product attachment uploaders. Checkout only — the cart page never collects them. */
-  showAttachments?: boolean;
+  checkout?: boolean;
 }
 
 const cartLineTotal = (item: CartItem) =>
@@ -55,9 +45,7 @@ const cartLineTotal = (item: CartItem) =>
 const CartItems: FC<CartItemsProps> = ({
   items = [],
   pricingGroups = [],
-  scrollable = false,
-  layout = "default",
-  showAttachments = false,
+  checkout = false,
 }) => {
   const { t } = useTranslation();
   const { formatPrice, systemSettings } = useSettings();
@@ -90,7 +78,7 @@ const CartItems: FC<CartItemsProps> = ({
 
   // Store attachments in parent component or context
   // Export this for checkout validation
-  if (typeof window !== "undefined") {
+  if (checkout && typeof window !== "undefined") {
     (window as any).__cartAttachments = attachments;
   }
 
@@ -104,25 +92,20 @@ const CartItems: FC<CartItemsProps> = ({
     }) : null;
   };
 
-  // Group items by store
-  const groupedItems = useMemo(() => {
-    const grouped = items.reduce(
-      (acc, item) => {
-        const storeId = item.store.id;
-        if (!acc[storeId]) {
-          acc[storeId] = {
-            store: item.store,
-            items: [],
-          };
-        }
-        acc[storeId].items.push(item);
-        return acc;
-      },
-      {} as Record<number, { store: CartItem["store"]; items: CartItem[] }>,
-    );
-
-    return Object.values(grouped);
-  }, [items]);
+  const pricingById = new Map(pricingGroups.map((group) => [group.group_id, group]));
+  const productGroups = new Map<string, { pricing?: CartPricingGroup; lines: CartItem[] }>();
+  for (const item of items) {
+    const pricing = item.pricing_group_id == null
+      ? undefined
+      : pricingById.get(item.pricing_group_id);
+    const key = `${item.product.id}:${pricing?.group_id ?? "regular"}`;
+    const group = productGroups.get(key);
+    if (group) {
+      group.lines.push(item);
+    } else {
+      productGroups.set(key, { pricing, lines: [item] });
+    }
+  }
 
   const handleRemoveItem = async () => {
     if (!selectedItemId) return;
@@ -253,15 +236,14 @@ const CartItems: FC<CartItemsProps> = ({
   // returns titles like "Extendable Dining Table - Walnut". Returns "" for
   // simple/default products so no extra line renders.
   const getVariantLabel = (item: CartItem): string => {
-    const attrs = (
-      item.variant as { attributes?: Record<string, string> | null }
-    )?.attributes;
+    const attrs = item.variant.attributes;
     if (attrs && typeof attrs === "object") {
       const parts = Object.entries(attrs)
         .filter(([, v]) => v != null && String(v).trim() !== "")
         .map(([k, v]) => `${prettifyKey(k)}: ${String(v).trim()}`);
       if (parts.length) return parts.join(" · ");
     }
+    if (item.variant.variant?.length) return item.variant.variant.join(" · ");
     const title = (item.variant?.title || "").trim();
     const name = (item.product?.name || "").trim();
     if (title && name && title.toLowerCase().startsWith(name.toLowerCase())) {
@@ -274,13 +256,11 @@ const CartItems: FC<CartItemsProps> = ({
     const variantLabel = getVariantLabel(item);
     return (
     <>
-      {variantLabel && (
-        <div className="text-xs text-foreground/50 flex flex-wrap gap-2 items-center">
-          <span className="line-clamp-2 block">
-            {variantLabel}
-          </span>
+      {(variantLabel || isLowStock) && (
+        <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-foreground">
+          {variantLabel && <span className="break-words">{variantLabel}</span>}
           {isLowStock && (
-            <span className="text-warning-600 font-semibold text-xxs bg-warning-50 px-1.5 py-0.5 rounded whitespace-nowrap">
+            <span className="rounded bg-warning-50 px-1.5 py-0.5 text-xs font-semibold text-warning-600">
               {t("product_modal.low_stock_alert", { stock: item.variant.stock })}
             </span>
           )}
@@ -291,11 +271,12 @@ const CartItems: FC<CartItemsProps> = ({
         <CartAddonList addons={item.addons} />
       )}
 
-      {item.variant.is_addons && (
+      {!checkout && item.variant.is_addons && (
         <button
+          type="button"
           onClick={() => handleCustomize(item)}
           disabled={isCustomizing}
-          className="text-[10px] md:text-xs font-semibold flex items-center gap-0.5 text-primary-600 hover:opacity-80 transition-opacity w-fit"
+          className="flex w-fit items-center gap-0.5 text-sm font-semibold text-primary-600 transition-opacity hover:opacity-80"
         >
           <span className="cursor-pointer">
             {isCustomizing && customizingProduct?.slug === item.product.slug
@@ -310,10 +291,11 @@ const CartItems: FC<CartItemsProps> = ({
   };
 
   const renderAttachment = (item: CartItem): ReactNode =>
-    showAttachments && item.product.is_attachment_required ? (
-      <div className="w-full mt-3 space-y-3 rounded-xl border border-divider p-3 bg-content2">
+    item.product.is_attachment_required ? (
+      <div className="space-y-2 border-t border-divider px-3 py-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <p className="text-xxs font-semibold text-foreground">
+          <p className="text-xs font-semibold text-foreground">
+            {item.product.name} ·{" "}
             {item.product.attachment_mode === "required"
               ? t("cart.attachments.requiredLabel", {
                   defaultValue: "Attachment required",
@@ -376,348 +358,178 @@ const CartItems: FC<CartItemsProps> = ({
     </>
   );
 
-  // ---- Cart-page layout: full-width item cards ----------------------------
-  if (layout === "cart") {
+  const renderLine = (item: CartItem, showBranch: boolean) => {
+    const image = item.variant.image || item.product.image;
+    const isLowStock =
+      lowStockLimit !== null &&
+      hasFiniteStock(item.variant.stock) &&
+      item.variant.stock > 0 &&
+      item.variant.stock <= lowStockLimit;
+    const eta = deliveryEtaLabel(item);
+
     return (
-      <div className="flex w-full flex-col gap-4">
-        {[
-          ...pricingGroups.map((group) => ({
-            group,
-            items: items.filter((item) => item.pricing_group_id === group.group_id && !item.save_for_later),
-          })),
-          {
-            group: null,
-            items: items.filter((item) =>
-              item.save_for_later || !pricingGroups.some((group) => group.group_id === item.pricing_group_id)
-            ),
-          },
-        ].map(({ group, items: groupItems }) => (
-          <Fragment key={group?.group_id ?? "regular-lines"}>
-            {group && (
-              <div className="rounded-medium border border-divider bg-content2 p-3 text-sm">
-                <h3 className="font-semibold">{groupItems[0]?.product.name} · {group.name}</h3>
-                <p>
-                  {t("wholesale.cartGroupQuantity", {
-                    quantity: group.quantity,
-                    minimum: group.minimum_order_quantity,
-                    defaultValue: "{{quantity}} units · Minimum {{minimum}}",
-                  })}
-                  {group.applied_tier && <> · {formatPrice(group.applied_tier.unit_price)} / {t("wholesale.unit", "unit")}</>}
-                </p>
-                {group.quantity_remaining > 0 ? (
-                  <p className="text-danger">
-                    {t("wholesale.groupShortfall", {
-                      quantity: group.quantity_remaining,
-                      defaultValue: "Add {{quantity}} more to check out.",
-                    })}
-                  </p>
-                ) : !group.quantity_step_valid && (
-                  <p className="text-danger">
-                    {t("wholesale.groupStep", {
-                      step: group.quantity_step_size,
-                      defaultValue: "Adjust the group quantity in increments of {{step}} above the minimum.",
-                    })}
-                  </p>
-                )}
-              </div>
-            )}
-            {groupItems.map((item) => {
-          const isLowStock =
-            lowStockLimit !== null &&
-          hasFiniteStock(item.variant.stock) &&
-          item.variant.stock > 0 &&
-            item.variant.stock <= lowStockLimit;
-
-          const shownPrice = cartLineTotal(item);
-
-          return (
-            <div
-              key={item.id}
-              id={`cart-item-${item.id}`}
-              className="rounded-large border border-divider bg-content1 p-3 sm:p-4"
-            >
-              <div className="flex gap-3 sm:gap-4">
-                {/* Image + quantity */}
-                <div className="flex shrink-0 flex-col items-center gap-2">
-                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-medium bg-content2 sm:h-28 sm:w-28">
-                    <Image
-                      loading="eager"
-                      src={item.product.image}
-                      alt={item.variant.title || item.product.name || ""}
-                      removeWrapper
-                      radius="none"
-                      className="h-full w-full cursor-pointer object-contain"
-                      onClick={() => openLightbox(item.product.image)}
-                    />
-                  </div>
-                  <CartQuantityControl
-                    item={item}
-                    maxQuantity={item.product.total_allowed_quantity}
-                    minQuantity={item.product.minimum_order_quantity}
-                    quantityStep={item.product.quantity_step_size}
-                    stock={item.variant.stock}
-                  />
-                </div>
-
-                {/* Details */}
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-
-                  <Link
-                    title={item.product.name || ""}
-                    href={`/products/${item.product.slug}`}
-                    className="line-clamp-2 text-sm font-semibold leading-snug text-foreground"
-                  >
-                    {item.product.name}
-                  </Link>
-
-                  {renderVariantMeta(item, isLowStock)}
-
-                      {/* Price */}
-                      <div className="mt-0.5 flex flex-wrap items-baseline gap-2">
-                        <span className="text-lg font-bold text-foreground">
-                          {formatPrice(shownPrice)}
-                        </span>
-                      </div>
-
-
-                      {/* Estimated delivery */}
-                      {deliveryEtaLabel(item) && (
-                        <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-success">
-                          <Icon icon="solar:clock-circle-linear" className="text-sm" />
-                          <span>{deliveryEtaLabel(item)}</span>
-                        </div>
-                      )}
-                      {/* Actions */}
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={isLoading}
-                          onClick={() =>
-                            handleSaveForLater(item.id, item.quantity)
-                          }
-                          className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-60"
-                        >
-                          <Icon icon="solar:bookmark-linear" className="text-sm" />
-                          {t("saveForLater.title")}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isLoading}
-                          onClick={() => setSelectedItemId(item.id)}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-60"
-                        >
-                          <Icon
-                            icon="solar:trash-bin-trash-linear"
-                            className="text-sm"
-                          />
-                          {t("remove_item")}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {renderAttachment(item)}
-                </div>
-              );
+      <div
+        key={item.id}
+        id={`cart-item-${item.id}`}
+        className={`grid scroll-mt-24 grid-cols-[auto_minmax(0,1fr)_minmax(0,auto)] items-start gap-x-3 gap-y-1 px-3 py-2 target:bg-content2 ${checkout ? "" : "@lg:grid-cols-[auto_minmax(0,1fr)_auto_minmax(0,auto)]"}`}
+      >
+        {image ? (
+          <button
+            type="button"
+            className="col-start-1 row-start-1 flex size-12 items-center justify-center overflow-hidden rounded-medium bg-content2"
+            aria-label={t("cart.previewVariant", "Preview {{variant}}", {
+              variant: item.variant.title || item.product.name,
             })}
-          </Fragment>
-        ))}
-
-        {modals}
-      </div>
-    );
-  }
-
-  // ---- Default layout: compact list (checkout summary) --------------------
-  return (
-    <ScrollShadow
-      className={`w-full py-1 flex flex-col gap-4 ${scrollable ? "max-h-[50vh]" : ""}`}
-    >
-      {groupedItems.length > 0 &&
-        groupedItems.map((group) => (
-          <div
-            key={group.store.id}
-            className="bg-content2 rounded-2xl p-4 border border-divider"
+            onClick={() => openLightbox(image)}
           >
-            {/* Store Header */}
+            <Image
+              src={image}
+              alt=""
+              removeWrapper
+              radius="none"
+              className="size-12 object-contain"
+            />
+          </button>
+        ) : <span className="col-start-1 row-start-1 size-12" aria-hidden="true" />}
 
-            {/* Items in this store */}
-            <div className="flex flex-col gap-3">
-              {group.items.map((item, itemIndex) => {
-                const shownPrice = cartLineTotal(item);
-                const isLowStock =
-                  lowStockLimit !== null &&
-                  hasFiniteStock(item.variant.stock) &&
-                  item.variant.stock > 0 &&
-                  item.variant.stock <= lowStockLimit;
+        <div className="col-start-2 row-start-1 min-w-0 self-center">
+          {renderVariantMeta(item, isLowStock)}
+          {showBranch && (
+            <p className="text-xs text-foreground/70">{item.store.name}</p>
+          )}
+          {eta && (
+            <p className="text-xs font-medium text-success">{eta}</p>
+          )}
+        </div>
 
-                return (
-                  <div key={item.id} id={`cart-item-${item.id}`}>
-                    {/* Main Item Row */}
-                    <div className="flex items-start space-x-2 sm:space-x-3 py-2">
-                      {/* Product Image - Smaller on mobile */}
-                      <div className="w-16 sm:w-[25%] shrink-0 flex justify-center">
-                        <Image
-                          loading="eager"
-                          src={item.product.image}
-                          alt={item.variant.title || ""}
-                          className="w-16 h-16 sm:w-full sm:h-16 object-cover rounded-xl cursor-pointer bg-content1"
-                          onClick={() => {
-                            setLightboxImages([{ src: item.product.image }]);
-                            setLightboxOpen(true);
-                          }}
-                        />
-                      </div>
+        <div className={`col-start-3 row-start-1 self-center text-right text-sm tabular-nums ${checkout ? "" : "@lg:col-start-4"}`}>
+          <div className="whitespace-nowrap font-semibold text-foreground">
+            {formatPrice(cartLineTotal(item))}
+          </div>
+          <div className="text-xs text-foreground/70">
+            {checkout && <>{item.quantity} × </>}
+            {formatPrice(Number(item.unit_price ?? item.variant.price))} / {t("wholesale.unit", "unit")}
+          </div>
+        </div>
 
-                      {/* Product Details */}
-                      <div className="flex-1 flex flex-col gap-1 min-w-0">
-                        <h3 className="font-medium text-sm">
-                          <Link
-                            title={item.product.name || ""}
-                            href={`/products/${item.product.slug}`}
-                            className="text-xs block truncate overflow-hidden text-ellipsis"
-                          >
-                            {item.product.name}
-                          </Link>
-
-                          {/* VARIANT NAME & LOW STOCK INDICATOR */}
-                          {getVariantLabel(item) && (
-                            <div className="text-xs text-foreground/50 flex flex-wrap gap-2 items-center mt-1">
-                              <span className="line-clamp-2 block">
-                                {getVariantLabel(item)}
-                              </span>
-                              {isLowStock && (
-                                <span className="text-warning-600 font-semibold text-xxs bg-warning-50 px-1.5 py-0.5 rounded whitespace-nowrap">
-                                  {t("product_modal.low_stock_alert", {
-                                    stock: item.variant.stock,
-                                  })}
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {item.addons && item.addons.length > 0 && (
-                            <CartAddonList
-                              addons={item.addons}
-                              className="mt-1"
-                            />
-                          )}
-
-                          {/* CUSTOMIZE BUTTON - Show if the item supports addons (item.variant.is_addons is present) */}
-                          {item.variant.is_addons && (
-                            <button
-                              onClick={() => handleCustomize(item)}
-                              disabled={isCustomizing}
-                              className="text-[10px] md:text-xs font-semibold mt-1 flex items-center gap-0.5 text-primary-600 hover:opacity-80 transition-opacity"
-                            >
-                              <span className="cursor-pointer">
-                                {isCustomizing &&
-                                customizingProduct?.slug === item.product.slug
-                                  ? t("loading")
-                                  : t("cartItems.customize")}
-                              </span>
-                              <Icon
-                                icon="solar:alt-arrow-right-linear"
-                                className="mt-0.5 text-sm"
-                              />
-                            </button>
-                          )}
-                        </h3>
-
-                        {/* Price and Quantity - Stack on mobile */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mt-1">
-                          <span className="font-medium text-xs text-foreground/60 whitespace-nowrap">
-                            <span className="text-sm font-semibold text-foreground">
-                              {formatPrice(shownPrice)}
-                            </span>
-                          </span>
-
-                          <CartQuantityControl
-                            item={item}
-                            maxQuantity={item.product.total_allowed_quantity}
-                            minQuantity={item.product.minimum_order_quantity}
-                            quantityStep={item.product.quantity_step_size}
-                            stock={item.variant.stock}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row items-center gap-0 sm:gap-1 -mt-2">
-                        <Button
-                          title={t("saveForLater.title")}
-                          aria-label={t("saveForLater.title")}
-                          className="p-0 bg-transparent min-w-0 text-primary-600"
-                          size="sm"
-                          isDisabled={isLoading}
-                          isIconOnly
-                          onPress={() =>
-                            handleSaveForLater(item.id, item.quantity)
-                          }
-                        >
-                          <Icon icon="solar:bookmark-linear" className="text-base" />
-                        </Button>
-                        <Button
-                          title={t("remove_item")}
-                          aria-label={t("remove_item")}
-                          className="p-0 bg-transparent min-w-0 text-danger"
-                          size="sm"
-                          isDisabled={isLoading}
-                          isIconOnly
-                          onPress={() => setSelectedItemId(item.id)}
-                        >
-                          <Icon icon="solar:trash-bin-trash-linear" className="text-base" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Attachment Section - Full Width Below Item */}
-                    {showAttachments && item.product.is_attachment_required && (
-                      <div className="w-full mt-3 mb-2 space-y-3 rounded-xl border border-divider p-3 bg-content1">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <p className="text-xxs font-semibold text-foreground">
-                            {item.product.attachment_mode === "required"
-                              ? t("cart.attachments.requiredLabel", {
-                                  defaultValue: "Attachment required",
-                                })
-                              : t("cart.attachments.optionalLabel", {
-                                  defaultValue: "Attachment optional",
-                                })}
-                          </p>
-                          <p className="text-xxs text-foreground/60">
-                            {t("cart.attachments.helperModeText", {
-                              defaultValue:
-                                item.product.attachment_mode === "required"
-                                  ? "Upload at least one file."
-                                  : "Upload files if you want.",
-                            })}
-                          </p>
-                        </div>
-
-                        <AttachmentUploader
-                          attachment={attachments[item.product.id] || []}
-                          onAttachmentChange={(attachmentFiles) =>
-                            handleAttachmentChange(
-                              item.product.id,
-                              attachmentFiles,
-                            )
-                          }
-                        />
-                      </div>
-                    )}
-
-                    {itemIndex < group.items.length - 1 && (
-                      <Divider className="my-2" orientation="horizontal" />
-                    )}
-                  </div>
-                );
-              })}
+        {!checkout && (
+          <div className="col-span-full row-start-2 flex items-center justify-between gap-x-2 @lg:col-span-1 @lg:col-start-3 @lg:row-start-1 @lg:self-center">
+            <CartQuantityControl
+              item={item}
+              maxQuantity={item.product.total_allowed_quantity}
+              minQuantity={item.product.minimum_order_quantity}
+              quantityStep={item.product.quantity_step_size}
+              stock={item.variant.stock}
+            />
+            <div className="flex items-center">
+              <Button
+                title={t("saveForLater.title")}
+                aria-label={t("saveForLater.title")}
+                color="primary"
+                variant="light"
+                size="sm"
+                isDisabled={isLoading}
+                isIconOnly
+                onPress={() => handleSaveForLater(item.id, item.quantity)}
+              >
+                <Icon icon="solar:bookmark-linear" className="text-base" />
+              </Button>
+              <Button
+                title={t("remove_item")}
+                aria-label={t("remove_item")}
+                color="danger"
+                variant="light"
+                size="sm"
+                isDisabled={isLoading}
+                isIconOnly
+                onPress={() => setSelectedItemId(item.id)}
+              >
+                <Icon icon="solar:trash-bin-trash-linear" className="text-base" />
+              </Button>
             </div>
           </div>
-        ))}
+        )}
+      </div>
+    );
+  };
+
+  const attachmentProducts = checkout
+    ? Array.from(new Map(items.map((item) => [item.product.id, item])).values())
+        .filter((item) => item.product.is_attachment_required)
+    : [];
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      {[...productGroups].map(([key, { pricing, lines }]) => {
+        const { product } = lines[0];
+        const quantity = pricing?.quantity ?? lines.reduce((total, item) => total + item.quantity, 0);
+        const subtotal = lines.reduce((total, item) => total + cartLineTotal(item), 0);
+        const showBranch = new Set(lines.map((item) => item.store_id)).size > 1;
+        const header = (
+          <>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <h3 className="text-base font-semibold leading-snug">
+                  {checkout ? product.name : (
+                    <Link href={`/products/${product.slug}`} className="hover:underline">
+                      {product.name}
+                    </Link>
+                  )}
+                </h3>
+                {pricing && <span className="text-sm font-medium text-foreground/70">{pricing.name}</span>}
+              </div>
+              <div className="flex flex-wrap gap-x-2 text-sm text-foreground/70">
+                <span>{t("wholesale.units", "{{count}} units", { count: quantity })}</span>
+                {!checkout && pricing && pricing.minimum_order_quantity > 1 && (
+                  <span>{t("wholesale.cartMinimum", "Min. {{minimum}}", { minimum: pricing.minimum_order_quantity })}</span>
+                )}
+              </div>
+            </div>
+            <div className="shrink-0 text-right tabular-nums">
+              <div className="text-sm text-foreground/70">{t("subtotal", "Subtotal")}</div>
+              <div className="text-base font-bold">{formatPrice(subtotal)}</div>
+            </div>
+          </>
+        );
+        const groupNote = pricing && (
+          pricing.quantity_remaining > 0 ? (
+            <p className="px-3 pb-2 text-sm font-medium text-danger">
+              {t("wholesale.groupShortfall", "Add {{quantity}} more to check out.", {
+                quantity: pricing.quantity_remaining,
+              })}
+            </p>
+          ) : !pricing.quantity_step_valid ? (
+            <p className="px-3 pb-2 text-sm font-medium text-danger">
+              {t("wholesale.groupStep", "Adjust group quantity in increments of {{step}} above the minimum.", {
+                step: pricing.quantity_step_size,
+              })}
+            </p>
+          ) : null
+        );
+        return (
+          <section key={key} className="@container rounded-large border border-divider bg-content1">
+            <div className="rounded-t-large bg-content2">
+              <div className="flex items-center gap-3 px-3 py-2">{header}</div>
+              {groupNote}
+            </div>
+            <div className="divide-y divide-divider border-t border-divider">
+              {lines.map((item) => renderLine(item, showBranch))}
+            </div>
+          </section>
+        );
+      })}
+
+      {attachmentProducts.length > 0 && (
+        <section className="overflow-hidden rounded-large border border-divider bg-content1">
+          <h3 className="px-3 py-2 text-sm font-semibold">{t("cart.attachments.title", "Attachments")}</h3>
+          {attachmentProducts.map((item) => (
+            <div key={item.product.id}>{renderAttachment(item)}</div>
+          ))}
+        </section>
+      )}
 
       {modals}
-    </ScrollShadow>
+    </div>
   );
 };
 

@@ -203,7 +203,7 @@ const ReelShareSheet = ({
             removeWrapper
             disableAnimation
             src={getReelShareImageUrl(reel) ?? undefined}
-            fallbackSrc="/logo.png"
+            fallbackSrc="/default-logo.png"
             alt={reel.caption ?? t("watchBuy.share.previewAlt")}
             className="h-28 w-20 shrink-0 rounded-medium object-cover"
           />
@@ -213,7 +213,7 @@ const ReelShareSheet = ({
                 removeWrapper
                 disableAnimation
                 src={reel.profile.photo_url ?? undefined}
-                fallbackSrc="/logo.png"
+                fallbackSrc="/default-logo.png"
                 alt=""
                 radius="full"
                 className="size-8 shrink-0 object-cover"

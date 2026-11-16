@@ -15,7 +15,7 @@ import {
   LANGUAGE_DIRECTION_COOKIE_KEY,
 } from "@/config/languages";
 
-type HypercommerceDocumentProps = DocumentInitialProps & {
+type StorefrontDocumentProps = DocumentInitialProps & {
   lang: string;
   dir: "ltr" | "rtl";
 };
@@ -45,15 +45,13 @@ const languageAttributeScript = `
   } catch (_) {}
 })();`;
 
-export default function Document({ lang, dir }: HypercommerceDocumentProps) {
+export default function Document({ lang, dir }: StorefrontDocumentProps) {
   return (
     <Html dir={dir} lang={lang} prefix="og: https://ogp.me/ns#">
       <Head>
         <script dangerouslySetInnerHTML={{ __html: languageAttributeScript }} />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="theme-color" content="#000000" />
-
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </Head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <Main />
@@ -65,7 +63,7 @@ export default function Document({ lang, dir }: HypercommerceDocumentProps) {
 
 Document.getInitialProps = async (
   ctx: DocumentContext,
-): Promise<HypercommerceDocumentProps> => {
+): Promise<StorefrontDocumentProps> => {
   const initialProps = await NextDocument.getInitialProps(ctx);
   const cookies = parse(ctx.req?.headers.cookie || "");
   const readCookie = (key: string): string | null => {

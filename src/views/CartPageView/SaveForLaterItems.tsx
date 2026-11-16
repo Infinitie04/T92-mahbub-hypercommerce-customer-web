@@ -145,19 +145,21 @@ const SaveForLaterItems: FC<{ moreProductsInline: boolean }> = ({
         className="pb-4"
       >
         {items.map((item) => {
+          const image = item.variant.image || item.product.image;
+
           return (
             <SwiperSlide key={item.id} className="h-auto">
               <div className="flex h-full flex-col rounded-large border border-divider bg-content1 p-2.5 transition-colors hover:border-default-300">
                 <div className="relative aspect-square w-full overflow-hidden rounded-medium bg-content2">
                   <Image
                     loading="lazy"
-                    src={item.product.image}
+                    src={image}
                     alt={item.variant.title || ""}
                     removeWrapper
                     radius="none"
                     className="absolute inset-0 h-full w-full cursor-pointer object-contain"
                     onClick={() => {
-                      setLightboxImages([{ src: item.product.image }]);
+                      setLightboxImages([{ src: image }]);
                       setLightboxOpen(true);
                     }}
                   />

@@ -16,6 +16,12 @@ const withPWA = withPWAInit({
   workboxOptions: {
     runtimeCaching: [
       {
+        urlPattern: ({ url, sameOrigin }) =>
+          sameOrigin && url.pathname === "/manifest.webmanifest",
+        handler: "NetworkFirst" as const,
+        options: { cacheName: "storefront-manifest" },
+      },
+      {
         urlPattern: /^\/(my-account|cart|payment|shopping-list)(\/|$)/,
         handler: "NetworkOnly" as const,
       },

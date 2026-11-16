@@ -1,13 +1,12 @@
 import React from "react";
 import { Button, Image } from "@heroui/react";
 import { useSettings } from "@/contexts/SettingsContext";
+import { siteConfig } from "@/config/site";
 import Link from "next/link";
 
 const AppDownloadSection: React.FC = () => {
   const { webSettings } = useSettings();
-  const appSection = webSettings?.appDownloadSection || false;
-
-  if (!appSection) {
+  if (!webSettings?.appDownloadSection) {
     return null;
   }
 
@@ -85,12 +84,11 @@ const AppDownloadSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Right — App Image instead of Phone Mockup */}
           <div className="relative flex justify-center lg:justify-end">
             <Image
-              src="/images/app-image.png"
-              alt="App Preview"
-              className="rounded-2xl object-contain w-80 h-60 sm:w-72 sm:h-80 lg:w-[400px] lg:h-96"
+              src={webSettings.pwaLogo192x192 || siteConfig.appleTouchIcon}
+              alt={webSettings.pwaName?.trim() || siteConfig.name}
+              className="size-40 rounded-2xl object-contain sm:size-48"
             />
           </div>
         </div>

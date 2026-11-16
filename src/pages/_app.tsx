@@ -17,6 +17,7 @@ import DefaultLayout from "@/layouts/default";
 import UserLayout from "@/layouts/UserLayout";
 import { NextPageWithLayout } from "@/types";
 import { fontSans, fontMono, fontDisplay } from "@/config/fonts";
+import { siteConfig } from "@/config/site";
 import GoogleAnalytics from "@/components/Functional/GoogleAnalytics";
 import MicrosoftClarity from "@/components/Functional/MicrosoftClarity";
 import { adTrackingService } from "@/services/adTrackingService";
@@ -93,6 +94,17 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
       <GoogleAnalytics />
       <MicrosoftClarity />
       <Head>
+        <link rel="icon" href={siteConfig.favicon} key="favicon" />
+        <link
+          rel="apple-touch-icon"
+          href={siteConfig.appleTouchIcon}
+          key="apple-touch-icon"
+        />
+        <meta
+          name="apple-mobile-web-app-title"
+          content={siteConfig.name}
+          key="apple-mobile-web-app-title"
+        />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover"

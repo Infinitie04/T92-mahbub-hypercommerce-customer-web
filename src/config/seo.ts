@@ -81,7 +81,7 @@ export const pageSEOConfigs: Record<string, PageSEOConfig> = {
   shippingPolicy: {
     title: "Shipping Policy",
     description:
-      "Learn how sellers on HyperCommerce ship orders, delivery times, and costs.",
+      "Learn about shipping options, delivery times, and costs for T92 Fashion orders.",
     keywords: "shipping, delivery, shipping policy, delivery policy",
     ogType: "article",
     canonical: "/shipping-policy",
@@ -115,7 +115,7 @@ export const pageSEOConfigs: Record<string, PageSEOConfig> = {
   sellerRegister: {
     title: "Become a Seller",
     description:
-      "Sell on HyperCommerce and reach thousands of buyers. Simple onboarding, secure payouts.",
+      "Learn about seller registration.",
     keywords:
       "become a seller, register, seller registration, sell online, vendor",
     ogType: "website",

@@ -1,13 +1,17 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "HyperCommerce",
+  name: "T92 Fashion",
   description:
-    "HyperCommerce is a multivendor marketplace for groceries, food, pharmacy and everyday essentials.",
+    "Browse wholesale garments and request a quote from T92 Fashion.",
   metaKeywords:
-    "hypercommerce, multivendor marketplace, online shopping, ecommerce, groceries, food, pharmacy, verified sellers, secure payments, fast delivery",
+    "T92 Fashion, wholesale garments, bulk apparel, clothing supplier",
   metaDescription:
-    "Shop groceries, food, pharmacy and everyday essentials from thousands of verified sellers on HyperCommerce. Secure payments, reliable delivery, one marketplace.",
+    "Shop wholesale garments from T92 Fashion. Browse the catalog, view bulk pricing, and request a quotation.",
+  logo: "/default-logo.png",
+  darkLogo: "/default-dark-logo.png",
+  favicon: "/default-favicon.ico?v=t92",
+  appleTouchIcon: "/logo-192.png?v=t92",
   navItems: [
     {
       label: "Home",

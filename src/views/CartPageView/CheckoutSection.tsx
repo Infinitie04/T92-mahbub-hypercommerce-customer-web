@@ -12,6 +12,7 @@ import { setPromoCode } from "@/lib/redux/slices/checkoutSlice";
 import { clearCart } from "@/routes/api";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { handleCheckout, ensureIdempotencyKey } from "@/helpers/functionalHelpers";
 
@@ -321,9 +322,9 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
                             {item.unfulfillable_reason ||
                               t("checkout.notAvailable", { defaultValue: "Not available" })}
                           </p>
-                          <a className="text-primary underline" href={`#cart-item-${item.cart_item_id}`}>
+                          <Link className="text-primary underline" href={`/cart#cart-item-${item.cart_item_id}`}>
                             {t("checkout.editCartItem", { defaultValue: "Edit item" })}
-                          </a>
+                          </Link>
                         </div>
                       ))}
                     </div>

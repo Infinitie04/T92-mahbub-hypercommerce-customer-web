@@ -415,7 +415,7 @@ export const generateOnlineStoreSchema = (
   baseUrl?: string,
 ): object => {
   const logo = ensureAbsoluteUrl(
-    webSettings.siteHeaderLogo || webSettings.siteFooterLogo || "/logo.png",
+    webSettings.siteHeaderLogo || webSettings.siteFooterLogo || "/default-logo.png",
     baseUrl,
   );
   const sameAs = [

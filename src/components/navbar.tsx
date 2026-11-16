@@ -17,6 +17,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/lib/redux/store";
 import { useRouter } from "next/router";
 import { useSettings } from "@/contexts/SettingsContext";
+import { siteConfig } from "@/config/site";
 import { useTranslation } from "react-i18next";
 import { authSheetStore } from "@/stores/authSheetStore";
 import { Heart, ShoppingCart, User, Package } from "lucide-react";
@@ -538,13 +539,14 @@ export const Navbar: FC = () => {
 
   const {
     siteHeaderLogo,
-    siteHeaderDarkLogo = "https://placehold.co/160x40?text=Logo",
-    siteName = "Site Logo",
+    siteHeaderDarkLogo,
+    siteName = siteConfig.name,
   } = webSettings || {};
-  const desktopLogo = header.logoUrl ?? siteHeaderDarkLogo;
+  const desktopLogo = header.logoUrl || siteHeaderDarkLogo || siteConfig.darkLogo;
   const mobileLogo = header.mobileLogoUrl ?? desktopLogo;
   const displayedMobileLogo = hasScrolledMobileSurface
-    ? siteHeaderLogo || mobileLogo
+    ? siteHeaderLogo ||
+      (mobileLogo === siteConfig.darkLogo ? siteConfig.logo : mobileLogo)
     : mobileLogo;
   const logoHeightClass =
     header.density === "compact"

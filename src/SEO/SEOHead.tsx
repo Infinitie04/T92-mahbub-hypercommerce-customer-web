@@ -27,7 +27,7 @@ export const SEOHead = ({ settings }: HeadProps) => {
     ""
   ).trim();
   const siteLogo = ensureAbsoluteUrl(
-    webSettings?.defaultSeoImage || webSettings?.siteHeaderLogo || "/logo.png",
+    webSettings?.defaultSeoImage || webSettings?.siteHeaderLogo || "/default-logo.png",
     baseUrl,
   );
   const pathname = router.asPath.split(/[?#]/)[0] || "/";
@@ -58,9 +58,18 @@ export const SEOHead = ({ settings }: HeadProps) => {
     <NextHead>
       <title>{fullTitle}</title>
       <link
+        rel="apple-touch-icon"
+        href={webSettings.pwaLogo192x192 || siteConfig.appleTouchIcon}
+        key="apple-touch-icon"
+      />
+      <meta
+        name="apple-mobile-web-app-title"
+        content={webSettings.pwaName?.trim() || siteConfig.name}
+        key="apple-mobile-web-app-title"
+      />
+      <link
         rel="icon"
-        href={webSettings?.siteFavicon || "/default-favicon.ico"}
-        type="image/x-icon"
+        href={webSettings.siteFavicon || siteConfig.favicon}
         key="favicon"
       />
       <meta

@@ -30,7 +30,7 @@ const CheckoutPageView: FC = () => {
 
       <div className="flex w-full flex-col gap-4 md:flex-row md:items-start">
         <div className="w-full md:w-[60%] lg:w-[65%]">
-          <CartAdditionalInfo cart={cartData} />
+          <CartAdditionalInfo />
         </div>
 
         <div className="w-full md:w-[40%] lg:w-[35%] md:max-w-md">

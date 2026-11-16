@@ -34,6 +34,10 @@ function generateHtaccess() {
   // Construct the .htaccess content
   const htaccessContent = `ErrorDocument 404 /404.html
 
+  <IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+  </IfModule>
+
   <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /

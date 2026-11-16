@@ -9,13 +9,9 @@ import { setOrderNote } from "@/lib/redux/slices/checkoutSlice";
 import { debounce } from "lodash";
 import PromoCodeSection from "@/components/Cart/PromoCodeSection";
 import { useTranslation } from "react-i18next";
-import { CartResponse } from "@/types/ApiResponse";
+import Link from "next/link";
 
-interface CartAdditionalInfoProps {
-  cart?: CartResponse | null;
-}
-
-const CartAdditionalInfo: FC<CartAdditionalInfoProps> = () => {
+const CartAdditionalInfo: FC = () => {
   const { t } = useTranslation();
   const [deliveryInstructions, setDeliveryInstructions] = useState<string>("");
   const { cartData } = useSelector((state: RootState) => state.cart);
@@ -46,10 +42,15 @@ const CartAdditionalInfo: FC<CartAdditionalInfoProps> = () => {
       {/* Cart items */}
       {items.length > 0 && (
         <div>
-          <h2 className="mb-3 text-base font-bold text-foreground">
-            {t("cart.title", { defaultValue: "Cart" })} ({cartData?.total_quantity})
-          </h2>
-          <CartItems items={items} pricingGroups={cartData?.pricing_groups} layout="cart" showAttachments />
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="text-base font-bold text-foreground">
+              {t("checkout.orderItems", "Order items")} ({cartData?.total_quantity})
+            </h2>
+            <Link href="/cart" className="text-sm font-medium text-primary hover:underline">
+              {t("checkout.editCart", "Edit cart")}
+            </Link>
+          </div>
+          <CartItems items={items} pricingGroups={cartData?.pricing_groups} checkout />
         </div>
       )}
 

@@ -182,7 +182,7 @@ const StoryViewer = ({
               alt=""
               radius="full"
               className="size-9 border border-shell-divider object-cover"
-              fallbackSrc="/logo.png"
+              fallbackSrc="/default-logo.png"
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold">{profile.username}</p>

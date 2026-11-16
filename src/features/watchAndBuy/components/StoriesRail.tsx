@@ -110,7 +110,7 @@ const StoriesRail = ({
                         alt=""
                         radius="full"
                         className="aspect-square size-full object-cover"
-                        fallbackSrc="/logo.png"
+                        fallbackSrc="/default-logo.png"
                       />
                     </span>
                     <span className="w-full truncate text-center text-xs font-semibold text-foreground">

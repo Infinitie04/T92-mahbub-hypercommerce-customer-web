@@ -1,11 +1,10 @@
 import localFont from "next/font/local";
-import { DM_Sans, Space_Grotesk } from "next/font/google";
 
 // The storefront sans. Exposed to Tailwind through the `--font-sans` variable,
 // which _app.tsx defines from this family.
-export const fontSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+export const fontSans = localFont({
+  src: "../assets/fonts/DMSans-VariableFont_opsz,wght.ttf",
+  weight: "100 1000",
   display: "swap",
   fallback: [
     "ui-sans-serif",
@@ -19,9 +18,9 @@ export const fontSans = DM_Sans({
 });
 
 // The display font for headings, titles etc.
-export const fontDisplay = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+export const fontDisplay = localFont({
+  src: "../assets/fonts/SpaceGrotesk-VariableFont_wght.ttf",
+  weight: "300 700",
   display: "swap",
   fallback: [
     "ui-sans-serif",
