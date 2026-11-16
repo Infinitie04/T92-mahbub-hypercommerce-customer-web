@@ -10,6 +10,7 @@ import {
   shadow,
   shell,
   spacing,
+  storefrontHeader,
 } from "./src/theme/tokens";
 
 /** @type {import('tailwindcss').Config} */
@@ -90,6 +91,9 @@ const config: import("tailwindcss").Config = {
         sheet: "90",
       },
       colors: {
+        "header-search": storefrontHeader.searchBackground,
+        "header-search-border": storefrontHeader.searchBorder,
+        "header-divider": storefrontHeader.divider,
         "rating-star": accent.ratingStar,
         "delivery-time": accent.deliveryTime,
         "discount-card": accent.discountCard,

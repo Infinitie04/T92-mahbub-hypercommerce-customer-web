@@ -6,40 +6,28 @@
  * these through the Tailwind/HeroUI theme.
  */
 
-/**
- * Brand amber. 500 is the brand primary (#FFB616).
- * Global scheme (2026-07): amber accent anchored on `#FFB616` (500) with a
- * monotonic light→dark ramp. Primary fills use a near-black label (`onBrand`)
- * since amber needs a dark, not white, foreground for contrast.
- */
-// export const brand = {
-//   50: "#F3F4F6",
-//   100: "#F3F4F6",
-//   200: "#ffe196",
-//   300: "#ffd268",
-//   400: "#ffc63f",
-//   500: "#ffb616",
-//   600: "#101828",
-//   700: "#b37e00",
-//   800: "#8a6100",
-//   900: "#5e4200",
-// } as const;
-
+/** T92 red. The base and hover shades match the T92 panel theme. */
 export const brand = {
-  50: "#F3F4F6", // Gray background
-  100: "#E5E7EB", // Light gray
-  200: "#FDF2C7", // Very light yellow
-  300: "#FCE588", // Soft yellow
-  400: "#F9D44A", // Warm yellow
-  500: "#FFB616", // Primary brand
-  600: "#E09E00", // Darker brand
-  700: "#B37E00", // Deep mustard
-  800: "#8A6100", // Brownish yellow
-  900: "#101828", // Dark gray instead of brown
+  50: "#FFF3F3",
+  100: "#FBE7E7",
+  200: "#F3C3C3",
+  300: "#EB9898",
+  400: "#E26262",
+  500: "#D63131",
+  600: "#C82B2B",
+  700: "#A52323",
+  800: "#852020",
+  900: "#661B1B",
 } as const;
 
-/** Label colour on brand (amber) fills — near-black for contrast. */
-export const onBrand = "#1a1200";
+/** Label colour on solid primary fills. */
+export const onBrand = "#ffffff";
+
+export const storefrontHeader = {
+  searchBackground: "#F8F3EE",
+  searchBorder: "#B3A699",
+  divider: "#DCD7D1",
+} as const;
 
 /** Label colour on the amber `warning` fill — near-black for contrast. */
 export const onWarning = "#1a1200";
@@ -196,6 +184,5 @@ export const shadow = {
   md: "0 12px 26px -14px rgba(16,24,40,0.18)",
   lg: "0 14px 30px -18px rgba(16,24,40,0.28)",
   overlay: "0 8px 24px -12px rgba(16,24,40,0.30)",
-  // Amber lift under the primary CTA — the signature button shadow.
-  primary: "0 8px 20px -10px rgba(255,182,22,0.5)",
+  primary: `0 8px 20px -10px ${brand[500]}80`,
 } as const;

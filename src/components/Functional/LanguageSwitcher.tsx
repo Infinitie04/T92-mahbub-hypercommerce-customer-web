@@ -30,7 +30,7 @@ const LanguageSwitcher = ({ variant = "desktop" }: LanguageSwitcherProps) => {
           size="sm"
           variant="light"
           isDisabled={isLoading}
-          className={`flex h-8 min-w-0 items-center gap-1 text-xs font-semibold text-inherit transition-colors hover:text-(--header-active-color) ${variant === "mobile" ? "px-1" : "px-2"}`}
+          className={`flex h-8 min-w-0 items-center gap-1 text-xs font-semibold text-inherit transition-colors ${variant === "mobile" ? "px-1 hover:text-(--header-active-color)" : "px-0 hover:underline"}`}
         >
           <div className="flex items-center gap-1">
             <span className="inline">{currentLanguage.code.toUpperCase()}</span>

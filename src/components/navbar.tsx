@@ -36,7 +36,6 @@ type HeaderPaletteStyle = CSSProperties & {
   "--header-navigation-active-color": string;
 };
 
-const ProfileBtn = dynamic(() => import("./ProfileBtn"), { ssr: false });
 const LanguageSwitcher = dynamic(
   () => import("./Functional/LanguageSwitcher"),
   { ssr: false },
@@ -50,25 +49,26 @@ const MOBILE_HEADER_REVEAL_DISTANCE = 10;
 const MOBILE_HEADER_COLLAPSE_OFFSET = 56;
 const MOBILE_HEADER_SCROLL_LOCK_MS = 500;
 const MOBILE_SCROLL_INTENT_WINDOW_MS = 1200;
+const desktopHeaderWidth = "mx-auto w-full max-w-site px-4";
+const headerActionClass =
+  "relative flex min-w-14 flex-col items-center gap-0.5 rounded-small px-1 py-1 text-compact font-medium leading-4 text-current transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-primary";
 
 const HeaderAction = ({
   icon,
   label,
   href,
-  onClick,
   showLabel,
 }: {
   icon: React.ReactNode;
   label: string;
-  href?: string;
-  onClick?: (e: React.MouseEvent) => void;
+  href: string;
   showLabel: boolean;
 }) => (
   <Link
-    href={href ?? "#"}
+    href={href}
     title={label}
-    onClick={onClick}
-    className="hidden cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-current opacity-90 transition hover:text-(--header-active-color) hover:opacity-100 min-[640px]:flex"
+    aria-label={label}
+    className={headerActionClass}
   >
     {icon}
     {showLabel ? <span>{label}</span> : null}
@@ -193,7 +193,6 @@ export const Navbar: FC = () => {
       : header.containerWidth === "wide"
         ? "max-w-screen-2xl"
         : "max-w-site";
-  const densityClass = header.density === "compact" ? "py-2" : "py-3";
   const surfaceToneClass =
     header.contentTone === "light"
       ? "bg-ink text-ink-foreground"
@@ -543,18 +542,18 @@ export const Navbar: FC = () => {
     siteHeaderDarkLogo,
     siteName = siteConfig.name,
   } = webSettings || {};
-  const desktopLogo = header.logoUrl || siteHeaderDarkLogo || siteConfig.darkLogo;
-  const mobileLogo = header.mobileLogoUrl ?? desktopLogo;
+  const desktopLogo = header.logoUrl || siteHeaderLogo || siteConfig.logo;
+  const mobileLogo =
+    header.mobileLogoUrl ||
+    header.logoUrl ||
+    (header.contentTone === "light"
+      ? siteHeaderDarkLogo || siteConfig.darkLogo
+      : desktopLogo);
   const displayedMobileLogo = hasScrolledMobileSurface
     ? siteHeaderLogo ||
       (mobileLogo === siteConfig.darkLogo ? siteConfig.logo : mobileLogo)
     : mobileLogo;
-  const logoHeightClass =
-    header.density === "compact"
-      ? "h-9"
-      : header.layout === "showcase"
-        ? "h-10 min-[1024px]:h-12"
-        : "h-10 min-[1024px]:h-11";
+  const logoHeightClass = "h-9 min-[1024px]:h-10";
 
   const SiteLogo = (
     <Link
@@ -569,7 +568,7 @@ export const Navbar: FC = () => {
     >
       {displayedMobileLogo !== desktopLogo ? (
         <>
-          <span className="min-[640px]:hidden">
+          <span className="min-[1024px]:hidden">
             <Image
               removeWrapper
               loading="eager"
@@ -581,7 +580,7 @@ export const Navbar: FC = () => {
               className={`${logoHeightClass} w-auto max-w-full object-contain`}
             />
           </span>
-          <span className="hidden min-[640px]:block">
+          <span className="hidden min-[1024px]:block">
             <Image
               removeWrapper
               loading="eager"
@@ -611,16 +610,21 @@ export const Navbar: FC = () => {
 
   const AccountAction =
     mounted && isLoggedIn ? (
-      <ProfileBtn showLabel={header.showActionLabels} />
+      <HeaderAction
+        href="/my-account"
+        icon={<User className="size-5" />}
+        label={t("nav.account", "Account")}
+        showLabel={header.showActionLabels}
+      />
     ) : (
       <button
         type="button"
         id="login-btn"
         aria-label={t("nav.account", "Account")}
         onClick={() => authSheetStore.open()}
-        className="hidden cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-current opacity-90 transition hover:text-(--header-active-color) hover:opacity-100 min-[640px]:flex"
+        className={`${headerActionClass} cursor-pointer`}
       >
-        <User className="h-5 w-5" />
+        <User className="size-5" />
         {header.showActionLabels ? (
           <span>{t("nav.account", "Account")}</span>
         ) : null}
@@ -631,7 +635,7 @@ export const Navbar: FC = () => {
 
   const WishlistAction = showAccountLinks ? (
     <HeaderAction
-      icon={<Heart className="h-5 w-5" />}
+      icon={<Heart className="size-5" />}
       label={t("nav.wishlist", "Wishlist")}
       href="/my-account/wishlists"
       showLabel={header.showActionLabels}
@@ -640,7 +644,7 @@ export const Navbar: FC = () => {
 
   const OrdersAction = showAccountLinks ? (
     <HeaderAction
-      icon={<Package className="h-5 w-5" />}
+      icon={<Package className="size-5" />}
       label={t("nav.orders", "Orders")}
       href="/my-account/orders"
       showLabel={header.showActionLabels}
@@ -649,18 +653,19 @@ export const Navbar: FC = () => {
 
   const CartAction = (
     <button
+      type="button"
       onClick={openCart}
       aria-label={t("nav.cart", "Cart")}
-      className="relative flex cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-current opacity-90 transition hover:text-(--header-active-color) hover:opacity-100"
+      className={`${headerActionClass} cursor-pointer`}
     >
-      <ShoppingCart className="h-5 w-5" />
+      <ShoppingCart className="size-5" />
       {header.showActionLabels ? (
         <span className="hidden min-[640px]:block">
           {t("nav.cart", "Cart")}
         </span>
       ) : null}
       {mounted && bagCount > 0 && (
-        <span className="absolute -top-1 right-0 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+        <span className="absolute -top-1 start-1/2 ms-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-xxs font-bold text-primary-foreground">
           {bagCount}
         </span>
       )}
@@ -669,19 +674,18 @@ export const Navbar: FC = () => {
 
   const headerTools =
     header.showLocation || header.showSearch ? (
-      <div className="flex min-w-0 flex-1 items-center gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-5">
         {header.showLocation ? (
           <LocationSelector
-            variant={header.layout === "showcase" ? "showcase" : "desktop"}
-            tone={effectiveControlTone}
+            variant="showcase"
+            tone="inherit"
             showLabel={header.showLocationLabel}
           />
         ) : null}
         {header.showSearch ? (
           <GlobalSearchbar
-            tone={effectiveControlTone}
-            size={header.layout === "showcase" ? "large" : "default"}
-            searchLabels={activeSearchLabels}
+            tone="storefront"
+            shape="rounded"
           />
         ) : null}
       </div>
@@ -705,7 +709,7 @@ export const Navbar: FC = () => {
   ) : null;
 
   const headerActions = (
-    <nav className="flex shrink-0 items-center gap-1 min-[640px]:gap-3">
+    <nav className="flex shrink-0 items-center gap-2">
       {header.actionItems.map((item) => (
         <Link
           key={item.id}
@@ -815,31 +819,22 @@ export const Navbar: FC = () => {
     <div
       aria-hidden={utilityIsHidden}
       inert={utilityIsHidden ? true : undefined}
-      className={`relative z-10 hidden overflow-hidden transition-[max-height,opacity,transform] duration-700 ease-in-out motion-reduce:transition-none min-[1024px]:block ${
+      className={`relative z-10 hidden overflow-hidden bg-primary text-primary-foreground transition-[max-height,opacity,transform] duration-700 ease-in-out motion-reduce:transition-none min-[1024px]:block ${
         utilityIsHidden
           ? "pointer-events-none max-h-0 -translate-y-full opacity-0"
           : "max-h-8 translate-y-0 opacity-100"
       }`}
-      style={{
-        ...(!usesHomeAppearance && header.utilityBackgroundColor
-          ? { backgroundColor: header.utilityBackgroundColor }
-          : {}),
-        ...(!usesHomeAppearance && header.utilityTextColor
-          ? { color: header.utilityTextColor }
-          : {}),
-      }}
     >
       <div
-        className={`mx-auto flex min-h-8 items-center justify-between gap-6 px-4 text-xs font-semibold ${containerClass}`}
+        className={`${desktopHeaderWidth} flex h-8 items-center justify-between gap-4 text-xs font-semibold`}
       >
         <div className="flex min-w-0 items-center gap-3">
-          {header.showLanguage ? <LanguageSwitcher /> : null}
           {showSupportPhone ? (
             <a
               href={`tel:${supportNumber}`}
-              className="inline-flex h-7 items-center gap-1.5 rounded-small px-2 text-xs font-semibold transition-colors hover:bg-content1/30 hover:text-(--header-active-color) focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
+              className="inline-flex h-8 items-center gap-2 rounded-small hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-current"
             >
-              <Icon icon="solar:phone-calling-linear" className="h-4 w-4" />
+              <Icon icon="solar:phone-calling-linear" className="size-4" />
               {supportNumber}
             </a>
           ) : null}
@@ -864,6 +859,7 @@ export const Navbar: FC = () => {
                 </Link>
               ))
             : null}
+          {header.showLanguage ? <LanguageSwitcher /> : null}
         </div>
       </div>
     </div>
@@ -1271,7 +1267,7 @@ export const Navbar: FC = () => {
       ) : null}
 
       <header
-        className={`${header.sticky ? "sticky" : "relative"} top-0 z-40 w-full border-0 shadow-none`}
+        className={`${header.sticky ? "sticky" : "relative"} top-0 z-40 w-full border-b border-header-divider shadow-[0_2px_5px_rgb(0_0_0_/_0.12)]`}
       >
         <div
           className={`relative isolate overflow-hidden border-0 ${surfaceToneClass}`}
@@ -1287,33 +1283,20 @@ export const Navbar: FC = () => {
           {utilityBar}
           {mobileTopRow}
           {mobileSearchRow}
-          {header.layout === "stacked" ? (
+          <div className="relative z-10 hidden bg-content1 text-ink min-[1024px]:block">
             <div
-              className={`relative z-10 mx-auto hidden flex-col gap-2 px-4 pb-2 min-[1024px]:flex ${densityClass} ${containerClass}`}
+              className={`${desktopHeaderWidth} grid min-h-16 grid-cols-[auto_1fr_auto] items-center gap-5`}
             >
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
                 {SiteLogo}
-                {headerActions}
+                {header.showLocation ? (
+                  <span aria-hidden="true" className="h-6 w-px bg-header-divider" />
+                ) : null}
               </div>
-              {headerTools}
-            </div>
-          ) : header.layout === "showcase" ? (
-            <div
-              className={`relative z-10 mx-auto hidden min-h-16 grid-cols-[auto_1fr_auto] items-center gap-6 px-4 py-2 min-[1024px]:grid ${containerClass}`}
-            >
-              {SiteLogo}
               {headerTools ?? <span />}
               {headerActions}
             </div>
-          ) : (
-            <div
-              className={`relative z-10 mx-auto hidden grid-cols-[auto_1fr_auto] items-center gap-6 px-4 min-[1024px]:grid ${densityClass} ${containerClass}`}
-            >
-              {SiteLogo}
-              {headerTools ?? <span />}
-              {headerActions}
-            </div>
-          )}
+          </div>
           {navigationBar}
         </div>
       </header>

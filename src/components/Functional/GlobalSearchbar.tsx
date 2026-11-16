@@ -33,7 +33,7 @@ const searchFetcher = async (
 };
 
 interface GlobalSearchBarProps {
-  tone?: "light" | "dark" | "inherit";
+  tone?: "light" | "dark" | "inherit" | "storefront";
   size?: "default" | "large";
   shape?: "pill" | "rounded";
   searchLabels?: string[];
@@ -57,6 +57,8 @@ const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
   );
 
   const placeholders = useMemo<string[]>(() => {
+    if (tone === "storefront") return [t("search_placeholder")];
+
     // Priority 1: Header-selected home category labels.
     if (Array.isArray(searchLabels) && searchLabels.length > 0) {
       return searchLabels;
@@ -75,7 +77,7 @@ const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
 
     // Priority 4: Translation fallback.
     return [t("search_placeholder")];
-  }, [currentSearchLabels, homeGeneralSettings?.searchLabels, searchLabels, t]);
+  }, [currentSearchLabels, homeGeneralSettings?.searchLabels, searchLabels, t, tone]);
 
   // === Animated placeholder state ===
   const [placeholderIndex, setPlaceholderIndex] = useState<number>(0);
@@ -287,7 +289,9 @@ const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
             : size === "large"
               ? "rounded-medium"
               : "rounded-full",
-          tone === "light"
+          tone === "storefront"
+            ? "border-header-search-border bg-header-search text-ink"
+            : tone === "light"
             ? "border-white/10 bg-white/10"
             : tone === "inherit"
               ? "border-divider bg-white/90 text-current"
@@ -298,7 +302,9 @@ const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
           icon="solar:magnifer-linear"
           className={clsx(
             "shrink-0 text-lg",
-            tone === "light"
+            tone === "storefront"
+              ? "text-current"
+              : tone === "light"
               ? "text-white/70"
               : "text-default-500/75",
           )}
@@ -309,7 +315,9 @@ const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
             key={placeholderIndex}
             className={clsx(
               "absolute inset-0 truncate text-sm font-normal leading-5 transition-all duration-600 ease-in-out",
-              tone === "light"
+              tone === "storefront"
+                ? "text-default-600"
+                : tone === "light"
                 ? "text-white/60"
                 : "text-default-500/75",
             )}
@@ -318,9 +326,11 @@ const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
               opacity: getOpacity(),
             }}
           >
-            {String(placeholders?.[placeholderIndex] ?? "")
-              .replace(/_/g, " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase()) || "Search"}
+            {tone === "storefront"
+              ? t("search_placeholder")
+              : String(placeholders?.[placeholderIndex] ?? "")
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase()) || "Search"}
           </span>
         </div>
 
@@ -333,7 +343,9 @@ const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
           aria-label={t("userLayout.shoppingList")}
           className={clsx(
             "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-transparent transition-colors",
-            tone === "light"
+            tone === "storefront"
+              ? "-me-2 text-current hover:bg-content2"
+              : tone === "light"
               ? "text-white/70 hover:bg-white/10 hover:text-white"
               : "text-default-500/75 hover:bg-content2 hover:text-default-600",
           )}

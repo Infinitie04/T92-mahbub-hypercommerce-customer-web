@@ -539,7 +539,7 @@ const LocationSelector = ({
           onClick={isCheckoutLocked ? undefined : onOpen}
           disabled={!isInitialized || isCheckoutLocked}
           className={clsx(
-            "hidden min-w-0 cursor-pointer items-center gap-2 ps-2 text-start transition-colors min-[1024px]:flex",
+            "hidden min-w-0 cursor-pointer items-center gap-2.5 text-start transition-colors min-[1024px]:flex",
             tone === "light"
               ? "text-white"
               : tone === "inherit"
@@ -549,23 +549,23 @@ const LocationSelector = ({
         >
           <MapPin
             className={clsx(
-              "h-5 w-5 shrink-0",
+              "size-5 shrink-0",
               tone === "inherit" ? "text-current" : "text-primary",
             )}
           />
           <span className="flex min-w-0 flex-col">
             {showLabel ? (
-              <span className="text-[10px] font-semibold uppercase tracking-wide opacity-60">
+              <span className="text-xxs font-semibold uppercase leading-4">
                 {t("nav.deliverTo", "Deliver to")}
               </span>
             ) : null}
-            <span className="max-w-48 truncate text-sm font-bold">
+            <span className="max-w-36 truncate text-sm font-semibold leading-4">
               {getButtonText()}
             </span>
           </span>
           <Icon
             icon="solar:alt-arrow-down-linear"
-            className="shrink-0 text-sm opacity-60"
+            className="shrink-0 text-sm"
           />
         </button>
       ) : variant === "desktop" ? (

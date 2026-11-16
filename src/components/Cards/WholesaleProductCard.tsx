@@ -139,10 +139,10 @@ export default function WholesaleProductCard(props: WholesaleProductCardProps) {
           href={productHref}
           onClick={onProductClick}
           className={clsx(
-            "mt-auto flex min-h-9 items-center justify-center rounded-small border border-primary px-2 py-1.5 text-center text-xs font-bold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+            "mt-auto flex min-h-9 items-center justify-center rounded-small border border-primary px-2 py-1.5 text-center text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
             pricingFirst
-              ? "hover:bg-primary/10"
-              : "bg-primary hover:bg-primary-600",
+              ? "text-primary-700 hover:bg-primary/10"
+              : "bg-primary text-primary-foreground hover:bg-primary-600",
           )}
         >
           {pricingFirst

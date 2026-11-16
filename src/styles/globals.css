@@ -44,8 +44,7 @@ button[aria-label="Toggle fullscreen view"] {
 /* Progress Bar CSS */
 #nprogress {
   pointer-events: none;
-  /* Brand amber, resolved from the HeroUI theme so it follows the tokens. */
-  --nprogress-color: hsl(var(--heroui-primary, 43 100% 54%));
+  --nprogress-color: hsl(var(--heroui-primary));
 }
 
 #nprogress .bar {
@@ -214,14 +213,14 @@ button[aria-label="Toggle fullscreen view"] {
 
 /* ==========================================================================
    Brand loader — lightweight dual-ring spinner (replaces logo-loading.gif)
-   Pure CSS, amber resolved from the HeroUI theme so it follows the tokens.
+   Uses the primary colour from the HeroUI theme.
    ========================================================================== */
 .brand-loader {
   position: relative;
   display: inline-block;
   width: 52px;
   height: 52px;
-  --brand-loader-color: hsl(var(--heroui-primary, 43 100% 54%));
+  --brand-loader-color: hsl(var(--heroui-primary));
 }
 
 .brand-loader::before,
@@ -234,13 +233,13 @@ button[aria-label="Toggle fullscreen view"] {
   will-change: transform;
 }
 
-/* Outer ring: solid amber arc, clockwise. */
+/* Outer ring: solid arc, clockwise. */
 .brand-loader::before {
   border-top-color: var(--brand-loader-color);
   animation: brand-spin 1s linear infinite;
 }
 
-/* Inner ring: faint amber arc, counter-clockwise + slower for depth. */
+/* Inner ring: faint arc, counter-clockwise + slower for depth. */
 .brand-loader::after {
   border-bottom-color: color-mix(in srgb, var(--brand-loader-color) 35%, transparent);
   animation: brand-spin 1.5s linear infinite reverse;
