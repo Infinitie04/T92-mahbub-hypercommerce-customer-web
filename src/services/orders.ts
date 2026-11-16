@@ -1,5 +1,6 @@
 import { isAxiosError } from "axios";
 import { api } from "./client";
+import { unwrapApiData, type ApiDataResponse } from "./responseData";
 import {
   ApiResponse,
   Order,
@@ -208,10 +209,10 @@ export const payOrder = async (
 };
 
 export async function verifyRazorpayOrderPayment(slug: string) {
-  const { data } = await api.post<Pick<Order, "payment_status" | "status">>(
+  const { data } = await api.post<ApiDataResponse<Pick<Order, "payment_status" | "status">>>(
     `/user/orders/${slug}/verify-payment`,
   );
-  return data;
+  return unwrapApiData(data);
 }
 
 // Mark a pending order's payment as failed and release its stock (user cancel).

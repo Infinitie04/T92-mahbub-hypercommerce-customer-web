@@ -1,4 +1,4 @@
-import { Button, EmptyState, ErrorState, Input, Select, SelectItem, Skeleton } from "@/components/ui";
+import { Button, EmptyState, ErrorState, Input, Select, SelectItem, Skeleton, Textarea } from "@/components/ui";
 import { useSettings } from "@/contexts/SettingsContext";
 import { getQuotationCurrency, quotationError, quotationValidation, submitQuotation, type QuotationDraft } from "@/services/quotations";
 import { X } from "lucide-react";
@@ -30,6 +30,7 @@ export default function QuotationRequestForm({ draft, onSubmitted }: {
   })));
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [message, setMessage] = useState("");
+  const [customerNote, setCustomerNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const inFlight = useRef(false);
   const activeRows = draft.source === "item" ? rows.filter((row) => row.id === variantIndex) : rows;
@@ -60,12 +61,12 @@ export default function QuotationRequestForm({ draft, onSubmitted }: {
     setSubmitting(true);
     try {
       const lines = activeRows.map((row) => ({ ...row.line, quantity: Number(row.quantity) }));
-      const quote = await submitQuotation(draft.source, currency, lines, activeRows.map((row) => row.price));
+      const quote = await submitQuotation(draft.source, currency, lines, activeRows.map((row) => row.price), customerNote);
       onSubmitted(quote.id);
     } catch (submitError) {
       const fields = quotationValidation(submitError)?.errors ?? {};
       setErrors(fields);
-      if (!Object.keys(fields).length || Object.keys(fields).some((key) => !/^items\.\d+\.(unit_price|quantity)$/.test(key))) {
+      if (!Object.keys(fields).length || Object.keys(fields).some((key) => key !== "customer_note" && !/^items\.\d+\.(unit_price|quantity)$/.test(key))) {
         setMessage(quotationError(submitError, t("quotation.error")));
       }
     } finally {
@@ -132,6 +133,22 @@ export default function QuotationRequestForm({ draft, onSubmitted }: {
             </section>
           );
         })}
+        <section className="rounded-large border border-divider bg-content1 p-4">
+          <Textarea
+            name="customer_note"
+            label={t("quotation.customerNoteOptional")}
+            value={customerNote}
+            onValueChange={(note) => {
+              setCustomerNote(note);
+              setErrors((current) => ({ ...current, customer_note: [] }));
+            }}
+            minRows={3}
+            maxLength={1000}
+            isDisabled={submitting}
+            isInvalid={Boolean(errors.customer_note?.length)}
+            errorMessage={errors.customer_note?.[0]}
+          />
+        </section>
       </div>
       <div className="space-y-4 rounded-large border border-divider bg-content1 p-4">
         <h2 className="font-bold">{t("quotation.summary")}</h2>

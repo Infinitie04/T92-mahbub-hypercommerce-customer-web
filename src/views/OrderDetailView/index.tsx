@@ -210,11 +210,6 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
       />
       <PageHead pageTitle={`${t("order")} #${order?.id || ""}`} />
 
-      {order.quotation_id && (
-        <Link href={`/my-account/quotations/${order.quotation_id}`} className="mb-3 inline-block text-sm text-primary hover:underline">
-          {t("quotation.number", { id: order.quotation_id })}
-        </Link>
-      )}
       {/* Back + order id */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -550,6 +545,20 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
               value={getFormattedDate(order.created_at)}
             />
             <LabelValue label={t("order_id")} value={`#${order.id}`} />
+            {order.quotation_id && (
+              <LabelValue
+                label={t("pages.order.orderSource")}
+                value={
+                  <Link
+                    href={`/my-account/quotations/${order.quotation_id}`}
+                    className="inline-flex min-h-8 gap-1.5 text-sm font-semibold hover:underline"
+                  >
+                    <Icon icon="solar:document-text-linear" width={16} height={16} aria-hidden="true" />
+                    {t("quotation.number", { id: order.quotation_id })}
+                  </Link>
+                }
+              />
+            )}
           </Card>
 
           {order.order_note && (

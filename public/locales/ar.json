@@ -1136,6 +1136,7 @@
       "totalItemPrice": "إجمالي سعر العنصر",
       "otherItems": "عناصر أخرى في هذا الطلب",
       "orderDetails": "تفاصيل الطلب",
+      "orderSource": "مصدر الطلب",
       "orderedOn": "تم الطلب في",
       "updatesSentTo": "تُرسل التحديثات إلى",
       "trackingTitle": "تحديثات الطلب",
@@ -2464,6 +2465,12 @@
     "invalidPrice": "أدخل سعراً بين 0.01 و99,999,999.99 بمنزلتين عشريتين كحد أقصى.",
     "lineTotal": "المجموع الفرعي للبند",
     "remark": "ملاحظة الإدارة",
+    "customerNote": "ملاحظة العميل",
+    "customerNoteOptional": "ملاحظة العميل (اختيارية)",
+    "cancelQuotation": "إلغاء عرض السعر",
+    "cancelConfirm": "سيؤدي الإلغاء إلى إغلاق عرض السعر وإزالة خيار إتمام الطلب.",
+    "keepQuotation": "الاحتفاظ بعرض السعر",
+    "cancelError": "تعذّر إلغاء عرض السعر. حاول مرة أخرى.",
     "viewOrder": "عرض الطلب",
     "resumePayment": "متابعة الدفع",
     "checkout": "إتمام الطلب",
@@ -2481,6 +2488,7 @@
       "accepted": "مقبول",
       "rejected": "مرفوض",
       "ready_to_pay": "جاهز للدفع",
+      "cancelled": "ملغى",
       "ordered": "تم الطلب"
     }
   }

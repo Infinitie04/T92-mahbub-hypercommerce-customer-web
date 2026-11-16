@@ -8,6 +8,7 @@ export const quotationStatusColors = {
   rejected: "danger",
   ready_to_pay: "primary",
   ordered: "success",
+  cancelled: "default",
 } as const satisfies Record<Quotation["status"], string>;
 
 export function useQuotationMoney(currency?: string) {

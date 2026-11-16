@@ -1,23 +1,27 @@
 import type { PaymentSummary, SellerShippingCost } from "@/types/cart";
 import { isAxiosError } from "axios";
 import { api } from "./client";
+import { unwrapApiData, type ApiDataResponse } from "./responseData";
 
 export type Quotation = {
   id: number;
   source: "item" | "cart";
-  status: "pending" | "accepted" | "rejected" | "ready_to_pay" | "ordered";
+  status: "pending" | "accepted" | "rejected" | "ready_to_pay" | "ordered" | "cancelled";
   currency_code: string;
   subtotal: number;
   item_count?: number;
   item_title?: string | null;
   image?: string | null;
   remark: string | null;
+  customer_note?: string | null;
   created_at: string;
   order_slug: string | null;
   payment_order_slug?: string | null;
 };
 
 export type QuotationDetail = Quotation & {
+  can_cancel?: boolean;
+  cancelled_at?: string | null;
   reviewed_at?: string | null;
   payment_requested_at?: string | null;
   items: {
@@ -62,9 +66,20 @@ export type QuotationDraft = {
 };
 
 export function quotationValidation(error: unknown) {
-  return isAxiosError<{ message?: string; errors?: Record<string, string[]>; details?: QuotationCheckoutErrors }>(error)
-    ? error.response?.data
-    : undefined;
+  type FieldErrors = Record<string, string[]>;
+  if (!isAxiosError<{
+    message?: string;
+    data?: QuotationCheckoutErrors & { errors?: FieldErrors };
+    errors?: FieldErrors;
+    details?: QuotationCheckoutErrors;
+  }>(error)) return;
+
+  const response = error.response?.data;
+  if (response) return {
+    message: response.message,
+    errors: response.data?.errors ?? response.errors,
+    details: response.data ?? response.details,
+  };
 }
 
 export function quotationError(error: unknown, fallback: string) {
@@ -77,8 +92,8 @@ export type QuotationCheckoutErrors = {
 };
 
 export async function getQuotationCurrency() {
-  const { data } = await api.get<{ currency_code: string }>("/user/quotations/currency");
-  return data.currency_code;
+  const { data } = await api.get<ApiDataResponse<{ currency_code: string }>>("/user/quotations/currency");
+  return unwrapApiData(data).currency_code;
 }
 
 export async function submitQuotation(
@@ -86,6 +101,7 @@ export async function submitQuotation(
   currency: string,
   lines: QuotationSourceLine[],
   prices: string[],
+  customerNote?: string,
 ) {
   const items = lines.map((line, index) => ({
     ...("cart_item_id" in line
@@ -94,29 +110,42 @@ export async function submitQuotation(
     quantity: line.quantity,
     unit_price: prices[index],
   }));
-  const { data } = await api.post<Quotation>("/user/quotations", { source, currency_code: currency, items });
-  return data;
+  const { data } = await api.post<ApiDataResponse<Quotation>>("/user/quotations", {
+    source,
+    currency_code: currency,
+    items,
+    customer_note: customerNote?.trim() || undefined,
+  });
+  return unwrapApiData(data);
 }
 
 export async function getQuotations(page: number) {
-  const { data } = await api.get<{ data: Quotation[]; current_page: number; last_page: number }>("/user/quotations", { params: { page } });
-  return data;
+  const { data } = await api.get<ApiDataResponse<{ data: Quotation[]; current_page: number; last_page: number }>>(
+    "/user/quotations",
+    { params: { page } },
+  );
+  return unwrapApiData(data);
 }
 
 export async function getQuotation(id: string) {
-  const { data } = await api.get<QuotationDetail>(`/user/quotations/${id}`);
-  return data;
+  const { data } = await api.get<ApiDataResponse<QuotationDetail>>(`/user/quotations/${id}`);
+  return unwrapApiData(data);
+}
+
+export async function cancelQuotation(id: number) {
+  const { data } = await api.post<ApiDataResponse<QuotationDetail>>(`/user/quotations/${id}/cancel`);
+  return unwrapApiData(data);
 }
 
 export async function previewQuotation(id: string, addressId: number) {
-  const { data } = await api.post<QuotationPreview | { order_slug: string }>(
+  const { data } = await api.post<ApiDataResponse<QuotationPreview | { order_slug: string }>>(
     `/user/quotations/${id}/preview`,
     { address_id: addressId },
   );
-  return data;
+  return unwrapApiData(data);
 }
 
 export async function payQuotation(id: string, body: FormData) {
-  const { data } = await api.post<{ order_slug: string }>(`/user/quotations/${id}/pay`, body);
-  return data;
+  const { data } = await api.post<ApiDataResponse<{ order_slug: string }>>(`/user/quotations/${id}/pay`, body);
+  return unwrapApiData(data);
 }

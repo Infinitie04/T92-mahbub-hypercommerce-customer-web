@@ -1136,6 +1136,7 @@
       "totalItemPrice": "Total item price",
       "otherItems": "Other items in this order",
       "orderDetails": "Order details",
+      "orderSource": "Order source",
       "orderedOn": "Ordered on",
       "updatesSentTo": "Updates sent to",
       "trackingTitle": "Order updates",
@@ -2461,6 +2462,12 @@
     "invalidPrice": "Enter a price from 0.01 to 99,999,999.99 with up to two decimal places.",
     "lineTotal": "Line subtotal",
     "remark": "Admin remark",
+    "customerNote": "Customer note",
+    "customerNoteOptional": "Customer note (optional)",
+    "cancelQuotation": "Cancel quotation",
+    "cancelConfirm": "Cancelling closes this quotation and removes the checkout option.",
+    "keepQuotation": "Keep quotation",
+    "cancelError": "Could not cancel the quotation. Try again.",
     "viewOrder": "View order",
     "resumePayment": "Resume payment",
     "checkout": "Checkout",
@@ -2478,6 +2485,7 @@
       "accepted": "Accepted",
       "rejected": "Rejected",
       "ready_to_pay": "Ready to pay",
+      "cancelled": "Cancelled",
       "ordered": "Ordered"
     }
   }
