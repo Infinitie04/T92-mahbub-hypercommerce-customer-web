@@ -1,10 +1,11 @@
 import { quotationCheckoutHref, quotationPaymentHref } from "@/helpers/quotationCheckout";
 import { quotationPageProps } from "@/helpers/quotationPage";
-import { Button, Chip, EmptyState, ErrorState, Skeleton, toastError, useDisclosure } from "@/components/ui";
+import { Button, Chip, EmptyState, ErrorState, Modal, ModalBody, ModalContent, ModalHeader, Skeleton, toastError, useDisclosure } from "@/components/ui";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import MyBreadcrumbs from "@/components/custom/MyBreadcrumbs";
 import PageHeader from "@/components/custom/PageHeader";
 import QuotationItems from "@/components/Quotations/QuotationItems";
+import QuotationRequestForm from "@/components/Quotations/QuotationRequestForm";
 import { quotationStatusColors, useQuotationMoney } from "@/components/Quotations/quotationPresentation";
 import { withAuth } from "@/guards/withAuth";
 import { getFormattedDate } from "@/helpers/getters";
@@ -25,6 +26,7 @@ function QuotationDetailPage() {
   const id = typeof router.query.id === "string" ? router.query.id : "";
   const { data: quote, error, mutate } = useSWR(id && userId ? ["quotation", userId, id] : null, () => getQuotation(id));
   const cancellation = useDisclosure();
+  const requote = useDisclosure();
   const money = useQuotationMoney(quote?.currency_code);
   const activity = quote ? [
     { label: t("quotation.submitted"), time: quote.created_at },
@@ -106,6 +108,9 @@ function QuotationDetailPage() {
                   {t(quote.payment_order_slug ? "quotation.resumePayment" : "quotation.checkout")}
                 </Button>
               )}
+              <Button variant="bordered" fullWidth onPress={requote.onOpen}>
+                {t("quotation.requestAgain")}
+              </Button>
               {quote.can_cancel && (
                 <Button color="danger" variant="light" fullWidth onPress={cancellation.onOpen}>
                   {t("quotation.cancelQuotation")}
@@ -113,6 +118,18 @@ function QuotationDetailPage() {
               )}
             </section>
           </div>
+          <Modal isOpen={requote.isOpen} onOpenChange={requote.onOpenChange}
+            placement="center" size="5xl" scrollBehavior="inside">
+            <ModalContent>
+              <ModalHeader>{t("quotation.requestAgain")}</ModalHeader>
+              <ModalBody className="pb-5">
+                {requote.isOpen && <QuotationRequestForm key={quote.id} previousQuote={quote} onSubmitted={(newId) => {
+                  requote.onClose();
+                  void router.push(`/my-account/quotations/${newId}`);
+                }} />}
+              </ModalBody>
+            </ModalContent>
+          </Modal>
           <ConfirmationModal
             isOpen={cancellation.isOpen}
             onClose={cancellation.onClose}

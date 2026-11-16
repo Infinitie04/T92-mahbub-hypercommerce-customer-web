@@ -26,6 +26,7 @@ export type QuotationDetail = Quotation & {
   payment_requested_at?: string | null;
   items: {
     product_id: number;
+    product_slug?: string | null;
     title: string;
     variant_title: string;
     image?: string | null;
@@ -124,6 +125,20 @@ export async function getQuotations(page: number) {
     "/user/quotations",
     { params: { page } },
   );
+  return unwrapApiData(data);
+}
+
+export async function requoteQuotation(
+  id: number,
+  currency: string,
+  items: { item_index: number; quantity: number; unit_price: string }[],
+  customerNote: string,
+) {
+  const { data } = await api.post<ApiDataResponse<Quotation>>(`/user/quotations/${id}/requote`, {
+    currency_code: currency,
+    items,
+    customer_note: customerNote.trim() || undefined,
+  });
   return unwrapApiData(data);
 }
 

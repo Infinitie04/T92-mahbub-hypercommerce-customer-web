@@ -71,6 +71,7 @@ declare global {
 const RazorPay: FC<{
   onSuccess: (slug?: string) => void;
   onError: () => void;
+  onStarted?: () => void;
   setIsLoading: (value: boolean) => void;
   isLoading: boolean;
   usageType?: "order" | "wallet";
@@ -81,6 +82,7 @@ const RazorPay: FC<{
 }> = ({
   onSuccess,
   onError,
+  onStarted,
   isLoading,
   setIsLoading,
   usageType = "order",
@@ -249,6 +251,7 @@ const RazorPay: FC<{
       });
 
       rzp.open();
+      onStarted?.();
     } catch (err) {
       console.error(err);
       addToast({
@@ -268,6 +271,7 @@ const RazorPay: FC<{
     paymentSettings,
     onSuccess,
     onError,
+    onStarted,
     userData,
     setIsConfirming,
     orderSlug,

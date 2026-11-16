@@ -2446,6 +2446,7 @@
     "title": "Quotations",
     "number": "Quotation #{{id}}",
     "request": "Request Quotation",
+    "requestAgain": "Request again",
     "submit": "Submit Quotation",
     "summary": "Quotation summary",
     "subtotal": "Proposed merchandise subtotal",

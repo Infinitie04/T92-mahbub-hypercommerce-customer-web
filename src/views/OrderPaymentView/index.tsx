@@ -31,7 +31,9 @@ const OrderPaymentView: FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [isLoading, setIsLoading] = useState(false);
+  const [startedSlug, setStartedSlug] = useState("");
   const isRazorpay = order?.payment_method === "razorpayPayment";
+  const paymentStarted = order?.payment_started || startedSlug === slug;
   const quotationId = order?.quotation_id;
 
   // Load the order and gate on its state.
@@ -235,7 +237,7 @@ const OrderPaymentView: FC = () => {
   const gateway = (() => {
     switch (order.payment_method) {
       case "razorpayPayment":
-        return <RazorPay {...gatewayProps} quotationId={order.quotation_id} />;
+        return <RazorPay {...gatewayProps} quotationId={order.quotation_id} onStarted={() => setStartedSlug(slug)} />;
       case "stripePayment":
         return <Stripe {...gatewayProps} />;
       case "paystackPayment":
@@ -329,7 +331,7 @@ const OrderPaymentView: FC = () => {
 
         {/* Gateway pay button */}
         <div className="mt-5 w-full">{gateway}</div>
-        {isRazorpay && order.payment_status === "pending" && (
+        {isRazorpay && paymentStarted && order.payment_status === "pending" && (
           <Button
             variant="light"
             fullWidth
