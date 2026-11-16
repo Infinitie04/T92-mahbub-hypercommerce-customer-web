@@ -8,6 +8,9 @@ export type Quotation = {
   status: "pending" | "accepted" | "rejected" | "ready_to_pay" | "ordered";
   currency_code: string;
   subtotal: number;
+  item_count?: number;
+  item_title?: string | null;
+  image?: string | null;
   remark: string | null;
   created_at: string;
   order_slug: string | null;
@@ -15,17 +18,20 @@ export type Quotation = {
 };
 
 export type QuotationDetail = Quotation & {
+  reviewed_at?: string | null;
+  payment_requested_at?: string | null;
   items: {
     product_id: number;
     title: string;
     variant_title: string;
+    image?: string | null;
     quantity: number;
     unit_price: string;
     addons: { addon_item_id: number; price: string; metadata?: { item_title?: string } }[];
   }[];
 };
 
-export type QuotationSourceLine = { quantity: number; label: string; variantLabel?: string } & (
+export type QuotationSourceLine = { quantity: number; label: string; variantLabel?: string; image?: string | null } & (
   | { cart_item_id: number }
   | {
       product_variant_id: number;

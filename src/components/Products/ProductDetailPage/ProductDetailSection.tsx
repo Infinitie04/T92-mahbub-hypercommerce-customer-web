@@ -489,6 +489,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
                 quantity,
                 label: initialProduct.title,
                 variantLabel: selectedVariant.title,
+                image: selectedVariant.image || initialProduct.main_image,
               }] : []} />
             </div>
           )}

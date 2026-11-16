@@ -222,6 +222,7 @@
   "cancelable": "Order Cancelable",
   "cancellation": "Cancellation",
   "cart": {
+    "billDetails": "Bill Details",
     "add_failed": "Add to cart failed",
     "add_failed_description": "Unable to add item to cart",
     "add_failed_title": "Add to Cart Failed",
@@ -338,6 +339,8 @@
   "change": "Change",
   "check_back_later": "Check back later for new exciting offers!",
   "checkout": {
+    "pendingChargesTotal": "Pending charges",
+    "platformFee": "Platform fee",
     "confirmingPayment": "Confirming payment…",
     "paymentConfirmed": "Payment confirmed",
     "paymentFailed": "Payment failed",
@@ -2428,6 +2431,16 @@
     "change_profile_photo": "Change profile photo"
   },
   "quotation": {
+    "quantityLabel": "Quantity",
+    "history": "Quotation History",
+    "details": "Quotation Details",
+    "activity": "Quotation updates",
+    "submitted": "Quotation submitted",
+    "items": "{{count}} items",
+    "items_one": "{{count}} item",
+    "removeItem": "Remove {{item}} from quotation",
+    "noItems": "No items in this quotation",
+    "invalidQuantity": "Enter a whole number from 1 to 1,000,000.",
     "title": "Quotations",
     "number": "Quotation #{{id}}",
     "request": "Request Quotation",

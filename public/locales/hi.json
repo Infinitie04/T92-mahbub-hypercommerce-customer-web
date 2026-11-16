@@ -222,6 +222,7 @@
   "cancelable": "ऑर्डर रद्द करने योग्य",
   "cancellation": "रद्दीकरण",
   "cart": {
+    "billDetails": "बिल का विवरण",
     "add_failed": "कार्ट में जोड़ना विफल",
     "add_failed_description": "आइटम को कार्ट में जोड़ना संभव नहीं",
     "add_failed_title": "कार्ट में जोड़ना विफल",
@@ -338,6 +339,8 @@
   "change": "बदलें",
   "check_back_later": "नई रोमांचक ऑफ़र के लिए बाद में जांचें!",
   "checkout": {
+    "pendingChargesTotal": "लंबित शुल्क",
+    "platformFee": "प्लेटफ़ॉर्म शुल्क",
     "confirmingPayment": "भुगतान की पुष्टि हो रही है…",
     "paymentConfirmed": "भुगतान की पुष्टि हो गई",
     "paymentFailed": "भुगतान विफल",
@@ -2429,6 +2432,16 @@
     "change_profile_photo": "प्रोफ़ाइल फ़ोटो बदलें"
   },
   "quotation": {
+    "quantityLabel": "मात्रा",
+    "history": "मूल्य प्रस्ताव का इतिहास",
+    "details": "मूल्य प्रस्ताव का विवरण",
+    "activity": "मूल्य प्रस्ताव के अपडेट",
+    "submitted": "मूल्य प्रस्ताव जमा किया गया",
+    "items": "{{count}} आइटम",
+    "items_one": "{{count}} आइटम",
+    "removeItem": "मूल्य प्रस्ताव से {{item}} हटाएँ",
+    "noItems": "इस मूल्य प्रस्ताव में कोई आइटम नहीं है",
+    "invalidQuantity": "1 से 1,000,000 तक की पूर्ण संख्या दर्ज करें।",
     "title": "मूल्य प्रस्ताव",
     "number": "मूल्य प्रस्ताव #{{id}}",
     "request": "मूल्य प्रस्ताव भेजें",

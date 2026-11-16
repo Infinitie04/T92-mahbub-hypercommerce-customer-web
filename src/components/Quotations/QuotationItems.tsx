@@ -1,3 +1,4 @@
+import QuotationThumbnail from "./QuotationThumbnail";
 import { useQuotationMoney } from "./quotationPresentation";
 import type { QuotationCheckoutErrors, QuotationDetail } from "@/services/quotations";
 import { useTranslation } from "react-i18next";
@@ -14,14 +15,17 @@ export default function QuotationItems({ quote, issues }: {
       {quote.items.map((item, index) => (
         <li key={index} className="space-y-2 p-4">
           <div className="flex flex-wrap justify-between gap-2">
-            <div>
+            <div className="flex min-w-0 items-center gap-3">
+              <QuotationThumbnail src={item.image} />
+              <div className="min-w-0">
               <div className="font-semibold">{item.title}</div>
-              <div className="text-sm text-default-600">{item.variant_title}</div>
+              {item.variant_title !== item.title && <div className="text-sm text-default-600">{item.variant_title}</div>}
               {item.addons.map((addon) => (
                 <div key={addon.addon_item_id} className="text-sm text-default-600">
                   {t("quotation.addOn", { name: addon.metadata?.item_title || `#${addon.addon_item_id}`, amount: money(addon.price) })}
                 </div>
               ))}
+              </div>
             </div>
             <span className="text-sm tabular-nums">{item.quantity} × {money(item.unit_price)}</span>
           </div>

@@ -1015,6 +1015,7 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
                       quantity,
                       label: product.title,
                       variantLabel: selectedVariant.title,
+                      image: selectedVariant.image || product.main_image,
                       addons: Object.entries(selectedAddons).flatMap(([groupId, itemIds]) =>
                         itemIds.map((itemId) => ({ addon_group_id: Number(groupId), addon_item_id: itemId })),
                       ),

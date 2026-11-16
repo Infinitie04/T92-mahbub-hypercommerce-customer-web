@@ -90,6 +90,7 @@ export default function WholesaleOrderTable({
       quantity: quantity || minimum,
       label: product.title,
       variantLabel: Object.values(variant.attributes ?? {}).filter(Boolean).join(" · ") || variant.title,
+      image: variant.image || product.main_image,
     }));
   const customVariant = quoteRows.find(({ customizable }) => customizable)?.variant;
   const totalQuantity = groups.reduce((sum, group) => sum + group.selected, 0);

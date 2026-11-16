@@ -222,6 +222,7 @@
   "cancelable": "قابل للإلغاء",
   "cancellation": "الإلغاء",
   "cart": {
+    "billDetails": "تفاصيل الفاتورة",
     "add_failed": "فشل الإضافة إلى السلة",
     "add_failed_description": "تعذر إضافة العنصر إلى السلة",
     "add_failed_title": "فشل إضافة إلى السلة",
@@ -338,6 +339,8 @@
   "change": "تغيير",
   "check_back_later": "تحقق لاحقًا للحصول على عروض جديدة ومثيرة!",
   "checkout": {
+    "pendingChargesTotal": "الرسوم المعلقة",
+    "platformFee": "رسوم المنصة",
     "confirmingPayment": "جارٍ تأكيد الدفع…",
     "paymentConfirmed": "تم تأكيد الدفع",
     "paymentFailed": "فشل الدفع",
@@ -2431,6 +2434,16 @@
     "change_profile_photo": "تغيير صورة الملف الشخصي"
   },
   "quotation": {
+    "quantityLabel": "الكمية",
+    "history": "سجل عروض الأسعار",
+    "details": "تفاصيل عرض السعر",
+    "activity": "تحديثات عرض السعر",
+    "submitted": "تم إرسال عرض السعر",
+    "items": "عدد البنود: {{count}}",
+    "items_one": "بند واحد",
+    "removeItem": "إزالة {{item}} من عرض السعر",
+    "noItems": "لا توجد بنود في عرض السعر هذا",
+    "invalidQuantity": "أدخل عدداً صحيحاً من 1 إلى 1,000,000.",
     "title": "عروض الأسعار",
     "number": "عرض السعر رقم {{id}}",
     "request": "اطلب عرض سعر",

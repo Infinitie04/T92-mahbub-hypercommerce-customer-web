@@ -183,6 +183,7 @@ const CartSummary: FC<CartSummaryProps> = ({ cart }) => {
               quantity: Number(item.quantity),
               label: item.product?.name || item.variant?.title || "",
               variantLabel: item.variant?.title,
+              image: item.variant?.image || item.product?.image,
             }))} />
           </div>
         </div>

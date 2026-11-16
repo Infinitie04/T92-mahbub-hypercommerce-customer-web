@@ -23,7 +23,7 @@ const translationResources = {
 };
 
 i18n.use(initReactI18next).init({
-  resources: translationResources,
+  resources: structuredClone(translationResources),
   lng: getCookie<string>(LANGUAGE_COOKIE_KEY) || DEFAULT_LANGUAGE,
   fallbackLng: DEFAULT_LANGUAGE,
   interpolation: {
@@ -37,10 +37,12 @@ export const applyLanguage = async (
   direction: LanguageDirection,
   persist = true,
 ): Promise<void> => {
+  const bundled = translationResources[code as keyof typeof translationResources]?.translation;
+  i18n.removeResourceBundle(code, "translation");
+  if (bundled) {
+    i18n.addResourceBundle(code, "translation", structuredClone(bundled));
+  }
   if (labels && Object.keys(labels).length > 0) {
-    if (i18n.hasResourceBundle(code, "translation")) {
-      i18n.removeResourceBundle(code, "translation");
-    }
     i18n.addResourceBundle(code, "translation", labels, true, true);
   }
 
