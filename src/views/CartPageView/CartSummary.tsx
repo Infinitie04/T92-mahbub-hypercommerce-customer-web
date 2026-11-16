@@ -1,3 +1,4 @@
+import RequestQuotation from "@/components/Quotations/RequestQuotation";
 import { FC, useState } from "react";
 import { CartResponse } from "@/types/ApiResponse";
 import { Button, Divider, Alert, toast } from "@/components/ui";
@@ -86,7 +87,7 @@ const CartSummary: FC<CartSummaryProps> = ({ cart }) => {
   const originalTotal = payment_summary.items_total + totalSaving;
 
   return (
-    <div className="w-full md:sticky md:top-24">
+    <div className="w-full">
       <div className="rounded-large border border-divider bg-content1 p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-foreground">
@@ -171,19 +172,19 @@ const CartSummary: FC<CartSummaryProps> = ({ cart }) => {
               }
               classNames={{ description: "text-xs" }}
             />
-          ) : (
-            <Button
-              color="primary"
-              fullWidth
-              className="mt-1 font-semibold"
-              isDisabled={isLoading}
-              onPress={() => router.push("/cart/checkout")}
-            >
-              {t("checkout.proceedToCheckout", {
-                defaultValue: "Proceed to Checkout",
-              })}
+          ) : null}
+          <div className="mt-1 grid gap-2">
+            <Button color="primary" fullWidth className="font-semibold"
+              isDisabled={isLoading || hasValidationErrors} onPress={() => router.push("/cart/checkout")}>
+              {t("checkout.proceedToCheckout")}
             </Button>
-          )}
+            <RequestQuotation source="cart" isDisabled={isLoading} lines={cart.items.filter((item) => !item.save_for_later).map((item) => ({
+              cart_item_id: item.id,
+              quantity: Number(item.quantity),
+              label: item.product?.name || item.variant?.title || "",
+              variantLabel: item.variant?.title,
+            }))} />
+          </div>
         </div>
       </div>
 

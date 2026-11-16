@@ -1,5 +1,5 @@
+import { CheckoutShipping, CheckoutTax } from "../CheckoutPageView/CheckoutBreakdown";
 import { FC, useState } from "react";
-import { formatDeliveryByDate } from "@/helpers/delivery";
 import { CartResponse } from "@/types/ApiResponse";
 import { Button, toast, Divider, Alert } from "@/components/ui";
 import { Icon } from "@iconify/react";
@@ -12,7 +12,6 @@ import { setPromoCode } from "@/lib/redux/slices/checkoutSlice";
 import { clearCart } from "@/routes/api";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useRouter } from "next/router";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { handleCheckout, ensureIdempotencyKey } from "@/helpers/functionalHelpers";
 
@@ -286,76 +285,8 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             </div>
           )}
 
-          {selectedAddress?.id &&
-            shipments.length > 0 && (
-              <div className="space-y-1 rounded-lg bg-content2 p-2 text-xs">
-                {shipments.map((store) => {
-                  const eta = store.is_fulfillable
-                    ? formatDeliveryByDate(store.delivery_eta)
-                    : null;
-
-                  return (
-                    <div key={store.store_id} className="space-y-1">
-                      <div className="flex justify-between gap-2">
-                        <span className="text-foreground/80">{store.store_name}</span>
-                        {store.is_fulfillable ? (
-                          <span>
-                            {store.shipping_cost === 0
-                              ? t("checkout.freeShipping")
-                              : formatPrice(store.shipping_cost ?? 0)}
-                          </span>
-                        ) : (
-                          <span className="text-danger">
-                            {t("checkout.notAvailable", { defaultValue: "Not available" })}
-                          </span>
-                        )}
-                      </div>
-                      {eta && (
-                        <p className="text-foreground/60">
-                          {t("cart.deliveryBy", { date: eta, defaultValue: `Delivery by ${eta}` })}
-                        </p>
-                      )}
-                      {store.items?.filter((item) => !item.is_fulfillable).map((item) => (
-                        <div key={item.cart_item_id} className="rounded border border-danger/20 p-2">
-                          <p className="font-medium">{item.product_name}</p>
-                          <p className="text-danger">
-                            {item.unfulfillable_reason ||
-                              t("checkout.notAvailable", { defaultValue: "Not available" })}
-                          </p>
-                          <Link className="text-primary underline" href={`/cart#cart-item-${item.cart_item_id}`}>
-                            {t("checkout.editCartItem", { defaultValue: "Edit item" })}
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-          {payment_summary.tax_total > 0 && (
-            <>
-              <div className="flex justify-between text-foreground/50">
-                <span>
-                  {t("checkout.taxIncluded", {
-                    defaultValue: "Tax (included)",
-                  })}
-                </span>
-                <span>{formatPrice(payment_summary.tax_total)}</span>
-              </div>
-              {payment_summary.tax_breakdown?.map((tax) => (
-                <div
-                  key={tax.tax_rate_id}
-                  className="flex justify-between ps-2 text-xs text-foreground/40"
-                >
-                  <span>
-                    {tax.title} ({tax.rate}%)
-                  </span>
-                  <span>{formatPrice(tax.amount)}</span>
-                </div>
-              ))}
-            </>
-          )}
+          {selectedAddress?.id && <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />}
+          <CheckoutTax total={payment_summary.tax_total} breakdown={payment_summary.tax_breakdown} formatPrice={formatPrice} />
 
           {payment_summary.platform_fee > 0 && (
             <div className="flex justify-between">

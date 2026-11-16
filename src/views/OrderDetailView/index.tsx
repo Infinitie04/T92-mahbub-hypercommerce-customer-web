@@ -212,7 +212,7 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
 
       {order.quotation_id && (
         <Link href={`/my-account/quotations/${order.quotation_id}`} className="mb-3 inline-block text-sm text-primary hover:underline">
-          Quotation #{order.quotation_id}
+          {t("quotation.number", { id: order.quotation_id })}
         </Link>
       )}
       {/* Back + order id */}

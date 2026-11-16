@@ -2,7 +2,7 @@
 import { GetServerSidePropsContext } from "next";
 import { getAccessTokenFromContext } from "@/helpers/auth";
 
-export const PROTECTED_ROUTES = ["/cart", "/my-account", "/payment"];
+export const PROTECTED_ROUTES = ["/cart", "/my-account", "/payment", "/quotation"];
 
 /**
  * Matches a route and everything below it, so `/payment/[slug]` and

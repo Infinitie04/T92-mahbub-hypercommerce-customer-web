@@ -477,17 +477,23 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
           >
             {t("buyNow")}
           </Button>
+          {selectedVariant?.addon_groups?.length ? (
+            <Button color="primary" className="w-full font-semibold xs:col-span-2" onPress={() => onOpenModal?.(quantity)}>
+              {t("quotation.request")}
+            </Button>
+          ) : (
+            <div className="xs:col-span-2">
+              <RequestQuotation source="item" lines={selectedVariant?.store_id ? [{
+                product_variant_id: selectedVariant.id,
+                store_id: selectedVariant.store_id,
+                quantity,
+                label: initialProduct.title,
+                variantLabel: selectedVariant.title,
+              }] : []} />
+            </div>
+          )}
         </div>
       ))}
-
-      {!usesGroups && selectedVariant?.store_id && !selectedVariant.addon_groups?.length && (
-        <RequestQuotation source="item" lines={[{
-          product_variant_id: selectedVariant.id,
-          store_id: selectedVariant.store_id,
-          quantity,
-          label: [initialProduct.title, selectedVariant.title].filter(Boolean).join(" · "),
-        }]} />
-      )}
 
       {/* Trust row */}
       {!isOutOfStock && (

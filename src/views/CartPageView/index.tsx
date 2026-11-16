@@ -1,4 +1,3 @@
-import RequestQuotation from "@/components/Quotations/RequestQuotation";
 import { FC } from "react";
 import { useSelector } from "react-redux";
 import useSWR from "swr";
@@ -51,15 +50,8 @@ const CartPageView: FC = () => {
         <div className="w-full md:w-[60%] lg:w-[65%]">
           <CartItems items={cartData.items} pricingGroups={cartData.pricing_groups} />
         </div>
-        <div className="w-full md:w-[40%] lg:w-[35%] md:max-w-md">
+        <div className="w-full md:sticky md:top-24 md:w-[40%] lg:w-[35%] md:max-w-md">
           <CartSummary cart={cartData} />
-          <div className="mt-3 flex justify-end">
-            <RequestQuotation source="cart" lines={items.filter((item) => !item.save_for_later).map((item) => ({
-              cart_item_id: item.id,
-              quantity: Number(item.quantity),
-              label: [item.product?.name, item.variant?.title].filter(Boolean).join(" · "),
-            }))} />
-          </div>
         </div>
       </div>
 

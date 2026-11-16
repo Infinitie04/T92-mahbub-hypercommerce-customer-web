@@ -79,6 +79,19 @@ export default function WholesaleOrderTable({
   });
 
   const selectedRows = groups.flatMap((group) => group.rows).filter((row) => row.quantity > 0);
+  const quoteRows = groups.flatMap(({ rows, minimum }) => rows
+    .filter(({ available }) => available)
+    .map((row) => ({ ...row, minimum })));
+  const quoteOptions = quoteRows.filter(({ customizable }) => !customizable)
+    .sort((first, second) => Number(second.quantity > 0) - Number(first.quantity > 0))
+    .map(({ variant, quantity, minimum }) => ({
+      product_variant_id: variant.id,
+      store_id: variant.store_id,
+      quantity: quantity || minimum,
+      label: product.title,
+      variantLabel: Object.values(variant.attributes ?? {}).filter(Boolean).join(" · ") || variant.title,
+    }));
+  const customVariant = quoteRows.find(({ customizable }) => customizable)?.variant;
   const totalQuantity = groups.reduce((sum, group) => sum + group.selected, 0);
   const subtotal = groups.reduce((sum, group) => sum + group.subtotal, 0);
   const atProductMaximum = productMaximum > 0 && bucketQuantity + totalQuantity >= productMaximum;
@@ -181,19 +194,7 @@ export default function WholesaleOrderTable({
                     <th scope="row" className="px-3 py-1.5 text-start font-medium">
                       <div className="flex items-center gap-3">
                         {source && <Image src={source} alt="" className="size-9 shrink-0 rounded-small object-cover" />}
-                        <div>
-                          <span className="break-words">{label}</span>
-                          {variant.store_id && !customizable && (
-                            <div>
-                              <RequestQuotation compact source="item" lines={[{
-                                product_variant_id: variant.id,
-                                store_id: variant.store_id,
-                                quantity: quantity || group.minimum,
-                                label: [product.title, label].filter(Boolean).join(" · "),
-                              }]} />
-                            </div>
-                          )}
-                        </div>
+                        <span className="break-words">{label}</span>
                       </div>
                     </th>
                     <td className="px-3 py-1.5 text-end">
@@ -282,17 +283,20 @@ export default function WholesaleOrderTable({
           {t("wholesale.productMaximum", "You can have up to {{count}} units of this product in your bucket.", { count: productMaximum })}
         </p>
       )}
-      <Button
-        variant="bordered"
-        color="default"
-        className="w-full border-divider bg-content1 font-semibold text-foreground shadow-none hover:bg-content2"
-        startContent={!isAdding && <Icon icon="solar:bag-4-linear" className="text-lg" />}
-        isLoading={isAdding}
-        isDisabled={isAdding || !canAdd}
-        onPress={() => void addSelection()}
-      >
-        {t("addToBucket")}
-      </Button>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Button color="primary" className="w-full font-semibold"
+          startContent={!isAdding && <Icon icon="solar:bag-4-linear" className="text-lg" />}
+          isLoading={isAdding} isDisabled={isAdding || !canAdd} onPress={() => void addSelection()}>
+          {t("addToBucket")}
+        </Button>
+        {!quoteOptions.length && customVariant ? (
+          <Button color="primary" className="w-full font-semibold" onPress={() => onCustomize(customVariant)}>
+            {t("quotation.request")}
+          </Button>
+        ) : (
+          <RequestQuotation source="item" lines={quoteOptions} isDisabled={isAdding} />
+        )}
+      </div>
     </section>
   );
 }

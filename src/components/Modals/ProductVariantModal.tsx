@@ -1009,11 +1009,12 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
                       : t("product_modal.add_to_cart_title")}
                   </Button>
                   {!editingCartItemId && selectedVariant?.store_id && (
-                    <RequestQuotation compact source="item" lines={[{
+                    <RequestQuotation source="item" lines={[{
                       product_variant_id: selectedVariant.id,
                       store_id: selectedVariant.store_id,
                       quantity,
-                      label: [product.title, selectedVariant.title].filter(Boolean).join(" · "),
+                      label: product.title,
+                      variantLabel: selectedVariant.title,
                       addons: Object.entries(selectedAddons).flatMap(([groupId, itemIds]) =>
                         itemIds.map((itemId) => ({ addon_group_id: Number(groupId), addon_item_id: itemId })),
                       ),

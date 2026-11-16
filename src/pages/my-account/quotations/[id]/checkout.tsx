@@ -1,11 +1,17 @@
+import { quotationPageProps } from "@/helpers/quotationPage";
 import { withAuth } from "@/guards/withAuth";
 import AddressSection from "@/components/Cart/AddressSection";
 import AddressModal from "@/components/Modals/AddressModal";
 import QuotationItems from "@/components/Quotations/QuotationItems";
-import { Button, Spinner } from "@/components/ui";
+import { Button, ErrorState, Skeleton, Spinner } from "@/components/ui";
+import AttachmentUploader, { type AttachmentFile } from "@/components/Cart/AttachmentUploader";
+import MyBreadcrumbs from "@/components/custom/MyBreadcrumbs";
+import { useQuotationMoney } from "@/components/Quotations/quotationPresentation";
+import { CheckoutShipping, CheckoutTax } from "@/views/CheckoutPageView/CheckoutBreakdown";
+import { useTranslation } from "react-i18next";
 import type { RootState } from "@/lib/redux/store";
 import PageHead from "@/SEO/PageHead";
-import { getQuotation, payQuotation, previewQuotation, quotationError, quoteMoney } from "@/services/quotations";
+import { getQuotation, payQuotation, previewQuotation, quotationError, quotationValidation, type QuotationCheckoutErrors } from "@/services/quotations";
 import type { Address } from "@/types/ApiResponse";
 import CheckoutLayout from "@/views/CheckoutPageView/CheckoutLayout";
 import { isAxiosError } from "axios";
@@ -17,18 +23,21 @@ import useSWR from "swr";
 
 function QuotationCheckoutPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const id = typeof router.query.id === "string" ? router.query.id : "";
   const userId = useSelector((state: RootState) => state.auth.user?.id);
-  const { data: quote, error: quoteError } = useSWR(id && userId ? ["quotation", userId, id] : null, () => getQuotation(id));
+  const { data: quote, error: quoteError, mutate: reloadQuote } = useSWR(id && userId ? ["quotation", userId, id] : null, () => getQuotation(id));
   const selectedAddress = useSelector((state: RootState) => state.checkout.selectedAddress);
   const [addressId, setAddressId] = useState<number>();
   const [addressModal, setAddressModal] = useState(false);
-  const [files, setFiles] = useState<Record<number, File[]>>({});
+  const [files, setFiles] = useState<Record<number, AttachmentFile[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const [paymentIssues, setPaymentIssues] = useState<QuotationCheckoutErrors>();
   const onAddressSelected = useCallback((address: Address) => {
     setAddressId(Number(address.id));
     setPaymentError("");
+    setPaymentIssues(undefined);
   }, []);
   const canPreview = quote?.status === "ready_to_pay" && addressId && addressId === Number(selectedAddress?.id);
   const { data: preview, error: previewError, isValidating, mutate } = useSWR(
@@ -38,6 +47,10 @@ function QuotationCheckoutPage() {
   );
   const pendingSlug = quote?.payment_order_slug || (preview && "order_slug" in preview ? preview.order_slug : null);
   const reviewed = preview && "totals" in preview ? preview : null;
+
+  const money = useQuotationMoney(reviewed?.currency_code);
+  const shippingIssues = (paymentIssues ?? quotationValidation(previewError)?.details)?.shipping_issues;
+  const title = t("quotation.number", { id });
 
   useEffect(() => {
     if (pendingSlug) void router.replace(`/payment/${pendingSlug}`);
@@ -49,86 +62,88 @@ function QuotationCheckoutPage() {
     body.set("address_id", String(addressId));
     body.set("pricing_review_token", reviewed.pricing_review_token);
     for (const [product, uploads] of Object.entries(files)) {
-      for (const file of uploads) body.append(`attachments[${product}][]`, file);
+      for (const file of uploads) body.append(`attachments[${product}][]`, file.file);
     }
     setPaymentError("");
+    setPaymentIssues(undefined);
     setSubmitting(true);
     try {
       const result = await payQuotation(id, body);
       await router.push(`/payment/${result.order_slug}`);
     } catch (error) {
-      setPaymentError(quotationError(error));
+      setPaymentError(quotationError(error, t("quotation.error")));
+      setPaymentIssues(quotationValidation(error)?.details);
       if (isAxiosError(error) && error.response?.status === 409) void mutate();
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (quoteError) return <p role="alert" className="text-danger">{quotationError(quoteError)}</p>;
-  if (!quote || pendingSlug) return <Spinner label="Loading quotation checkout" />;
+  if (quoteError) return <ErrorState title={t("quotation.loadError")} description={quotationError(quoteError, t("quotation.error"))} onRetry={() => void reloadQuote()} />;
+  if (!quote || pendingSlug) return <Skeleton className="h-48 rounded-large" />;
   if (quote.status !== "ready_to_pay") {
-    return <Link className="text-primary" href={`/my-account/quotations/${id}`}>Return to quotation #{id}</Link>;
+    return <Link className="text-primary" href={`/my-account/quotations/${id}`}>{title}</Link>;
   }
 
   return (
     <>
-      <PageHead pageTitle={`Checkout quotation #${id}`} />
-      <Link className="mb-3 inline-block text-sm text-primary hover:underline" href={`/my-account/quotations/${id}`}>Quotation #{id}</Link>
+      <PageHead pageTitle={t("quotation.checkoutTitle")} />
+      <MyBreadcrumbs breadcrumbs={[
+        { href: "/my-account/quotations", label: t("quotation.title") },
+        { href: `/my-account/quotations/${id}`, label: title },
+        { href: "#", label: t("quotation.checkout") },
+      ]} />
       <CheckoutLayout
-        heading="Quotation checkout"
+        heading={t("quotation.checkoutTitle")}
         details={
           <div className="space-y-4">
             <AddressSection onAddAddressModalOpen={() => setAddressModal(true)} onAddressSelected={onAddressSelected} />
-            <QuotationItems quote={quote} />
+            <QuotationItems quote={quote} issues={shippingIssues} />
             {reviewed?.attachments.map((item) => (
-              <label key={item.product_id} className="block rounded-large border border-divider bg-content1 p-4">
-                <span className="mb-2 block text-sm font-medium">Attachment for {item.title}{item.required ? " (required)" : ""}</span>
-                <input
-                  type="file"
-                  multiple
-                  accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx"
-                  onChange={(event) => {
-                    const uploads = Array.from(event.currentTarget.files ?? []);
-                    setFiles((existing) => ({ ...existing, [item.product_id]: uploads }));
-                  }}
-                  className="max-w-full text-sm"
+              <section key={item.product_id} className="rounded-large border border-divider bg-content1 p-4">
+                <h2 className="mb-2 text-sm font-medium">
+                  {t("quotation.attachmentFor", { item: item.title })} · {t(item.required ? "cart.attachments.requiredLabel" : "cart.attachments.optionalLabel")}
+                </h2>
+                <AttachmentUploader
+                  attachment={files[item.product_id] ?? []}
+                  onAttachmentChange={(uploads) => setFiles((current) => ({ ...current, [item.product_id]: uploads }))}
                 />
-              </label>
+              </section>
             ))}
           </div>
         }
         summary={
           <div className="space-y-3 rounded-large border border-divider bg-content1 p-4 md:sticky md:top-24">
-            <h2 className="font-bold">Order summary</h2>
-            {!canPreview ? <p className="text-sm text-default-600">Select a delivery address to calculate your total.</p> :
-              previewError ? <p role="alert" className="text-sm text-danger">{quotationError(previewError)}</p> :
-              !reviewed ? <Spinner size="sm" label="Calculating total" /> : (
+            <h2 className="font-bold">{t("cart.billDetails")}</h2>
+            {!canPreview ? <p className="text-sm text-default-600">{t("quotation.selectDelivery")}</p> :
+              previewError ? <ErrorState title={t("checkout.validation.title")}
+                description={quotationError(previewError, t("quotation.error"))} onRetry={() => void mutate()} /> :
+              !reviewed ? <Spinner size="sm" label={t("quotation.calculating")} /> : (
                 <>
-                  <dl className="space-y-2 text-sm">
-                    {[
-                      ["Merchandise (incl. tax)", reviewed.totals.items_total],
-                      ["Tax included in merchandise", reviewed.totals.tax_total],
-                      ["Shipping", reviewed.totals.total_delivery_charges],
-                      ["Platform fee", reviewed.totals.platform_fee],
-                      ["Pending charges", reviewed.totals.pending_charges_total],
-                    ].map(([label, amount]) => (
-                      <div key={label} className="flex justify-between gap-3">
-                        <dt>{label}</dt><dd>{quoteMoney(amount, reviewed.currency_code)}</dd>
-                      </div>
-                    ))}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between gap-3"><span>{t("quotation.merchandise")}</span><span>{money(reviewed.totals.items_total)}</span></div>
+                    <div className="flex justify-between gap-3"><span>{t("quotation.shipping")}</span><span>{money(reviewed.totals.total_delivery_charges)}</span></div>
+                    <CheckoutShipping shipments={reviewed.seller_shipping_costs ?? []} formatPrice={money} />
+                    <CheckoutTax total={reviewed.totals.tax_total} breakdown={reviewed.tax_breakdown} formatPrice={money} />
+                    {reviewed.totals.platform_fee > 0 && (
+                      <div className="flex justify-between gap-3"><span>{t("checkout.platformFee")}</span><span>{money(reviewed.totals.platform_fee)}</span></div>
+                    )}
+                    {reviewed.totals.pending_charges_total > 0 && (
+                      <div className="flex justify-between gap-3"><span>{t("checkout.pendingChargesTotal")}</span><span>{money(reviewed.totals.pending_charges_total)}</span></div>
+                    )}
                     <div className="flex justify-between gap-3 border-t border-divider pt-2 font-bold">
-                      <dt>Total</dt><dd>{quoteMoney(reviewed.totals.payable_amount, reviewed.currency_code)}</dd>
+                      <span>{t("quotation.total")}</span><span>{money(reviewed.totals.payable_amount)}</span>
                     </div>
-                  </dl>
+                  </div>
                   {paymentError && <p role="alert" className="text-sm text-danger">{paymentError}</p>}
                   <Button
                     color="primary"
-                    className="w-full"
+                    className="w-full font-semibold"
                     isLoading={submitting}
                     isDisabled={isValidating || reviewed.attachments.some((item) => item.required && !files[item.product_id]?.length)}
                     onPress={() => void pay()}
                   >
-                    Pay with Razorpay
+                    {t("quotation.pay")}
                   </Button>
                 </>
               )}
@@ -143,5 +158,7 @@ function QuotationCheckoutPage() {
     </>
   );
 }
+
+export const getServerSideProps = quotationPageProps;
 
 export default withAuth(QuotationCheckoutPage);

@@ -22,7 +22,7 @@ const withPWA = withPWAInit({
         options: { cacheName: "storefront-manifest" },
       },
       {
-        urlPattern: /^\/(my-account|cart|payment|shopping-list)(\/|$)/,
+        urlPattern: /^\/(my-account|cart|payment|quotation|shopping-list)(\/|$)/,
         handler: "NetworkOnly" as const,
       },
     ],

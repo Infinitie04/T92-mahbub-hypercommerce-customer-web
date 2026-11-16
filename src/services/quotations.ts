@@ -1,3 +1,4 @@
+import type { PaymentSummary, SellerShippingCost } from "@/types/cart";
 import { isAxiosError } from "axios";
 import { api } from "./client";
 
@@ -24,7 +25,7 @@ export type QuotationDetail = Quotation & {
   }[];
 };
 
-export type QuotationSourceLine = { quantity: number; label: string } & (
+export type QuotationSourceLine = { quantity: number; label: string; variantLabel?: string } & (
   | { cart_item_id: number }
   | {
       product_variant_id: number;
@@ -40,27 +41,34 @@ type QuotationPreview = {
   >;
   currency_code: string;
   pricing_review_token: string;
+  tax_breakdown: PaymentSummary["tax_breakdown"];
+  seller_shipping_costs: SellerShippingCost[];
   attachments: { product_id: number; title: string; required: boolean }[];
 };
 
-export const quotationLabels: Record<Quotation["status"], string> = {
-  pending: "Pending review",
-  accepted: "Accepted",
-  rejected: "Rejected",
-  ready_to_pay: "Ready to pay",
-  ordered: "Ordered",
+export const QUOTATION_DRAFT_KEY = "t92-quotation-draft";
+
+export type QuotationDraft = {
+  source: Quotation["source"];
+  userId: string;
+  lines: QuotationSourceLine[];
+  returnPath: string;
 };
 
-export const quoteMoney = (amount: number | string, currency: string) =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount));
-
-export function quotationError(error: unknown) {
-  if (isAxiosError<{ message?: string; errors?: Record<string, string[]> }>(error)) {
-    const data = error.response?.data;
-    return Object.values(data?.errors ?? {})[0]?.[0] ?? data?.message ?? "Quotation request failed. Try again.";
-  }
-  return "Quotation request failed. Try again.";
+export function quotationValidation(error: unknown) {
+  return isAxiosError<{ message?: string; errors?: Record<string, string[]>; details?: QuotationCheckoutErrors }>(error)
+    ? error.response?.data
+    : undefined;
 }
+
+export function quotationError(error: unknown, fallback: string) {
+  const data = quotationValidation(error);
+  return Object.values(data?.errors ?? {})[0]?.[0] ?? data?.message ?? fallback;
+}
+
+export type QuotationCheckoutErrors = {
+  shipping_issues?: { cart_item_id: number; reason: string }[];
+};
 
 export async function getQuotationCurrency() {
   const { data } = await api.get<{ currency_code: string }>("/user/quotations/currency");

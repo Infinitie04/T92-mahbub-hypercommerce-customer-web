@@ -1,58 +1,74 @@
+import { quotationPageProps } from "@/helpers/quotationPage";
+import { Chip, EmptyState, ErrorState, Skeleton } from "@/components/ui";
+import { Pagination } from "@heroui/react";
+import MyBreadcrumbs from "@/components/custom/MyBreadcrumbs";
+import PageHeader from "@/components/custom/PageHeader";
+import { quotationStatusColors, useQuotationMoney } from "@/components/Quotations/quotationPresentation";
 import { withAuth } from "@/guards/withAuth";
-import { Button, Spinner } from "@/components/ui";
+import { getFormattedDate } from "@/helpers/getters";
 import type { RootState } from "@/lib/redux/store";
-import { useSelector } from "react-redux";
 import PageHead from "@/SEO/PageHead";
-import { getQuotations, quotationError, quotationLabels, quoteMoney } from "@/services/quotations";
+import { getQuotations, quotationError, type Quotation } from "@/services/quotations";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
 import useSWR from "swr";
 
+function QuotationRow({ quote }: { quote: Quotation }) {
+  const { t, i18n } = useTranslation();
+  const money = useQuotationMoney(quote.currency_code);
+  return (
+    <li>
+      <Link href={`/my-account/quotations/${quote.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-content2">
+        <span>
+          <span className="block font-semibold">{t("quotation.number", { id: quote.id })}</span>
+          <span className="text-sm text-default-600">{getFormattedDate(quote.created_at, i18n.resolvedLanguage)}</span>
+        </span>
+        <span className="space-y-1 text-end text-sm">
+          <Chip size="sm" variant="flat" color={quotationStatusColors[quote.status]}>{t(`quotation.status.${quote.status}`)}</Chip>
+          <span className="block text-default-600">{money(quote.subtotal)}</span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
 function QuotationsPage() {
+  const router = useRouter();
+  const { t } = useTranslation();
   const userId = useSelector((state: RootState) => state.auth.user?.id);
-  const [page, setPage] = useState(1);
-  const { data, error, mutate } = useSWR(userId ? ["quotations", userId, page] : null, () => getQuotations(page));
+  const page = Math.max(1, Number.parseInt(String(router.query.page), 10) || 1);
+  const { data, error, mutate } = useSWR(userId && router.isReady ? ["quotations", userId, page] : null, () => getQuotations(page));
 
   return (
     <section className="space-y-4">
-      <PageHead pageTitle="Quotations" />
-      <h1 className="text-xl font-bold">Quotations</h1>
+      <PageHead pageTitle={t("quotation.title")} />
+      <MyBreadcrumbs breadcrumbs={[{ href: "/my-account/quotations", label: t("quotation.title") }]} />
+      <PageHeader title={t("quotation.title")} />
       {error ? (
-        <div role="alert">
-          <p>{quotationError(error)}</p>
-          <Button variant="light" onPress={() => void mutate()}>Try again</Button>
+        <ErrorState title={t("quotation.loadError")} description={quotationError(error, t("quotation.error"))} onRetry={() => void mutate()} />
+      ) : !data ? (
+        <div className="space-y-3" aria-busy="true">
+          {[1, 2, 3].map((key) => <Skeleton key={key} className="h-16 rounded-large" />)}
         </div>
-      ) : !data ? <Spinner label="Loading quotations" /> : !data.data.length ? (
-        <p className="text-default-600">No quotations yet.</p>
+      ) : !data.data.length ? (
+        <EmptyState title={t("quotation.empty")} />
       ) : (
         <>
           <ul className="divide-y divide-divider rounded-large border border-divider bg-content1">
-            {data.data.map((quote) => (
-              <li key={quote.id}>
-                <Link href={`/my-account/quotations/${quote.id}`} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 hover:bg-content2">
-                  <span>
-                    <span className="block font-semibold">Quotation #{quote.id}</span>
-                    <span className="text-sm text-default-600">{new Date(quote.created_at).toLocaleDateString()}</span>
-                  </span>
-                  <span className="text-end text-sm">
-                    <span className="block font-medium">{quotationLabels[quote.status]}</span>
-                    <span className="text-default-600">{quoteMoney(quote.subtotal, quote.currency_code)}</span>
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {data.data.map((quote) => <QuotationRow key={quote.id} quote={quote} />)}
           </ul>
           {data.last_page > 1 && (
-            <nav aria-label="Quotation pages" className="flex items-center gap-3">
-              <Button size="sm" variant="bordered" isDisabled={page <= 1} onPress={() => setPage(page - 1)}>Previous</Button>
-              <span className="text-sm">{page} / {data.last_page}</span>
-              <Button size="sm" variant="bordered" isDisabled={page >= data.last_page} onPress={() => setPage(page + 1)}>Next</Button>
-            </nav>
+            <Pagination showControls page={page} total={data.last_page}
+              onChange={(nextPage) => void router.push({ pathname: router.pathname, query: { page: nextPage } }, undefined, { shallow: true })} />
           )}
         </>
       )}
     </section>
   );
 }
+
+export const getServerSideProps = quotationPageProps;
 
 export default withAuth(QuotationsPage);
