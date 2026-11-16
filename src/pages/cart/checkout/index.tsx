@@ -6,14 +6,20 @@ import { getMarketFromContext } from "@/helpers/functionalHelpers";
 import { NextPageWithLayout } from "@/types";
 import dynamic from "next/dynamic";
 import { updateCartData } from "@/helpers/updators";
+import { parseQuotationId } from "@/helpers/quotationCheckout";
 import { withAuth } from "@/guards/withAuth";
 import { serverSideAuthGuard } from "@/guards/authGuard";
 import { loadTranslations } from "../../../../i18n";
 import PageHead from "@/SEO/PageHead";
+import { ErrorState } from "@/components/ui";
+import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 
 const CheckoutPageView = dynamic(() => import("@/views/CheckoutPageView"), {
+  ssr: false,
+});
+const QuotationCheckout = dynamic(() => import("@/views/CheckoutPageView/QuotationCheckout"), {
   ssr: false,
 });
 
@@ -23,28 +29,47 @@ interface CheckoutPageProps {
 
 const CheckoutPage: NextPageWithLayout<CheckoutPageProps> = () => {
   const { t } = useTranslation();
+  const router = useRouter();
+  const quotationParam = router.query.quotation;
+  const quotationId = parseQuotationId(quotationParam);
+  const isCartCheckout = router.isReady && quotationParam === undefined;
+  const title = t("pageTitle.checkout", { defaultValue: "Checkout" });
+
   useEffect(() => {
-    updateCartData(false, false, 0, false);
-  }, []);
+    if (isCartCheckout) updateCartData(false, false, 0, false);
+  }, [isCartCheckout]);
+
+  const breadcrumbs = quotationId
+    ? [
+        { href: "/my-account/quotations", label: t("quotation.history") },
+        { href: `/my-account/quotations/${quotationId}`, label: t("quotation.number", { id: quotationId }) },
+        { label: title },
+      ]
+    : [
+        { href: "/cart", label: "Shopping Cart" },
+        { href: "/cart/checkout", label: title },
+      ];
 
   return (
     <>
-      <PageHead pageTitle={t("pageTitle.checkout", { defaultValue: "Checkout" })} />
-
-      <button
-        id="refetch-cart-page"
-        onClick={() => updateCartData(true, false)}
-        className="hidden"
-      />
+      <PageHead pageTitle={title} />
 
       <div className="min-h-screen">
-        <MyBreadcrumbs
-          breadcrumbs={[
-            { href: "/cart", label: "Shopping Cart" },
-            { href: "/cart/checkout", label: "Checkout" },
-          ]}
-        />
-        <CheckoutPageView />
+        {router.isReady && (
+          <>
+            <MyBreadcrumbs breadcrumbs={breadcrumbs} />
+            {isCartCheckout ? (
+              <>
+                <button id="refetch-cart-page" onClick={() => updateCartData(true, false)} className="hidden" />
+                <CheckoutPageView />
+              </>
+            ) : quotationId ? (
+              <QuotationCheckout key={quotationId} id={quotationId} />
+            ) : (
+              <ErrorState title={t("quotation.notFound")} />
+            )}
+          </>
+        )}
       </div>
     </>
   );

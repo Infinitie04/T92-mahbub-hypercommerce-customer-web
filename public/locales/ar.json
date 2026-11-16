@@ -345,6 +345,7 @@
     "paymentConfirmed": "تم تأكيد الدفع",
     "paymentFailed": "فشل الدفع",
     "paymentPending": "سنُعلمك بمجرد تأكيد دفعتك.",
+    "checkPaymentStatus": "تحقق من حالة الدفع",
     "cartCleared": {
       "description": "تم مسح سلتك بنجاح",
       "title": "تم مسح السلة"

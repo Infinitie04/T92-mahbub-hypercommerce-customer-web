@@ -345,6 +345,7 @@
     "paymentConfirmed": "Payment confirmed",
     "paymentFailed": "Payment failed",
     "paymentPending": "We'll notify you once your payment is confirmed.",
+    "checkPaymentStatus": "Check payment status",
     "cartCleared": {
       "description": "Your cart has been cleared successfully",
       "title": "Cart Cleared"

@@ -345,6 +345,7 @@
     "paymentConfirmed": "भुगतान की पुष्टि हो गई",
     "paymentFailed": "भुगतान विफल",
     "paymentPending": "भुगतान की पुष्टि होते ही हम आपको सूचित करेंगे।",
+    "checkPaymentStatus": "भुगतान की स्थिति देखें",
     "cartCleared": {
       "description": "आपकी कार्ट सफलतापूर्वक साफ़ कर दी गई है",
       "title": "कार्ट साफ़ की गई"

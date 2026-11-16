@@ -18,8 +18,8 @@ export const isPaymentRetryLimitReached = (res: PayResult): boolean =>
  * When the retry limit is hit, redirect to checkout. Returns true if it
  * redirected, so callers can stop and skip the failure toast.
  */
-export const redirectToCheckoutOnRetryLimit = (res: PayResult): boolean => {
+export const redirectToCheckoutOnRetryLimit = (res: PayResult, checkoutHref = "/cart/checkout"): boolean => {
   if (!isPaymentRetryLimitReached(res)) return false;
-  void Router.replace("/cart/checkout");
+  void Router.replace(checkoutHref);
   return true;
 };

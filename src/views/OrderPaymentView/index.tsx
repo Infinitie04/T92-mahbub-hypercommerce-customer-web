@@ -12,7 +12,7 @@ import PayStack from "@/components/PaymentGateway/Paystack";
 import FlutterwavePayment from "@/components/PaymentGateway/FlutterwavePayment";
 import XenditPayment from "@/components/PaymentGateway/XenditPayment";
 import MercadoPagoPayment from "@/components/PaymentGateway/MercadoPagoPayment";
-import { getSpecificOrders } from "@/services/orders";
+import { getSpecificOrders, verifyRazorpayOrderPayment } from "@/services/orders";
 import { Order } from "@/types/order";
 
 type Phase = "loading" | "pay" | "waiting" | "success" | "failed";
@@ -31,6 +31,8 @@ const OrderPaymentView: FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [isLoading, setIsLoading] = useState(false);
+  const isRazorpay = order?.payment_method === "razorpayPayment";
+  const quotationId = order?.quotation_id;
 
   // Load the order and gate on its state.
   useEffect(() => {
@@ -65,38 +67,42 @@ const OrderPaymentView: FC = () => {
   const onError = () => setPhase("failed");
   const onSuccess = () => setPhase("waiting");
 
-  // Waiting: poll the order until the webhook confirms/fails it (~90s).
   useEffect(() => {
     if (phase !== "waiting" || !slug) return;
     let active = true;
-    let attempts = 0;
     let timer: ReturnType<typeof setTimeout>;
+    const started = Date.now();
+    let verifyAt = isRazorpay ? started + 5000 : Infinity;
 
     const poll = async () => {
       if (!active) return;
-      const res = await getSpecificOrders({ slug });
-      const status = res?.data?.payment_status;
+      const shouldVerify = Date.now() >= verifyAt;
+      if (shouldVerify) verifyAt = Date.now() + 10000;
 
-      if (status === "completed") {
+      const result = shouldVerify
+        ? await verifyRazorpayOrderPayment(slug).catch(() => null)
+        : (await getSpecificOrders({ slug }))?.data;
+
+      if (!active) return;
+      if (result?.payment_status === "completed") {
         setPhase("success");
         return;
       }
-      if (status === "failed" || res?.data?.status === "cancelled") {
+      if (result?.payment_status === "failed" || result?.status === "cancelled") {
         setPhase("failed");
         return;
       }
-      attempts += 1;
-      if (attempts >= 30) {
+      if (Date.now() - started >= 90000) {
         toast({
           title: t("checkout.paymentPending", {
             defaultValue: "We'll notify you once your payment is confirmed.",
           }),
           color: "warning",
         });
-        router.push(order?.quotation_id ? `/my-account/quotations/${order.quotation_id}` : "/my-account/orders");
+        void router.push(quotationId ? `/my-account/quotations/${quotationId}` : "/my-account/orders");
         return;
       }
-      timer = setTimeout(poll, 3000);
+      timer = setTimeout(poll, Math.min(3000, Math.max(0, verifyAt - Date.now())));
     };
 
     timer = setTimeout(poll, 2000);
@@ -104,8 +110,7 @@ const OrderPaymentView: FC = () => {
       active = false;
       clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, slug]);
+  }, [phase, slug, isRazorpay, quotationId, router, t]);
 
   // Success → order detail.
   useEffect(() => {
@@ -230,7 +235,7 @@ const OrderPaymentView: FC = () => {
   const gateway = (() => {
     switch (order.payment_method) {
       case "razorpayPayment":
-        return <RazorPay {...gatewayProps} />;
+        return <RazorPay {...gatewayProps} quotationId={order.quotation_id} />;
       case "stripePayment":
         return <Stripe {...gatewayProps} />;
       case "paystackPayment":
@@ -324,6 +329,17 @@ const OrderPaymentView: FC = () => {
 
         {/* Gateway pay button */}
         <div className="mt-5 w-full">{gateway}</div>
+        {isRazorpay && order.payment_status === "pending" && (
+          <Button
+            variant="light"
+            fullWidth
+            className="mt-2"
+            isDisabled={isLoading}
+            onPress={() => setPhase("waiting")}
+          >
+            {t("checkout.checkPaymentStatus", { defaultValue: "Check payment status" })}
+          </Button>
+        )}
 
         {/* Trust note */}
         <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-foreground/40">

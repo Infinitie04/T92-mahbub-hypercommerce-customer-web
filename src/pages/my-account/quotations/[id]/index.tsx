@@ -1,3 +1,4 @@
+import { quotationCheckoutHref, quotationPaymentHref } from "@/helpers/quotationCheckout";
 import { quotationPageProps } from "@/helpers/quotationPage";
 import { Button, Chip, EmptyState, ErrorState, Skeleton } from "@/components/ui";
 import MyBreadcrumbs from "@/components/custom/MyBreadcrumbs";
@@ -78,7 +79,7 @@ function QuotationDetailPage() {
                 <Button as={Link} color="primary" fullWidth href={`/my-account/orders/${quote.order_slug}`}>{t("quotation.viewOrder")}</Button>
               ) : quote.status === "ready_to_pay" && (
                 <Button as={Link} color="primary" fullWidth
-                  href={quote.payment_order_slug ? `/payment/${quote.payment_order_slug}` : `/my-account/quotations/${quote.id}/checkout`}>
+                  href={quote.payment_order_slug ? quotationPaymentHref(quote.payment_order_slug, quote.id) : quotationCheckoutHref(quote.id)}>
                   {t(quote.payment_order_slug ? "quotation.resumePayment" : "quotation.checkout")}
                 </Button>
               )}

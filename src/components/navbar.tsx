@@ -16,6 +16,7 @@ import dynamic from "next/dynamic";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/redux/store";
 import { useRouter } from "next/router";
+import { parseQuotationId } from "@/helpers/quotationCheckout";
 import { useSettings } from "@/contexts/SettingsContext";
 import { siteConfig } from "@/config/site";
 import { useTranslation } from "react-i18next";
@@ -1139,10 +1140,16 @@ export const Navbar: FC = () => {
 
   if (isCheckoutOrPayment) {
     const isPaymentPage = router.pathname.startsWith("/payment");
-    const backHref = isPaymentPage ? "/cart/checkout" : "/cart";
-    const backText = isPaymentPage
-      ? t("nav.backToCheckout", "Back to Checkout")
-      : t("nav.backToCart", "Back to Cart");
+    const quotationId = parseQuotationId(router.query.quotation);
+    let backHref = "/cart";
+    let backText = t("nav.backToCart", "Back to Cart");
+    if (quotationId) {
+      backHref = `/my-account/quotations/${quotationId}`;
+      backText = t("quotation.number", { id: quotationId });
+    } else if (isPaymentPage) {
+      backHref = "/cart/checkout";
+      backText = t("nav.backToCheckout", "Back to Checkout");
+    }
     const titleText = isPaymentPage
       ? t("nav.securePayment", "Secure Payment")
       : t("nav.secureCheckout", "Secure Checkout");

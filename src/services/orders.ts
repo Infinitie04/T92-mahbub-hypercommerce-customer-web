@@ -207,6 +207,13 @@ export const payOrder = async (
   }
 };
 
+export async function verifyRazorpayOrderPayment(slug: string) {
+  const { data } = await api.post<Pick<Order, "payment_status" | "status">>(
+    `/user/orders/${slug}/verify-payment`,
+  );
+  return data;
+}
+
 // Mark a pending order's payment as failed and release its stock (user cancel).
 export const cancelOrderPayment = async (
   slug: string,
