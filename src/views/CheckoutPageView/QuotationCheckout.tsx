@@ -48,6 +48,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const money = useQuotationMoney(reviewed?.currency_code);
   const shippingIssues = (paymentIssues ?? quotationValidation(previewError)?.details)?.shipping_issues;
   const title = t("quotation.number", { id });
+  const previewLoadingLabel = t(quote?.has_pending_order ? "checkout.confirmingPayment" : "quotation.calculating");
 
   const pay = async () => {
     if (!reviewed || !canPreview || previewAddressId === undefined || submitting) return;
@@ -77,7 +78,8 @@ export default function QuotationCheckout({ id }: { id: string }) {
     }
   };
 
-  if (quoteError) return <ErrorState title={t("quotation.loadError")} description={quotationError(quoteError, t("quotation.error"))} onRetry={() => void reloadQuote()} />;
+  if (quoteError) return <ErrorState title={t("quotation.loadError")} description={quotationError(quoteError, t("quotation.error"))}
+    retryLabel={t("retry")} onRetry={() => void reloadQuote()} />;
   if (!quote) return <Skeleton className="h-48 rounded-large" />;
   if (quote.order_slug) {
     return <Button as={Link} color="primary" href={`/my-account/orders/${quote.order_slug}`}>{t("quotation.viewOrder")}</Button>;
@@ -111,8 +113,10 @@ export default function QuotationCheckout({ id }: { id: string }) {
           <div className="space-y-3 rounded-large border border-divider bg-content1 p-4 md:sticky md:top-24">
             <h2 className="font-bold">{t("cart.billDetails")}</h2>
             {!canPreview ? <p className="text-sm text-default-600">{t("quotation.selectDelivery")}</p> :
+              previewError && isValidating ? <Spinner size="sm" label={previewLoadingLabel} /> :
               previewError ? <ErrorState title={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "checkout.validation.title")}
-                description={quotationError(previewError, t("quotation.error"))} onRetry={() => {
+                description={quotationError(previewError, t("quotation.error"))}
+                retryLabel={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "retry")} onRetry={() => {
                   void reloadQuote();
                   void mutate();
                 }} /> :
@@ -124,7 +128,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
                   {t(verifiedOrder.payment_status === "completed" ? "quotation.viewOrder" : "quotation.pay")}
                 </Button>
               ) :
-              !reviewed ? <Spinner size="sm" label={t(quote.has_pending_order ? "checkout.confirmingPaymentTitle" : "quotation.calculating")} /> : (
+              !reviewed ? <Spinner size="sm" label={previewLoadingLabel} /> : (
                 <>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3"><span>{t("quotation.merchandise")}</span><span>{money(reviewed.totals.items_total)}</span></div>
