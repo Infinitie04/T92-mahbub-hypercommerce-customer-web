@@ -1,4 +1,4 @@
-import { quotationCheckoutHref, quotationPaymentHref } from "@/helpers/quotationCheckout";
+import { quotationCheckoutHref } from "@/helpers/quotationCheckout";
 import { quotationPageProps } from "@/helpers/quotationPage";
 import { Button, Chip, EmptyState, ErrorState, Modal, ModalBody, ModalContent, ModalHeader, Skeleton, toastError, useDisclosure } from "@/components/ui";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
@@ -103,9 +103,8 @@ function QuotationDetailPage() {
               {quote.order_slug ? (
                 <Button as={Link} color="primary" fullWidth href={`/my-account/orders/${quote.order_slug}`}>{t("quotation.viewOrder")}</Button>
               ) : quote.status === "ready_to_pay" && (
-                <Button as={Link} color="primary" fullWidth
-                  href={quote.payment_order_slug ? quotationPaymentHref(quote.payment_order_slug, quote.id) : quotationCheckoutHref(quote.id)}>
-                  {t(quote.payment_order_slug ? "quotation.resumePayment" : "quotation.checkout")}
+                <Button as={Link} color="primary" fullWidth href={quotationCheckoutHref(quote.id)}>
+                  {t("quotation.checkout")}
                 </Button>
               )}
               <Button variant="bordered" fullWidth onPress={requote.onOpen}>

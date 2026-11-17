@@ -15,7 +15,7 @@ import MercadoPagoPayment from "@/components/PaymentGateway/MercadoPagoPayment";
 import { getSpecificOrders, verifyRazorpayOrderPayment } from "@/services/orders";
 import { Order } from "@/types/order";
 
-type Phase = "loading" | "pay" | "waiting" | "success" | "failed";
+type Phase = "loading" | "checking" | "pay" | "waiting" | "success" | "failed";
 
 const OrderPaymentView: FC = () => {
   const router = useRouter();
@@ -58,7 +58,13 @@ const OrderPaymentView: FC = () => {
         return;
       }
       setOrder(o);
-      setPhase(o.payment_status === "failed" || o.status === "cancelled" ? "failed" : returnedFromHostedGateway ? "waiting" : "pay");
+      if (o.payment_status === "failed" || o.status === "cancelled") {
+        setPhase("failed");
+      } else if (o.quotation_id && o.payment_method === "razorpayPayment") {
+        setPhase("checking");
+      } else {
+        setPhase(returnedFromHostedGateway ? "waiting" : "pay");
+      }
     })();
     return () => {
       active = false;
@@ -66,24 +72,25 @@ const OrderPaymentView: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, returnedFromHostedGateway]);
 
-  const onError = () => setPhase("failed");
+  const onError = () => setPhase(quotationId && isRazorpay ? "checking" : "failed");
   const onSuccess = () => setPhase("waiting");
 
   useEffect(() => {
-    if (phase !== "waiting" || !slug) return;
+    if ((phase !== "waiting" && phase !== "checking") || !slug) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
     const started = Date.now();
-    let verifyAt = isRazorpay ? started + 5000 : Infinity;
+    let verifyAt = isRazorpay ? started + (phase === "checking" ? 0 : 5000) : Infinity;
 
     const poll = async () => {
       if (!active) return;
       const shouldVerify = Date.now() >= verifyAt;
       if (shouldVerify) verifyAt = Date.now() + 10000;
 
-      const result = shouldVerify
+      const verification = shouldVerify
         ? await verifyRazorpayOrderPayment(slug).catch(() => null)
-        : (await getSpecificOrders({ slug }))?.data;
+        : null;
+      const result = shouldVerify ? verification : (await getSpecificOrders({ slug }))?.data;
 
       if (!active) return;
       if (result?.payment_status === "completed") {
@@ -92,6 +99,10 @@ const OrderPaymentView: FC = () => {
       }
       if (result?.payment_status === "failed" || result?.status === "cancelled") {
         setPhase("failed");
+        return;
+      }
+      if (phase === "checking" && verification?.can_pay) {
+        setPhase("pay");
         return;
       }
       if (Date.now() - started >= 90000) {
@@ -107,7 +118,7 @@ const OrderPaymentView: FC = () => {
       timer = setTimeout(poll, Math.min(3000, Math.max(0, verifyAt - Date.now())));
     };
 
-    timer = setTimeout(poll, 2000);
+    timer = setTimeout(poll, phase === "checking" ? 0 : 2000);
     return () => {
       active = false;
       clearTimeout(timer);
@@ -133,7 +144,7 @@ const OrderPaymentView: FC = () => {
   const cancel = () => router.push(order?.quotation_id ? `/my-account/quotations/${order.quotation_id}` : "/cart/checkout");
 
   // ---------- Loading ----------
-  if (phase === "loading" || !order) {
+  if (phase === "loading" || !order || order.slug !== slug) {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
         <Spinner size="lg" color="primary" />
@@ -145,7 +156,7 @@ const OrderPaymentView: FC = () => {
   }
 
   // ---------- Waiting screen ----------
-  if (phase === "waiting") {
+  if (phase === "waiting" || phase === "checking") {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col items-center justify-center px-4">
         <div className="w-full rounded-large border border-divider bg-content1 p-8 text-center">
@@ -319,18 +330,18 @@ const OrderPaymentView: FC = () => {
               <p className="font-semibold">
                 {t("checkout.paymentFailed", { defaultValue: "Payment failed" })}
               </p>
-              <p className="text-xs text-red-600">
+              {!quotationId && <p className="text-xs text-red-600">
                 {t("checkout.paymentFailedHelp", {
                   defaultValue:
                     "Your payment didn't go through. You can try again below.",
                 })}
-              </p>
+              </p>}
             </div>
           </div>
         )}
 
         {/* Gateway pay button */}
-        <div className="mt-5 w-full">{gateway}</div>
+        {!(quotationId && phase === "failed") && <div className="mt-5 w-full">{gateway}</div>}
         {isRazorpay && paymentStarted && order.payment_status === "pending" && (
           <Button
             variant="light"

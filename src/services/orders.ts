@@ -209,7 +209,7 @@ export const payOrder = async (
 };
 
 export async function verifyRazorpayOrderPayment(slug: string) {
-  const { data } = await api.post<ApiDataResponse<Pick<Order, "payment_status" | "status">>>(
+  const { data } = await api.post<ApiDataResponse<Pick<Order, "payment_status" | "status"> & { can_pay: boolean }>>(
     `/user/orders/${slug}/verify-payment`,
   );
   return unwrapApiData(data);

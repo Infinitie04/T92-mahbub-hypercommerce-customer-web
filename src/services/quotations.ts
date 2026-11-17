@@ -16,7 +16,7 @@ export type Quotation = {
   customer_note?: string | null;
   created_at: string;
   order_slug: string | null;
-  payment_order_slug?: string | null;
+  has_pending_order?: boolean;
 };
 
 export type QuotationDetail = Quotation & {
@@ -152,8 +152,13 @@ export async function cancelQuotation(id: number) {
   return unwrapApiData(data);
 }
 
-export async function previewQuotation(id: string, addressId: number) {
-  const { data } = await api.post<ApiDataResponse<QuotationPreview | { order_slug: string }>>(
+type QuotationPaymentOrder = {
+  order_slug: string;
+  payment_status: "pending" | "completed";
+};
+
+export async function previewQuotation(id: string, addressId?: number) {
+  const { data } = await api.post<ApiDataResponse<QuotationPreview | QuotationPaymentOrder>>(
     `/user/quotations/${id}/preview`,
     { address_id: addressId },
   );
@@ -161,6 +166,6 @@ export async function previewQuotation(id: string, addressId: number) {
 }
 
 export async function payQuotation(id: string, body: FormData) {
-  const { data } = await api.post<ApiDataResponse<{ order_slug: string }>>(`/user/quotations/${id}/pay`, body);
+  const { data } = await api.post<ApiDataResponse<QuotationPaymentOrder>>(`/user/quotations/${id}/pay`, body);
   return unwrapApiData(data);
 }

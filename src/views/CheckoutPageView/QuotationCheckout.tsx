@@ -14,7 +14,7 @@ import CheckoutLayout from "./CheckoutLayout";
 import { isAxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
 import useSWR from "swr";
 
@@ -35,27 +35,24 @@ export default function QuotationCheckout({ id }: { id: string }) {
     setPaymentError("");
     setPaymentIssues(undefined);
   }, []);
-  const canPreview = quote?.status === "ready_to_pay" && addressId && addressId === Number(selectedAddress?.id);
+  const previewAddressId = addressId === Number(selectedAddress?.id) ? addressId : undefined;
+  const canPreview = quote?.status === "ready_to_pay" && (quote.has_pending_order || previewAddressId !== undefined);
   const { data: preview, error: previewError, isValidating, mutate } = useSWR(
-    canPreview ? ["quotation-preview", userId, id, addressId] : null,
-    () => previewQuotation(id, addressId!),
+    canPreview ? ["quotation-preview", userId, id, previewAddressId] : null,
+    () => previewQuotation(id, previewAddressId),
     { shouldRetryOnError: false, revalidateOnFocus: false },
   );
-  const pendingSlug = quote?.payment_order_slug || (preview && "order_slug" in preview ? preview.order_slug : null);
+  const verifiedOrder = !previewError && preview && "order_slug" in preview ? preview : null;
   const reviewed = preview && "totals" in preview ? preview : null;
 
   const money = useQuotationMoney(reviewed?.currency_code);
   const shippingIssues = (paymentIssues ?? quotationValidation(previewError)?.details)?.shipping_issues;
   const title = t("quotation.number", { id });
 
-  useEffect(() => {
-    if (pendingSlug) void router.replace(quotationPaymentHref(pendingSlug, id));
-  }, [id, pendingSlug, router]);
-
   const pay = async () => {
-    if (!reviewed || !canPreview || submitting) return;
+    if (!reviewed || !canPreview || previewAddressId === undefined || submitting) return;
     const body = new FormData();
-    body.set("address_id", String(addressId));
+    body.set("address_id", String(previewAddressId));
     body.set("pricing_review_token", reviewed.pricing_review_token);
     for (const [product, uploads] of Object.entries(files)) {
       for (const file of uploads) body.append(`attachments[${product}][]`, file.file);
@@ -65,18 +62,26 @@ export default function QuotationCheckout({ id }: { id: string }) {
     setSubmitting(true);
     try {
       const result = await payQuotation(id, body);
-      await router.push(quotationPaymentHref(result.order_slug, id));
+      await router.push(result.payment_status === "completed"
+        ? `/my-account/orders/${result.order_slug}`
+        : quotationPaymentHref(result.order_slug, id));
     } catch (error) {
       setPaymentError(quotationError(error, t("quotation.error")));
       setPaymentIssues(quotationValidation(error)?.details);
-      if (isAxiosError(error) && error.response?.status === 409) void mutate();
+      if (isAxiosError(error) && [409, 503].includes(error.response?.status ?? 0)) {
+        void reloadQuote();
+        void mutate();
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   if (quoteError) return <ErrorState title={t("quotation.loadError")} description={quotationError(quoteError, t("quotation.error"))} onRetry={() => void reloadQuote()} />;
-  if (!quote || pendingSlug) return <Skeleton className="h-48 rounded-large" />;
+  if (!quote) return <Skeleton className="h-48 rounded-large" />;
+  if (quote.order_slug) {
+    return <Button as={Link} color="primary" href={`/my-account/orders/${quote.order_slug}`}>{t("quotation.viewOrder")}</Button>;
+  }
   if (quote.status !== "ready_to_pay") {
     return <Link className="text-primary" href={`/my-account/quotations/${id}`}>{title}</Link>;
   }
@@ -87,7 +92,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
         heading={t("pageTitle.checkout", { defaultValue: "Checkout" })}
         details={
           <div className="space-y-4">
-            <AddressSection onAddAddressModalOpen={() => setAddressModal(true)} onAddressSelected={onAddressSelected} />
+            {!quote.has_pending_order && <AddressSection onAddAddressModalOpen={() => setAddressModal(true)} onAddressSelected={onAddressSelected} />}
             <QuotationItems quote={quote} issues={shippingIssues} />
             {reviewed?.attachments.map((item) => (
               <section key={item.product_id} className="rounded-large border border-divider bg-content1 p-4">
@@ -106,9 +111,20 @@ export default function QuotationCheckout({ id }: { id: string }) {
           <div className="space-y-3 rounded-large border border-divider bg-content1 p-4 md:sticky md:top-24">
             <h2 className="font-bold">{t("cart.billDetails")}</h2>
             {!canPreview ? <p className="text-sm text-default-600">{t("quotation.selectDelivery")}</p> :
-              previewError ? <ErrorState title={t("checkout.validation.title")}
-                description={quotationError(previewError, t("quotation.error"))} onRetry={() => void mutate()} /> :
-              !reviewed ? <Spinner size="sm" label={t("quotation.calculating")} /> : (
+              previewError ? <ErrorState title={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "checkout.validation.title")}
+                description={quotationError(previewError, t("quotation.error"))} onRetry={() => {
+                  void reloadQuote();
+                  void mutate();
+                }} /> :
+              verifiedOrder ? (
+                <Button as={Link} color="primary" fullWidth isDisabled={isValidating}
+                  href={verifiedOrder.payment_status === "completed"
+                    ? `/my-account/orders/${verifiedOrder.order_slug}`
+                    : quotationPaymentHref(verifiedOrder.order_slug, id)}>
+                  {t(verifiedOrder.payment_status === "completed" ? "quotation.viewOrder" : "quotation.pay")}
+                </Button>
+              ) :
+              !reviewed ? <Spinner size="sm" label={t(quote.has_pending_order ? "checkout.confirmingPaymentTitle" : "quotation.calculating")} /> : (
                 <>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3"><span>{t("quotation.merchandise")}</span><span>{money(reviewed.totals.items_total)}</span></div>
