@@ -104,6 +104,11 @@ const AddressCard: FC<AddressCardProps> = ({ address, onDelete, onEdit }) => {
     address.address_type == "home" ? "home_title" : address.address_type,
   );
 
+  const badgeClasses = {
+    base: "h-[24px] shrink-0 px-2",
+    content: "px-0.5 text-[12px] leading-[16px] font-medium",
+  };
+
   return (
     <>
       <div className="flex items-start justify-between gap-3 rounded-medium border border-divider bg-content1 p-4 transition-colors hover:border-primary">
@@ -115,7 +120,7 @@ const AddressCard: FC<AddressCardProps> = ({ address, onDelete, onEdit }) => {
               color={getAddressTypeColor(address.address_type)}
               variant="flat"
               className="capitalize"
-              classNames={{ content: "text-[11px] font-semibold" }}
+              classNames={badgeClasses}
               startContent={
                 <span className="ms-1 flex">
                   {getAddressTypeIcon(address.address_type)}
@@ -124,8 +129,8 @@ const AddressCard: FC<AddressCardProps> = ({ address, onDelete, onEdit }) => {
             >
               {typeLabel}
             </Chip>
-            {address.is_default_billing && <Chip size="sm" variant="flat">{t("address.labels.defaultBilling", "Default billing address")}</Chip>}
-            {address.is_default_shipping && <Chip size="sm" variant="flat">{t("address.labels.defaultShipping", "Default delivery address")}</Chip>}
+            {address.is_default_billing && <Chip size="sm" variant="flat" classNames={badgeClasses}>{t("address.labels.defaultBilling", "Default billing address")}</Chip>}
+            {address.is_default_shipping && <Chip size="sm" variant="flat" classNames={badgeClasses}>{t("address.labels.defaultShipping", "Default delivery address")}</Chip>}
           </div>
 
           <div className="mt-2 text-[13.5px] font-bold text-foreground">
