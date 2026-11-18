@@ -28,6 +28,11 @@
     "deleted_title": "Address Deleted",
     "deliveryAddress": "Delivery Address",
     "labels": {
+      "legalName": "Legal name",
+      "gstin": "GSTIN (if registered)",
+      "defaultBilling": "Default billing address",
+      "defaultShipping": "Default delivery address",
+      "gstStateCode": "GST state code",
       "addressLine1": "Address Line 1",
       "addressLine2": "Address Line 2",
       "addressType": "Address Type",
@@ -59,6 +64,7 @@
     "update": "Update Address",
     "subtitle": "Tell us where to deliver your order",
     "sections": {
+      "billing": "Billing details",
       "location": "Delivery location",
       "details": "Address details"
     },

@@ -5,6 +5,7 @@ import {
   ModalHeader,
   ModalFooter,
   Input,
+  Checkbox,
   Select,
   SelectItem,
   Button,
@@ -38,6 +39,10 @@ interface AddressModalProps {
 }
 
 type AddressFormData = {
+  legal_name: string;
+  gstin: string;
+  is_default_billing: boolean;
+  is_default_shipping: boolean;
   id: string | number;
   address_line1: string;
   address_line2: string;
@@ -106,6 +111,10 @@ const reverseGeocode = async (latLng: {
 };
 
 const emptyForm = (initialData?: Partial<Address>): AddressFormData => ({
+  legal_name: initialData?.legal_name ?? "",
+  gstin: initialData?.gstin ?? "",
+  is_default_billing: initialData?.is_default_billing ?? false,
+  is_default_shipping: initialData?.is_default_shipping ?? false,
   id: initialData?.id || "",
   address_line1: initialData?.address_line1 || "",
   address_line2: initialData?.address_line2 || "",
@@ -504,7 +513,7 @@ const AddressModal: FC<AddressModalProps> = ({
             : { latitude: location.lat, longitude: location.lng }
           : {};
 
-      const addressData = { ...formData, ...coords };
+      const addressData = { ...formData, ...coords, gstin: formData.country_code === "IN" ? formData.gstin.trim() : "" };
 
       const response = initialData
         ? await editAddress(addressData)
@@ -522,6 +531,8 @@ const AddressModal: FC<AddressModalProps> = ({
       } else {
         let errorDescription = response?.message || t("address.toast.error");
         if (response?.data && typeof response.data === "object") {
+          setErrors(Object.fromEntries(Object.entries(response.data).map(([key, value]) =>
+            [key, Array.isArray(value) ? value.join(", ") : String(value)])));
           const fieldErrors = Object.values(response.data)
             .map((e) => (Array.isArray(e) ? e.join(", ") : String(e)))
             .filter(Boolean)
@@ -823,6 +834,32 @@ const AddressModal: FC<AddressModalProps> = ({
                 </SelectItem>
               </Select>
             </div>
+          </section>
+          <section className="flex flex-col gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/50">
+              {t("address.sections.billing", "Billing details")}
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Input label={t("address.labels.legalName", "Legal name")} labelPlacement="outside"
+                variant="bordered" value={formData.legal_name} maxLength={255}
+                isRequired={formData.country_code === "IN" && !!formData.gstin}
+                isInvalid={!!errors.legal_name} errorMessage={errors.legal_name}
+                onValueChange={(value) => setField("legal_name", value)} isReadOnly={isLoading} />
+              {formData.country_code === "IN" && (
+                <Input label={t("address.labels.gstin", "GSTIN (if registered)")} labelPlacement="outside"
+                  variant="bordered" value={formData.gstin} maxLength={15}
+                  isInvalid={!!errors.gstin} errorMessage={errors.gstin}
+                  onValueChange={(value) => setField("gstin", value.toUpperCase())} isReadOnly={isLoading} />
+              )}
+            </div>
+            <Checkbox isSelected={formData.is_default_billing} isDisabled={isLoading}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, is_default_billing: value }))}>
+              {t("address.labels.defaultBilling", "Default billing address")}
+            </Checkbox>
+            <Checkbox isSelected={formData.is_default_shipping} isDisabled={isLoading}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, is_default_shipping: value }))}>
+              {t("address.labels.defaultShipping", "Default delivery address")}
+            </Checkbox>
           </section>
         </ModalBody>
         <ModalFooter>

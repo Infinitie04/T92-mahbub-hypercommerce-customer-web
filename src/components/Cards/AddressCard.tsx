@@ -1,5 +1,5 @@
 import { FC, useState } from "react";
-import { Button, Chip, useDisclosure, addToast } from "@heroui/react";
+import { Button, Chip, useDisclosure, toast as addToast } from "@/components/ui";
 import { Icon } from "@iconify/react";
 import { Address } from "@/types/ApiResponse";
 import AddressModal from "../Modals/AddressModal";
@@ -108,7 +108,7 @@ const AddressCard: FC<AddressCardProps> = ({ address, onDelete, onEdit }) => {
     <>
       <div className="flex items-start justify-between gap-3 rounded-medium border border-divider bg-content1 p-4 transition-colors hover:border-primary">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Chip
               size="sm"
               radius="full"
@@ -124,9 +124,12 @@ const AddressCard: FC<AddressCardProps> = ({ address, onDelete, onEdit }) => {
             >
               {typeLabel}
             </Chip>
+            {address.is_default_billing && <Chip size="sm" variant="flat">{t("address.labels.defaultBilling", "Default billing address")}</Chip>}
+            {address.is_default_shipping && <Chip size="sm" variant="flat">{t("address.labels.defaultShipping", "Default delivery address")}</Chip>}
           </div>
 
           <div className="mt-2 text-[13.5px] font-bold text-foreground">
+            {address.legal_name && <div>{address.legal_name}</div>}
             {address.address_line1}
           </div>
           <div className="mt-1 text-xs text-default-500 line-clamp-2">
@@ -139,6 +142,8 @@ const AddressCard: FC<AddressCardProps> = ({ address, onDelete, onEdit }) => {
               .filter(Boolean)
               .join(", ")}
           </div>
+          {address.gstin && <div className="mt-1 text-xs text-default-500">GSTIN · {address.gstin}</div>}
+          {address.gst_state_code && <div className="text-xs text-default-500">{t("address.labels.gstStateCode", "GST state code")} · {address.gst_state_code}</div>}
           <div className="mt-1 flex items-center gap-1.5 text-xs text-default-500">
             <Icon icon="solar:phone-linear" width={12} height={12} />
             <span>{address.mobile}</span>

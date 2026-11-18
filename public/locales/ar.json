@@ -28,6 +28,11 @@
     "deleted_title": "تم حذف العنوان",
     "deliveryAddress": "عنوان التوصيل",
     "labels": {
+      "legalName": "الاسم القانوني",
+      "gstin": "رقم GSTIN (للمسجلين)",
+      "defaultBilling": "عنوان الفوترة الافتراضي",
+      "defaultShipping": "عنوان التوصيل الافتراضي",
+      "gstStateCode": "رمز الولاية لضريبة GST",
       "addressLine1": "سطر العنوان 1",
       "addressLine2": "سطر العنوان 2",
       "addressType": "نوع العنوان",
@@ -59,6 +64,7 @@
     "update": "تحديث العنوان",
     "subtitle": "أخبرنا بمكان توصيل طلبك",
     "sections": {
+      "billing": "بيانات الفوترة",
       "location": "موقع التوصيل",
       "details": "تفاصيل العنوان"
     },

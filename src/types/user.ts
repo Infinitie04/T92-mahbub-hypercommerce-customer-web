@@ -1,4 +1,9 @@
 export type Address = {
+  legal_name?: string | null;
+  gstin?: string | null;
+  is_default_billing?: boolean;
+  is_default_shipping?: boolean;
+  gst_state_code?: string | null;
   id: number;
   user_id: number;
   address_line1: string;

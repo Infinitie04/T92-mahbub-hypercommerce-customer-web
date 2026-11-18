@@ -1,4 +1,8 @@
 export interface AddressParams {
+  legal_name?: string | null;
+  gstin?: string | null;
+  is_default_billing?: boolean;
+  is_default_shipping?: boolean;
   id?: number | string;
   address_line1: string; // Required, max length 255 characters
   address_line2?: string | null; // Optional, max length 255 characters

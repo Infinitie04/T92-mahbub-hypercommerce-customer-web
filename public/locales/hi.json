@@ -28,6 +28,11 @@
     "deleted_title": "पता हटाया गया",
     "deliveryAddress": "डिलीवरी पता",
     "labels": {
+      "legalName": "कानूनी नाम",
+      "gstin": "GSTIN (यदि पंजीकृत हैं)",
+      "defaultBilling": "डिफ़ॉल्ट बिलिंग पता",
+      "defaultShipping": "डिफ़ॉल्ट डिलीवरी पता",
+      "gstStateCode": "GST राज्य कोड",
       "addressLine1": "पता पंक्ति 1",
       "addressLine2": "पता पंक्ति 2",
       "addressType": "पते का प्रकार",
@@ -59,6 +64,7 @@
     "update": "पता अपडेट करें",
     "subtitle": "हमें बताएं कि आपका ऑर्डर कहाँ पहुँचाना है",
     "sections": {
+      "billing": "बिलिंग विवरण",
       "location": "डिलीवरी लोकेशन",
       "details": "पते का विवरण"
     },
