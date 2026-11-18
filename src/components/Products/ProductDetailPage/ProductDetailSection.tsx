@@ -301,7 +301,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
         </span>
       </div>}
       <span className="text-xs text-foreground/50">
-        {t("product.priceIncludesTax", "Product prices include applicable tax.")}
+        {t("product.checkoutTaxDetails", "See the tax breakdown for your delivery address at checkout.")}
       </span>
 
       <Divider className="my-1" />

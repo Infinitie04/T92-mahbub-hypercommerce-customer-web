@@ -1,3 +1,5 @@
+import { ErrorState } from "@/components/ui";
+import { updateCartData } from "@/helpers/updators";
 import { FC } from "react";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
@@ -15,9 +17,12 @@ import ConfettiTrigger from "@/components/Functional/ConfettiTrigger";
  */
 const CheckoutPageView: FC = () => {
   const { t } = useTranslation();
-  const { cartData } = useSelector((state: RootState) => state.cart);
+  const { cartData, error, isLoading } = useSelector((state: RootState) => state.cart);
 
   if (!cartData || cartData.items.length === 0) {
+    if (isLoading) return <p role="status">{t("checkout.loadingCart", "Loading checkout…")}</p>;
+    if (error) return <ErrorState title={error} retryLabel={t("checkout.refreshTotals", "Refresh totals")}
+      onRetry={() => void updateCartData(true, false)} />;
     return <CartPageEmpty />;
   }
 

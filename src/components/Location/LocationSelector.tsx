@@ -10,11 +10,11 @@ import {
 import { Icon } from "@iconify/react";
 import { UserLocation } from "./types/LocationAutoComplete.types";
 import { getCookie, setCookie } from "@/lib/cookies";
-import { geoDetectForCountry, switchMarket, getAddresses } from "@/routes/api";
+import { getAddresses } from "@/routes/api";
 import { useSettings } from "@/contexts/SettingsContext";
 import { onLocationChange } from "@/helpers/events";
 import { useTranslation } from "react-i18next";
-import { mutate } from "swr";
+import { resolveMarketForCountry } from "@/helpers/market";
 import { staticLat, staticLng } from "@/config/constants";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -145,8 +145,18 @@ const LocationSelector = ({
     if (!isInitialized || bootstrappedRef.current) return;
 
     const existing = getCookie("userLocation") as PersistedLocation | null;
-    if (hasPersistedSelection(existing)) return; // already chosen
     bootstrappedRef.current = true;
+    if (hasPersistedSelection(existing)) {
+      if (existing.countryCode && router.pathname !== "/cart/checkout") {
+        const previousMarket = getCookie<string>("market");
+        void resolveMarketForCountry(existing.countryCode).then((market) => {
+          if (market && market !== previousMarket && getCookie<PersistedLocation>("userLocation")?.countryCode === existing.countryCode) {
+            onLocationChange();
+          }
+        });
+      }
+      return;
+    }
 
     const applyDefaultMarket = () =>
       commitLocation(
@@ -286,22 +296,6 @@ const LocationSelector = ({
     }
   };
 
-  // Resolve + switch the market for a country (currency/catalogue follow it).
-  const resolveMarket = async (countryCode?: string) => {
-    try {
-      const res = await geoDetectForCountry(countryCode);
-      const market = res?.data?.suggested_market;
-
-      if (market?.code) {
-        setCookie<string>("market", market.code);
-        await switchMarket(market.code);
-        await mutate("/settings");
-      }
-    } catch (err) {
-      console.error("[LocationSelector] market resolve failed:", err);
-    }
-  };
-
   // Commit a chosen location: persist cookie, resolve market, refresh catalogue.
   const commitLocation = async (
     latLng: { lat: number | null; lng: number | null },
@@ -354,6 +348,10 @@ const LocationSelector = ({
           placeDescription,
         };
 
+    if (!await resolveMarketForCountry(demoMode ? "IN" : countryCode)) {
+      if (!options.silent) addToast({ title: "Could not load this market. Try again.", color: "warning" });
+      return;
+    }
     setSelectedLocation(finalLocation);
     setSelectedAddressId(options.addressId ?? null);
 
@@ -370,7 +368,6 @@ const LocationSelector = ({
     setCookie<PersistedLocation>("userLocation", userLocation);
     window.dispatchEvent(new Event(USER_LOCATION_CHANGED_EVENT));
 
-    await resolveMarket(countryCode);
     onLocationChange();
 
     // Silent auto-bootstrap (first load, no saved location) must not pop a

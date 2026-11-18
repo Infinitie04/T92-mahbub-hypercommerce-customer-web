@@ -14,7 +14,8 @@ import Link from "next/link";
 const CartAdditionalInfo: FC = () => {
   const { t } = useTranslation();
   const [deliveryInstructions, setDeliveryInstructions] = useState<string>("");
-  const { cartData } = useSelector((state: RootState) => state.cart);
+  const address = useSelector((state: RootState) => state.checkout.selectedAddress);
+  const { cartData, isLoading, error } = useSelector((state: RootState) => state.cart);
   const items = cartData?.items ?? [];
 
   const {
@@ -40,7 +41,7 @@ const CartAdditionalInfo: FC = () => {
       <AddressSection onAddAddressModalOpen={onAddressModalOpen} />
 
       {/* Cart items */}
-      {items.length > 0 && (
+      {items.length > 0 && !error && (!address || (!isLoading && Number(cartData?.address_id) === Number(address.id))) && (
         <div>
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 className="text-base font-bold text-foreground">

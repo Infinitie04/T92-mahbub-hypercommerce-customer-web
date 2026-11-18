@@ -101,7 +101,10 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
     return false;
   };
 
+  const cartError = useSelector((state: RootState) => state.cart.error);
+  const needsAddressReview = !!selectedAddress && Number(cart.address_id) !== Number(selectedAddress.id);
   const handlePlaceOrder = async () => {
+    if (isLoading || cartError || needsAddressReview) return;
     if (!selectedAddress) {
       toast({
         title: t("checkout.noAddressSelected.title"),
@@ -211,6 +214,19 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
 
   const hasValidationErrors = validationErrors.length > 0;
 
+  if (cartError || isLoading || needsAddressReview) {
+    return (
+      <div className="space-y-3 rounded-large border border-divider bg-content1 p-4" role="status">
+        <h2 className="font-bold">{t("cart.billDetails", "Bill Details")}</h2>
+        <p>{isLoading ? t("checkout.updatingBill", "Updating totals for your delivery address…")
+          : cartError || t("checkout.reviewAddress", "Refresh totals for this delivery address before payment.")}</p>
+        {!isLoading && <Button onPress={() => void updateCartData(true, false)}>
+          {t("checkout.refreshTotals", "Refresh totals")}
+        </Button>}
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full flex-col gap-4 md:sticky md:top-24">
       {/* ---------- Bill Details ---------- */}
@@ -243,9 +259,11 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
               {formatPrice(payment_summary.items_total)}
             </span>
           </div>
-          <div className="-mt-2 w-full text-start text-xs text-foreground/50">
-            {`${t("checkout.allPricesIncludeTaxes")}`}
-          </div>
+          {payment_summary.tax_total > 0 && (
+            <div className="-mt-2 w-full text-start text-xs text-foreground/50">
+              {t("checkout.allPricesIncludeTaxes")}
+            </div>
+          )}
 
           {payment_summary.total_saving > 0 && (
             <div className="flex justify-between text-success">

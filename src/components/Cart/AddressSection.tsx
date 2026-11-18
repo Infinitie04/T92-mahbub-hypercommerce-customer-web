@@ -1,4 +1,4 @@
-import { Button, useDisclosure } from "@heroui/react";
+import { addToast, Button, useDisclosure } from "@heroui/react";
 import { MapPin, Plus, ChevronDown } from "lucide-react";
 import { FC, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -174,8 +174,12 @@ const AddressSection: FC<AddressSectionProps> = ({ onAddAddressModalOpen, onAddr
     onOpenChange();
     // The delivery address is authoritative for the market on checkout: switch
     // currency to the address's country, then recompute the cart in that market.
-    await resolveMarketForCountry(selectedAddr.country_code);
     if (onAddressSelected) {
+      if (!await resolveMarketForCountry(selectedAddr.country_code)) {
+        dispatch(setSelectedAddress(null));
+        addToast({ title: "Could not load pricing for this delivery country.", color: "warning" });
+        return;
+      }
       onAddressSelected(selectedAddr);
     } else {
       await updateCartData(false, false, selectedAddr.id?.toString() || "");

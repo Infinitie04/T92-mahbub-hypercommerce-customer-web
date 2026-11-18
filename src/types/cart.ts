@@ -21,6 +21,7 @@ export interface CartPricingGroup {
 }
 
 export interface CartResponse {
+  address_id?: number | string;
   pricing_groups?: CartPricingGroup[];
   id: number;
   uuid: string;

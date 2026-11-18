@@ -1,13 +1,7 @@
 import { geoDetectForCountry, switchMarket } from "@/routes/api";
-import { setCookie } from "@/lib/cookies";
+import { getCookie, setCookie } from "@/lib/cookies";
 import { mutate } from "swr";
 
-/**
- * Resolve the market a country belongs to and switch the storefront to it
- * (currency + catalogue follow). Shared by the header location selector and by
- * checkout, where the selected delivery address is authoritative for the
- * market. Returns the switched-to market code, or null if unchanged / failed.
- */
 /**
  * SWR keys whose payload changes with the active market: settings, the whole
  * catalogue, the home layout and search. A market switch has to drop all of
@@ -35,21 +29,22 @@ export const isMarketScopedKey = (key: unknown): boolean => {
   );
 };
 
-export const resolveMarketForCountry = async (
-  countryCode?: string,
-): Promise<string | null> => {
-  if (!countryCode) return null;
-  try {
+// Serialize market switches across the desktop selector, mobile selector, and checkout.
+let pendingMarket: Promise<string | null> = Promise.resolve(null);
+
+export const resolveMarketForCountry = (countryCode?: string): Promise<string | null> => {
+  const resolve = async () => {
     const res = await geoDetectForCountry(countryCode);
-    const market = res?.data?.suggested_market;
-    if (market?.code) {
-      setCookie<string>("market", market.code);
-      await switchMarket(market.code);
+    const code = res?.data?.suggested_market?.code;
+    if (!code) return null;
+    if (getCookie<string>("market") !== code) {
+      const switched = await switchMarket(code);
+      if (!switched.success) return null;
+      setCookie("market", code);
       await mutate(isMarketScopedKey);
-      return market.code;
     }
-  } catch (err) {
-    console.error("[resolveMarketForCountry] failed:", err);
-  }
-  return null;
+    return code;
+  };
+  pendingMarket = pendingMarket.then(resolve).catch(() => null);
+  return pendingMarket;
 };

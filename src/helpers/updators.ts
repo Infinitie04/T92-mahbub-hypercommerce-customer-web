@@ -16,6 +16,10 @@ import {
 } from "@/lib/redux/slices/offlineCartSlice";
 import { setFailedCartItems } from "@/lib/redux/slices/cartNoticeSlice";
 
+import { resolveMarketForCountry } from "./market";
+
+let latestCartRequest = 0;
+
 export const updateCartData = async (
   passAddress: boolean = true,
   renderToast: boolean = true,
@@ -25,6 +29,7 @@ export const updateCartData = async (
   _customRushMode: boolean = true,
   emtyCartToast: boolean = true
 ): Promise<ApiResponse<CartResponse> | undefined> => {
+  const requestId = ++latestCartRequest;
   try {
     const isLoggedIn = store.getState().auth.isLoggedIn;
     const address_id = store
@@ -38,12 +43,24 @@ export const updateCartData = async (
     store.dispatch(setCartLoading(true));
     const state = store.getState();
     const promo_code = state?.checkout?.promoCode || "";
+    const requestAddress = customAddress || (passAddress ? address_id : "");
+    const selected = state.checkout.selectedAddress;
+    const onCheckout = typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === "/cart/checkout";
+    if (onCheckout && selected?.country_code && String(requestAddress) === String(selected.id)) {
+      const market = await resolveMarketForCountry(selected.country_code);
+      if (requestId !== latestCartRequest) return;
+      if (!market) {
+        store.dispatch(setError("Could not load pricing for this delivery country. Refresh totals to retry."));
+        return;
+      }
+    }
     const cartRes: ApiResponse<CartResponse> = await getCart({
-      address_id: customAddress ? customAddress : passAddress ? address_id : "",
+      address_id: requestAddress,
       use_wallet: false,
       promo_code,
     });
 
+    if (requestId !== latestCartRequest) return;
     if (cartRes.success && cartRes.data) {
       store.dispatch(setCartData(cartRes.data));
 
@@ -58,7 +75,7 @@ export const updateCartData = async (
         });
       }
     } else {
-      store.dispatch(setError("Failed to fetch updated cart"));
+      store.dispatch(setError(cartRes.message || "Failed to fetch updated cart"));
       if (renderToast) {
         addToast({
           title: i18n.t("cartStatus.fetchFailedTitle"),
@@ -70,8 +87,9 @@ export const updateCartData = async (
     return cartRes;
   } catch (error) {
     console.error(error);
+    if (requestId === latestCartRequest) store.dispatch(setError("Failed to fetch updated cart"));
   } finally {
-    store.dispatch(setCartLoading(false));
+    if (requestId === latestCartRequest) store.dispatch(setCartLoading(false));
   }
 };
 
