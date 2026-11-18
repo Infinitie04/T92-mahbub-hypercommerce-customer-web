@@ -66,16 +66,16 @@ export default function WholesaleOrderTable({
         : sum, 0);
     const combined = selected + inBucket;
     const tiers = [...group.tiers].sort((a, b) => a.min_quantity - b.min_quantity);
-    let activeTier: (typeof tiers)[number] | undefined;
+    let activeTier = tiers[0];
     for (const tier of tiers) {
-      if (tier.min_quantity > combined) break;
+      if (tier.min_quantity > selected) break;
       activeTier = tier;
     }
-    const subtotal = selected * Number((activeTier ?? tiers[0]).unit_price);
+    const subtotal = selected * Number(activeTier.unit_price);
     const minimum = Math.max(1, Number(group.minimum_order_quantity) || 1);
     const remaining = Math.max(0, minimum - combined);
     const stepRemainder = Math.max(0, combined - minimum) % quantityStep;
-    return { group, rows, selected, inBucket, combined, subtotal, minimum, remaining, stepRemainder };
+    return { group, rows, selected, inBucket, activeTier, subtotal, minimum, remaining, stepRemainder };
   });
 
   const selectedRows = groups.flatMap((group) => group.rows).filter((row) => row.quantity > 0);
@@ -183,7 +183,7 @@ export default function WholesaleOrderTable({
               </tr>
               <tr>
                 <td colSpan={2} className="px-3 py-3">
-                  <WholesaleTiers group={group.group} quantity={group.combined} showMinimum={false} />
+                  <WholesaleTiers group={group.group} quantity={group.selected > 0 ? group.activeTier.min_quantity : undefined} showMinimum={false} />
                 </td>
               </tr>
               {group.rows.map(({ variant, available, customizable, limit, quantity }) => {

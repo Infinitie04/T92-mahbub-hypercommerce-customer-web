@@ -67,7 +67,6 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
     ratings = 0,
     rating_count = 0,
     variants,
-    is_inclusive_tax,
     quantity_step_size = 1,
     minimum_order_quantity = 1,
     featured = "0",
@@ -301,9 +300,9 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
           {formatPrice(price)}
         </span>
       </div>}
-      {is_inclusive_tax && (
-        <span className="text-xs text-foreground/50">{t("inclusiveTax")}</span>
-      )}
+      <span className="text-xs text-foreground/50">
+        {t("product.priceIncludesTax", "Product prices include applicable tax.")}
+      </span>
 
       <Divider className="my-1" />
 
