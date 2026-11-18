@@ -9,7 +9,7 @@ import { getHomeLayout, getSettings } from "@/routes/api";
 import { HomeLayout, Settings } from "@/types/ApiResponse";
 import HomeBuilder from "@/views/homePage/HomeBuilder";
 import { NextPageWithLayout } from "@/types";
-import { getMarketFromContext } from "@/helpers/functionalHelpers";
+import { getCountryIso2FromContext, getMarketFromContext } from "@/helpers/functionalHelpers";
 import { getAccessTokenFromContext } from "@/helpers/auth";
 import { loadTranslations } from "../../i18n";
 import { useTranslation } from "react-i18next";
@@ -99,6 +99,7 @@ export const getServerSideProps: GetServerSideProps<HomePageProps> | undefined =
             cookieMarket || getDefaultMarketCode(settings.data) || undefined;
 
           const layoutRes = await getHomeLayout({
+            deliveryCountry: getCountryIso2FromContext(context),
             navbar_slug,
             page: 1,
             per_page: 6,

@@ -74,6 +74,7 @@ export async function fetchProductDetailPageData(
     }),
     getProducts({
       exclude_product: slug,
+      deliveryCountry: country_iso2,
       per_page: PER_PAGE,
       access_token,
       market,

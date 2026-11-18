@@ -18,7 +18,7 @@ import { useInfiniteData } from "@/hooks/useInfiniteData";
 import { Product, PaginatedResponse, Brand } from "@/types/ApiResponse";
 import { NextPageWithLayout } from "@/types";
 import { getAccessTokenFromContext } from "@/helpers/auth";
-import { getMarketFromContext } from "@/helpers/functionalHelpers";
+import { getCountryIso2FromContext, getMarketFromContext } from "@/helpers/functionalHelpers";
 import InfiniteScrollStatus from "@/components/Functional/InfiniteScrollStatus";
 import { useRouter } from "next/router";
 import NoProductsFound from "@/components/NoProductsFound";
@@ -426,6 +426,7 @@ export const getServerSideProps: GetServerSideProps | undefined = isSSR()
         const initialFilters = parseFiltersFromQuery(context.query);
 
         const apiParams: any = {
+          deliveryCountry: getCountryIso2FromContext(context),
           page: 1,
           per_page: PER_PAGE,
           brands: slug,

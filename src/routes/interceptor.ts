@@ -35,6 +35,14 @@ export const setupInterceptors = (instance: AxiosInstance): void => {
         }
       }
 
+      // Forward the delivery country independently of the market shared by those countries.
+      const destination = config.params?.deliveryCountry ??
+        (typeof window !== "undefined" ? getCookie<{countryCode?: string}>("userLocation")?.countryCode : undefined);
+      if (config.params?.deliveryCountry !== undefined) delete config.params.deliveryCountry;
+      if (!config.headers.has("X-Country-Code") && typeof destination === "string" && /^[a-z]{2}$/i.test(destination)) {
+        config.headers.set("X-Country-Code", destination.toUpperCase());
+      }
+
       // Market (hypercommerce): attach X-Market header so the backend's
       // DetectMarket middleware resolves the right market. SSR passes it via
       // params.market; client reads the `market` cookie set by /markets/switch.

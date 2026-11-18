@@ -16,6 +16,7 @@ export const getHomeLayout = async (
     page?: string | number;
     per_page?: string | number;
     market?: string;
+    deliveryCountry?: string;
     /** Storefront platform layout; the web storefront uses "web". */
     platform?: "app" | "web";
     /** SSR-only: forwarded as a Bearer token so per-user data (favorites) resolves. */
@@ -55,6 +56,7 @@ export const getHomeLayoutSection = async (params: {
   page?: string | number;
   per_page?: string | number;
   market?: string;
+  deliveryCountry?: string;
   /** SSR-only: forwarded as a Bearer token so per-user data (favorites) resolves. */
   access_token?: string;
 }): Promise<PaginatedResponse<HomeSection[]>> => {

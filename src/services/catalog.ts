@@ -117,6 +117,7 @@ export const getProducts = async (
     slug?: string;
     per_page?: string | number;
     exclude_product?: string;
+    deliveryCountry?: string;
     access_token?: string | undefined;
     categories?: string;
     brands?: string;

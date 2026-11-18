@@ -19,7 +19,7 @@ import { useInfiniteData } from "@/hooks/useInfiniteData";
 import { Product, PaginatedResponse } from "@/types/ApiResponse";
 import { NextPageWithLayout } from "@/types";
 import { getAccessTokenFromContext } from "@/helpers/auth";
-import { getMarketFromContext } from "@/helpers/functionalHelpers";
+import { getCountryIso2FromContext, getMarketFromContext } from "@/helpers/functionalHelpers";
 import InfiniteScrollStatus from "@/components/Functional/InfiniteScrollStatus";
 import { useRouter } from "next/router";
 import NoProductsFound from "@/components/NoProductsFound";
@@ -496,6 +496,7 @@ export const getServerSideProps: GetServerSideProps | undefined = isSSR()
         const subcategory = Array.isArray(rawSub) ? rawSub[0] : rawSub;
 
         const apiParams: any = {
+          deliveryCountry: getCountryIso2FromContext(context),
           page: 1,
           per_page: PER_PAGE,
           categories: subcategory || slug,

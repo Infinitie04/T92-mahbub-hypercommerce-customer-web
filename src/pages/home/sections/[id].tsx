@@ -4,7 +4,7 @@ import HomeSectionDetailView, {
   HomeSectionDetailData,
 } from "@/views/homePage/HomeSectionDetailView";
 import { getHomeLayoutSection, getSettings } from "@/routes/api";
-import { getMarketFromContext } from "@/helpers/functionalHelpers";
+import { getCountryIso2FromContext, getMarketFromContext } from "@/helpers/functionalHelpers";
 import { getAccessTokenFromContext } from "@/helpers/auth";
 import { HomeSectionType } from "@/types/ApiResponse";
 import { isSSR } from "@/helpers/getters";
@@ -31,7 +31,7 @@ export const getServerSideProps: GetServerSideProps | undefined = isSSR()
       let lastPage = 1;
 
       if (Number.isFinite(sectionId)) {
-        const res = await getHomeLayoutSection({ sectionId, page: 1, per_page: 20, market, access_token });
+        const res = await getHomeLayoutSection({ sectionId, deliveryCountry: getCountryIso2FromContext(context), page: 1, per_page: 20, market, access_token });
         if (res.success && res.data) {
           items = (res.data.data as unknown as HomeSectionDetailData["items"]) ?? [];
           currentPage = res.data.current_page ?? 1;
