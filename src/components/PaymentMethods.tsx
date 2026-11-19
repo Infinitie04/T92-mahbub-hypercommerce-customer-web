@@ -56,40 +56,41 @@ const PaymentMethods: FC<PaymentMethodsProps> = ({
 
   return (
     <RadioGroup
+      aria-label={t("paymentMethod")}
       value={selectedPayment}
       onValueChange={setSelectedPayment}
       className="w-full"
-      classNames={{ wrapper: "w-full gap-0" }}
+      classNames={{ wrapper: "w-full gap-2" }}
       isDisabled={isLoading}
     >
-      {paymentMethods.map((method, idx) => (
+      {paymentMethods.map((method) => (
         <Radio
           key={method.id}
           value={method.id}
           isDisabled={method.disabled}
           classNames={{
-            base: `inline-flex m-0 w-full max-w-full items-center justify-between flex-row-reverse cursor-pointer gap-3 py-3 ${
-              idx > 0 ? "border-t border-divider" : ""
+            base: `inline-flex m-0 w-full max-w-full items-center justify-between flex-row-reverse cursor-pointer rounded-medium border gap-2 px-3 py-2.5 ${
+              selectedPayment === method.id ? "border-primary bg-primary/5" : "border-divider bg-content1"
             }`,
             control: "text-primary-600",
           }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <Image
               src={method.icon}
-              alt={method.name}
+              alt=""
               width={28}
               height={28}
               className="rounded-md"
             />
             <div>
-              <h4 className="text-sm font-medium text-foreground">
+              <h4 className="text-sm font-semibold text-foreground">
                 {method.name}
               </h4>
               {method.disabled && method.disabledReason ? (
                 <p className="text-xs text-danger">{method.disabledReason}</p>
               ) : method.tagline ? (
-                <p className="text-xs text-foreground/50">{method.tagline}</p>
+                <p className="text-xs text-foreground/70">{method.tagline}</p>
               ) : null}
             </div>
           </div>

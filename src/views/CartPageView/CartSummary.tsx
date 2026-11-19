@@ -180,6 +180,7 @@ const CartSummary: FC<CartSummaryProps> = ({ cart }) => {
             </Button>
             <RequestQuotation source="cart" isDisabled={isLoading} lines={cart.items.filter((item) => !item.save_for_later).map((item) => ({
               cart_item_id: item.id,
+              quotationUnitPrice: item.quotation_unit_price,
               quantity: Number(item.quantity),
               label: item.product?.name || item.variant?.title || "",
               variantLabel: item.variant?.title,

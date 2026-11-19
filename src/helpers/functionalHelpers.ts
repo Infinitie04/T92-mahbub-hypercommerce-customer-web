@@ -39,7 +39,6 @@ import {
   updateOfflineCartItem,
 } from "@/lib/redux/slices/offlineCartSlice";
 import { trackPurchase } from "@/lib/analytics";
-import { stockLimit } from "@/helpers/stock";
 
 type OfflineCartItemWithVariant = OfflineCartItem & {
   variantTitle?: string;
@@ -340,9 +339,8 @@ export const handleOfflineAddToCart = (params: {
   }
   const minQuantity = pricingGroup ? 1 : product.minimum_order_quantity || 1;
   const stepSize = pricingGroup ? 1 : product.quantity_step_size || 1;
-  const maxAllowed = product.total_allowed_quantity || (pricingGroup ? Number.MAX_SAFE_INTEGER : 1);
+  const maxAllowed = product.total_allowed_quantity || Number.MAX_SAFE_INTEGER;
   const stock = variant.stock;
-  const maxQuantity = stockLimit(stock, maxAllowed);
   const finalPrice = pricingGroup?.tiers[0]?.unit_price ?? Number(variant.price);
   const addonSuffix =
     addons.length > 0
@@ -365,7 +363,7 @@ export const handleOfflineAddToCart = (params: {
       storeName: variant.store_name,
       storeSlug: variant.store_slug,
       minQuantity: minQuantity,
-      maxQuantity: maxQuantity,
+      maxQuantity: maxAllowed,
       stepSize: stepSize || 1,
       stock: stock,
       product_variant_id: variant.id,
@@ -421,9 +419,8 @@ export const handleUpdateOfflineCartItem = (params: {
   );
   const minQuantity = pricingGroup ? 1 : product.minimum_order_quantity || 1;
   const stepSize = pricingGroup ? 1 : product.quantity_step_size || 1;
-  const maxAllowed = product.total_allowed_quantity || (pricingGroup ? Number.MAX_SAFE_INTEGER : 1);
+  const maxAllowed = product.total_allowed_quantity || Number.MAX_SAFE_INTEGER;
   const stock = variant.stock;
-  const maxQuantity = stockLimit(stock, maxAllowed);
   const finalPrice = pricingGroup?.tiers[0]?.unit_price ?? Number(variant.price);
 
   const addonSuffix =
@@ -449,7 +446,7 @@ export const handleUpdateOfflineCartItem = (params: {
         storeName: variant.store_name,
         storeSlug: variant.store_slug,
         minQuantity: minQuantity,
-        maxQuantity: maxQuantity,
+        maxQuantity: maxAllowed,
         stepSize: stepSize || 1,
         stock: stock,
         product_variant_id: variant.id,
@@ -548,6 +545,7 @@ export const handleCheckout = async (
     formData.append("gift_card_discount", "");
     formData.append("address_id", address_id.toString());
     const billing = state.checkout.billingAddress;
+    if (state.checkout.thirdPartyDelivery) formData.append("third_party_delivery", "1");
     if (billing) formData.append("billing_address_id", String(billing === "delivery" ? address_id : billing.id));
     formData.append("order_note", order_note);
     formData.append(

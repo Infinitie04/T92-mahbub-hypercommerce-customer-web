@@ -28,14 +28,18 @@ const CartQuantityControl: React.FC<CartQuantityControlProps> = ({
   item,
   debounceDelay = 500,
   minQuantity = 1,
-  maxQuantity = 999,
+  maxQuantity = 0,
   quantityStep = 1,
-  stock = 9999,
+  stock = null,
 }) => {
   const { t } = useTranslation();
   const [localQuantity, setLocalQuantity] = useState<number>(item.quantity);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
-  const maximum = maxQuantity > 0 ? Math.min(maxQuantity, 999) : 999;
+  const otherQuantity = useSelector((state: RootState) =>
+    state.cart.cartData?.items.reduce((sum, line) =>
+      !line.save_for_later && line.product_variant_id === item.product_variant_id && line.id !== item.id
+        ? sum + Number(line.quantity) : sum, 0) ?? 0);
+  const maximum = maxQuantity > 0 ? Math.max(0, maxQuantity - otherQuantity) : Number.MAX_SAFE_INTEGER;
   const dispatch = useDispatch();
   const isLoading = useSelector((state: RootState) => state.cart.isLoading);
 

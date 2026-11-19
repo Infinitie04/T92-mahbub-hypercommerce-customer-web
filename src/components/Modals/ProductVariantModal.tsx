@@ -1,3 +1,4 @@
+import { currentQuotationUnitPrice } from "@/services/quotations";
 import RequestQuotation from "@/components/Quotations/RequestQuotation";
 import QtyInput from "@/components/Products/ProductDetailPage/QtyInput";
 import WholesaleTiers from "@/components/Products/ProductDetailPage/WholesaleTiers";
@@ -1013,6 +1014,7 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
                       product_variant_id: selectedVariant.id,
                       store_id: selectedVariant.store_id,
                       quantity,
+                      quotationUnitPrice: currentQuotationUnitPrice(product, selectedVariant, quantity),
                       label: product.title,
                       variantLabel: selectedVariant.title,
                       image: selectedVariant.image || product.main_image,

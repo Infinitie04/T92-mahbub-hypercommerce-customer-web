@@ -100,6 +100,9 @@ function QuotationDetailPage() {
                   <p className="whitespace-pre-wrap break-words text-sm text-default-600">{quote.remark}</p>
                 </div>
               )}
+              {quote.proforma_url && (
+                <Button as="a" variant="bordered" fullWidth href={quote.proforma_url}>{t("quotation.downloadExport")}</Button>
+              )}
               {quote.order_slug ? (
                 <Button as={Link} color="primary" fullWidth href={`/my-account/orders/${quote.order_slug}`}>{t("quotation.viewOrder")}</Button>
               ) : quote.status === "ready_to_pay" && (

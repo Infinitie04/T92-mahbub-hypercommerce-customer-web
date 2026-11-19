@@ -9,8 +9,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/redux/store";
 import { updateCartData } from "@/helpers/updators";
 import { setPromoCode } from "@/lib/redux/slices/checkoutSlice";
-import { clearCart } from "@/routes/api";
-import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { handleCheckout, ensureIdempotencyKey } from "@/helpers/functionalHelpers";
@@ -22,8 +20,7 @@ interface CheckoutSectionProps {
 const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [paymentChoice, setSelectedPayment] = useState("");
-  const [showClearCartModal, setShowClearCartModal] = useState(false);
+  const [paymentChoice, setSelectedPayment] = useState("razorpayPayment");
   const router = useRouter();
   const { formatPrice, paymentSettings, systemSettings } = useSettings();
   const { payment_summary, items } = cart;
@@ -43,18 +40,18 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const displayedPayable = payment_summary.payable_amount - payment_summary.cod_fee + codFee;
 
   const wholesaleProducts = new Set(cart.pricing_groups?.map((group) => group.product_id));
-  const productQuantities = new Map<number, number>();
+  const variantQuantities = new Map<number, number>();
   for (const item of items) {
     if (!item.save_for_later && wholesaleProducts.has(item.product_id)) {
-      productQuantities.set(item.product_id, (productQuantities.get(item.product_id) ?? 0) + item.quantity);
+      variantQuantities.set(item.product_variant_id, (variantQuantities.get(item.product_variant_id) ?? 0) + item.quantity);
     }
   }
-  const exceedsProductMaximum = items.find((item) =>
+  const exceedsVariantMaximum = items.find((item) =>
     item.product.total_allowed_quantity > 0 &&
-    (productQuantities.get(item.product_id) ?? 0) > item.product.total_allowed_quantity
+    (variantQuantities.get(item.product_variant_id) ?? 0) > item.product.total_allowed_quantity
   );
-  const wholesaleBlocked = Boolean(exceedsProductMaximum) ||
-    Boolean(cart.pricing_groups?.some((group) => !group.quantity_step_valid));
+  const wholesaleBlocked = Boolean(exceedsVariantMaximum) ||
+    Boolean(cart.pricing_groups?.some((group) => group.quantity_remaining > 0 || !group.quantity_step_valid));
   const shipments = payment_summary.seller_shipping_costs ?? [];
   const shippingBlocked =
     Boolean(selectedAddress?.id) &&
@@ -217,7 +214,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   if (cartError || isLoading || needsAddressReview) {
     return (
       <div className="space-y-3 rounded-large border border-divider bg-content1 p-4" role="status">
-        <h2 className="font-bold">{t("cart.billDetails", "Bill Details")}</h2>
+        <h2 className="font-bold">{t("orderSummary")}</h2>
         <p>{isLoading ? t("checkout.updatingBill", "Updating totals for your delivery address…")
           : cartError || t("checkout.reviewAddress", "Refresh totals for this delivery address before payment.")}</p>
         {!isLoading && <Button onPress={() => void updateCartData(true, false)}>
@@ -228,29 +225,17 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   }
 
   return (
-    <div className="flex w-full flex-col gap-4 md:sticky md:top-24">
+    <div className="flex w-full flex-col gap-3 md:sticky md:top-24">
       {/* ---------- Bill Details ---------- */}
-      <div className="w-full rounded-large border border-divider bg-content1 p-4 sm:p-5">
+      <div className="w-full rounded-large border border-divider bg-content1 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-foreground">
-            {t("cart.billDetails", { defaultValue: "Bill Details" })}
+            {t("orderSummary")}
           </h2>
-          <Button
-            size="sm"
-            variant="light"
-            className="h-7 text-xs"
-            color="danger"
-            title={t("checkout.clearCart")}
-            startContent={
-              <Icon icon="solar:trash-bin-trash-linear" className="text-sm" />
-            }
-            onPress={() => setShowClearCartModal(true)}
-          >
-            {t("checkout.clearCart")}
-          </Button>
+
         </div>
 
-        <div className="mt-4 w-full space-y-3 text-sm">
+        <div className="mt-3 w-full space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-foreground/60">
               {t("checkout.itemsTotal")}
@@ -259,21 +244,6 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
               {formatPrice(payment_summary.items_total)}
             </span>
           </div>
-          {payment_summary.tax_total > 0 && (
-            <div className="-mt-2 w-full text-start text-xs text-foreground/50">
-              {t("checkout.allPricesIncludeTaxes")}
-            </div>
-          )}
-
-          {payment_summary.total_saving > 0 && (
-            <div className="flex justify-between text-success">
-              <span>
-                {t("checkout.totalSaving", { defaultValue: "Total savings" })}
-              </span>
-              <span>{formatPrice(-payment_summary.total_saving)}</span>
-            </div>
-          )}
-
           {selectedAddress?.id && (
             <div className="flex justify-between">
               <span className="text-foreground/60">
@@ -303,7 +273,12 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             </div>
           )}
 
-          {selectedAddress?.id && <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />}
+          {selectedAddress?.id && shipments.length > 0 && (
+            <details open={shippingBlocked || undefined} className="text-sm">
+              <summary className="cursor-pointer text-foreground/70">{t("shippingDetails", "Shipping details")}</summary>
+              <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />
+            </details>
+          )}
           <CheckoutTax total={payment_summary.tax_total} breakdown={payment_summary.tax_breakdown} formatPrice={formatPrice} />
 
           {payment_summary.platform_fee > 0 && (
@@ -378,18 +353,18 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
 
           <Divider />
 
-          <div className="flex justify-between text-lg font-bold text-foreground">
-            <span>{t("checkout.totalAmount")}</span>
+          <div className="flex justify-between text-base font-bold text-foreground">
+            <span>{t("totalPayable")}</span>
             <span>{formatPrice(displayedPayable)}</span>
           </div>
 
           {payment_summary.total_saving > 0 && (
-            <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-sm font-semibold text-green-700">
-              <Icon icon="solar:tag-price-bold" className="shrink-0 text-base" />
+            <div className="flex items-center gap-2 rounded-medium bg-success/10 px-3 py-2 text-sm font-semibold text-success-700 dark:text-success-400">
+              <Icon icon="solar:check-circle-bold" className="shrink-0 text-base" />
               <span>
-                {t("cart.savedOnOrder", {
+                {t("checkout.savingsApplied", {
                   amount: formatPrice(payment_summary.total_saving),
-                  defaultValue: `You saved ${formatPrice(payment_summary.total_saving)} on this order!`,
+                  defaultValue: "Savings already applied: {{amount}}",
                 })}
               </span>
             </div>
@@ -397,28 +372,6 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
         </div>
       </div>
 
-      {/* ---------- Payment methods (inline) ---------- */}
-      {!hasValidationErrors && (
-        <div className="w-full rounded-large border border-divider bg-content1 p-4 sm:p-5">
-          <h3 className="text-sm font-bold text-foreground">
-            {t("checkout.payWith", {
-              amount: formatPrice(displayedPayable),
-              defaultValue: `Pay: ${formatPrice(displayedPayable)} with`,
-            })}
-          </h3>
-
-          <div className="mt-1">
-            <PaymentMethods
-              selectedPayment={selectedPayment}
-              setSelectedPayment={setSelectedPayment}
-              hideCOD={!selectedAddress?.id}
-              isLoading={loading || isLoading}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ---------- Place order ---------- */}
       {hasValidationErrors ? (
         <Alert
           color="warning"
@@ -436,13 +389,22 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
           classNames={{ description: "text-xs" }}
         />
       ) : (
-        <div className="space-y-2">
+        <section className="w-full space-y-3 rounded-large border border-divider bg-content1 p-4">
+          <h2 className="text-base font-bold">{t("paymentMethod")}</h2>
+          <div className="mt-3">
+            <PaymentMethods
+              selectedPayment={selectedPayment}
+              setSelectedPayment={setSelectedPayment}
+              hideCOD={!selectedAddress?.id}
+              isLoading={loading || isLoading}
+            />
+          </div>
           {wholesaleBlocked && (
             <p id="checkout-wholesale-blocked" className="text-sm text-danger">
-              {exceedsProductMaximum
+              {exceedsVariantMaximum
                 ? t("wholesale.productMaximum", {
-                    product: exceedsProductMaximum.product.name,
-                    maximum: exceedsProductMaximum.product.total_allowed_quantity,
+                    product: exceedsVariantMaximum.variant.title || exceedsVariantMaximum.product.name,
+                    maximum: exceedsVariantMaximum.product.total_allowed_quantity,
                     defaultValue: "{{product}} allows up to {{maximum}} units per order.",
                   })
                 : t("wholesale.checkoutBlocked", "Adjust the wholesale group quantities above to continue.")}
@@ -467,34 +429,14 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             }
             onPress={handlePlaceOrder}
           >
-            {t("checkout.placeOrder", { defaultValue: "Place Order" })}
+            {selectedPayment === "razorpayPayment"
+              ? t("checkout.payAmount", { amount: formatPrice(displayedPayable) })
+              : t("checkout.placeOrder", { defaultValue: "Place Order" })}
           </Button>
-        </div>
+        </section>
       )}
 
-      <ConfirmationModal
-        isOpen={showClearCartModal}
-        onClose={() => setShowClearCartModal(false)}
-        onConfirm={async () => {
-          await clearCart();
-          setShowClearCartModal(false);
-          toast({
-            title: t("checkout.cartCleared.title"),
-            description: t("checkout.cartCleared.description"),
-            color: "success",
-          });
-          await router.push("/");
-          updateCartData(true, false);
-        }}
-        title="Clear Cart"
-        icon={<Icon icon="solar:trash-bin-trash-linear" className="text-base" />}
-        description={t("checkout.clearCartModal.description")}
-        confirmText={t("checkout.clearCartModal.confirmText")}
-        cancelText={t("checkout.clearCartModal.cancelText")}
-        variant="danger"
-        alertTitle={t("checkout.clearCartModal.alertTitle")}
-        alertDescription={t("checkout.clearCartModal.alertDescription")}
-      />
+
     </div>
   );
 };

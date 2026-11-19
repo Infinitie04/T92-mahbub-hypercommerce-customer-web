@@ -49,9 +49,10 @@ export default function QuotationRequestForm({ draft, previousQuote, onSubmitted
       .formatToParts(0).find((part) => part.type === "currency")?.value || currency);
 
   function proposedPrice(row: (typeof rows)[number]) {
-    return row.price ?? (previousQuote && previousQuote.currency_code === currency
-      ? previousQuote.items[row.id].unit_price
-      : "");
+    if (row.price !== undefined) return row.price;
+    if (previousQuote) return previousQuote.currency_code === currency ? previousQuote.items[row.id].unit_price : "";
+    const currentPrice = draft.lines[row.id].quotationUnitPrice;
+    return currentPrice != null && Number.isFinite(currentPrice) && currentPrice > 0 ? currentPrice.toFixed(2) : "";
   }
 
   function lineCents(row: (typeof rows)[number]) {

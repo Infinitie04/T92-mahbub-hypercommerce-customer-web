@@ -1,3 +1,4 @@
+import type { Product, ProductVariant } from "@/types/catalog";
 import type { PaymentSummary, SellerShippingCost } from "@/types/cart";
 import { isAxiosError } from "axios";
 import { api } from "./client";
@@ -20,6 +21,7 @@ export type Quotation = {
 };
 
 export type QuotationDetail = Quotation & {
+  proforma_url?: string;
   can_cancel?: boolean;
   cancelled_at?: string | null;
   reviewed_at?: string | null;
@@ -36,7 +38,7 @@ export type QuotationDetail = Quotation & {
   }[];
 };
 
-export type QuotationSourceLine = { quantity: number; label: string; variantLabel?: string; image?: string | null } & (
+export type QuotationSourceLine = { quantity: number; quotationUnitPrice?: number | null; label: string; variantLabel?: string; image?: string | null } & (
   | { cart_item_id: number }
   | {
       product_variant_id: number;
@@ -44,6 +46,13 @@ export type QuotationSourceLine = { quantity: number; label: string; variantLabe
       addons?: { addon_group_id: number; addon_item_id: number }[];
     }
 );
+
+export function currentQuotationUnitPrice(product: Product, variant: ProductVariant, quantity: number) {
+  const tiers = product.pricing_groups?.find((group) => group.id === variant.pricing_group_id)?.tiers;
+  if (!tiers?.length) return variant.quotation_unit_price;
+  const sorted = [...tiers].sort((a, b) => b.min_quantity - a.min_quantity);
+  return (sorted.find((tier) => tier.min_quantity <= quantity) ?? sorted[sorted.length - 1]).quotation_unit_price;
+}
 
 type QuotationPreview = {
   cod_available: boolean;
@@ -160,10 +169,10 @@ type QuotationPaymentOrder = {
   payment_status: "pending" | "completed";
 };
 
-export async function previewQuotation(id: string, addressId?: number, paymentType?: string, billingId?: number) {
+export async function previewQuotation(id: string, addressId?: number, paymentType?: string, billingId?: number, directed = false) {
   const { data } = await api.post<ApiDataResponse<QuotationPreview | QuotationPaymentOrder>>(
     `/user/quotations/${id}/preview`,
-    { address_id: addressId, payment_type: paymentType, billing_address_id: billingId },
+    { address_id: addressId, payment_type: paymentType, billing_address_id: billingId, third_party_delivery: directed },
   );
   return unwrapApiData(data);
 }

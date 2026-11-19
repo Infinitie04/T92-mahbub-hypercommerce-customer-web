@@ -10,11 +10,11 @@ export default function CheckoutLayout({
   summary: ReactNode;
 }) {
   return (
-    <div className="rd-fade flex w-full flex-col gap-6">
+    <div className="rd-fade flex w-full flex-col gap-3 pb-4">
       <h1 className="text-xl font-bold text-foreground sm:text-2xl">{heading}</h1>
-      <div className="flex w-full flex-col gap-4 md:flex-row md:items-start">
-        <div className="w-full md:w-[60%] lg:w-[65%]">{details}</div>
-        <div className="w-full md:w-[40%] md:max-w-md lg:w-[35%]">{summary}</div>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.62fr)_minmax(0,1fr)]">
+        <div className="min-w-0">{details}</div>
+        <div className="min-w-0">{summary}</div>
       </div>
     </div>
   );

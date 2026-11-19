@@ -9,7 +9,7 @@ import AddressModal from "@/components/Modals/AddressModal";
 import AddressSelectionModal from "@/components/Modals/AddressSelectionModal";
 import { resolveMarketForCountry } from "@/helpers/market";
 import { updateCartData } from "@/helpers/updators";
-import { setBillingAddress, setSelectedAddress } from "@/lib/redux/slices/checkoutSlice";
+import { setBillingAddress, setThirdPartyDelivery, setSelectedAddress } from "@/lib/redux/slices/checkoutSlice";
 import { RootState } from "@/lib/redux/store";
 import { getAddresses } from "@/routes/api";
 import { Address } from "@/types/ApiResponse";
@@ -21,7 +21,7 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.auth.user?.id);
-  const { selectedAddress: delivery, billingAddress: choice } = useSelector((state: RootState) => state.checkout);
+  const { selectedAddress: delivery, billingAddress: choice, thirdPartyDelivery } = useSelector((state: RootState) => state.checkout);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [pickedId, setPickedId] = useState("");
   const { data: defaultBilling, error: defaultError, mutate: reloadDefault } = useSWR(
@@ -60,6 +60,7 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
     setDialog(null);
     if (purpose === "billing") {
       dispatch(setBillingAddress(address));
+      if (thirdPartyDelivery && !onAddressSelected && delivery) await updateCartData(true, false);
       return;
     }
     if (onAddressSelected) {
@@ -75,56 +76,70 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
 
   return (
     <>
-      {(["delivery", "billing"] as const).map((purpose) => {
-        const isBilling = purpose === "billing";
-        const address = isBilling ? billing : delivery;
-        const Icon = isBilling ? ReceiptText : MapPin;
-        const waitingForDefault = isBilling && !choice && defaultBilling === undefined;
-        return (
-          <Card as="section" key={purpose}>
-            <CardBody className="space-y-3 p-4">
-              <div className="flex items-center gap-2">
-                <Icon className="size-4 text-primary" aria-hidden="true" />
-                <h2 className="text-sm font-semibold">{t(isBilling ? "checkout.addresses.billing" : "address.deliveryAddress")}</h2>
-              </div>
-              {isBilling && (
-                <Checkbox
-                  isSelected={usesDelivery}
-                  onValueChange={(checked) => {
-                    if (checked) dispatch(setBillingAddress("delivery"));
-                    else if (defaultBilling && defaultBilling.id !== delivery?.id) dispatch(setBillingAddress(defaultBilling));
-                    else open("billing", "pick");
-                  }}
-                >
-                  {t("checkout.addresses.same")}
-                </Checkbox>
-              )}
-              {waitingForDefault ? (
-                <p role="status" className="text-sm text-default-500">
-                  {defaultError ? t("checkout.addresses.loadError") : t("loading")}
-                </p>
-              ) : address ? (
-                <div className="space-y-1 text-sm">
-                  {isBilling && address.legal_name && <p className="font-medium">{address.legal_name}</p>}
-                  <p className="text-default-600">{[address.address_line1, address.address_line2, address.landmark, address.city, address.state, address.zipcode, address.country].filter(Boolean).join(", ")}</p>
-                  {address.gstin && <p className="text-default-600">GSTIN · {address.gstin}</p>}
-                  {!isBilling && address.mobile && <p className="text-default-600">{address.mobile}</p>}
+      <div className="grid gap-3">
+        {(["delivery", "billing"] as const).map((purpose) => {
+          const isBilling = purpose === "billing";
+          const address = isBilling ? billing : delivery;
+          const Icon = isBilling ? ReceiptText : MapPin;
+          const waitingForDefault = isBilling && !choice && defaultBilling === undefined;
+          return (
+            <Card as="section" key={purpose} className="h-full min-w-0">
+              <CardBody className="flex flex-col gap-2 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 text-primary">
+                    <Icon className="size-4" aria-hidden="true" />
+                  </span>
+                  <h2 className="text-base font-bold">{t(isBilling ? "checkout.addresses.billing" : "address.deliveryAddress")}</h2>
                 </div>
-              ) : (
-                <p className="text-sm text-default-500">{t(isBilling ? "checkout.addresses.deliveryFallback" : "address.chooseLocation")}</p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <Button variant="bordered" onPress={() => open(purpose, "pick")}>
-                  {t(address ? "change" : "address.selectAddress")}
-                </Button>
-                <Button variant="flat" color="primary" startContent={<Plus className="size-4" />} onPress={() => open(purpose, "add")}>
-                  {t(isBilling ? "checkout.addresses.addBilling" : "address.addNew")}
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
-        );
-      })}
+                {isBilling && (
+                  <Checkbox size="sm"
+                    isSelected={usesDelivery}
+                    onValueChange={(checked) => {
+                      if (checked) {
+                        dispatch(setBillingAddress("delivery"));
+                        if (thirdPartyDelivery && !onAddressSelected) void updateCartData(true, false);
+                      }
+                      else if (defaultBilling && defaultBilling.id !== delivery?.id) dispatch(setBillingAddress(defaultBilling));
+                      else open("billing", "pick");
+                    }}
+                  >
+                    {t("checkout.addresses.same")}
+                  </Checkbox>
+                )}
+                {isBilling && billing?.gstin && billing.country_code === "IN" && delivery?.country_code === "IN" && billing.id !== delivery.id && (
+                  <Checkbox size="sm" isSelected={thirdPartyDelivery} onValueChange={(checked) => {
+                    dispatch(setBillingAddress(billing));
+                    dispatch(setThirdPartyDelivery(checked));
+                    if (!onAddressSelected) void updateCartData(true, false);
+                  }}>{t("checkout.addresses.directedDelivery")}</Checkbox>
+                )}
+                {waitingForDefault ? (
+                  <p role="status" className="text-sm text-default-500">
+                    {defaultError ? t("checkout.addresses.loadError") : t("loading")}
+                  </p>
+                ) : address ? (
+                  <div className="break-words text-sm leading-snug">
+                    {isBilling && address.legal_name && <p className="font-medium">{address.legal_name}</p>}
+                    <p className="text-default-600">{[address.address_line1, address.address_line2, address.landmark, address.city, address.state, address.zipcode, address.country].filter(Boolean).join(", ")}</p>
+                    {address.gstin && <p className="text-default-600">GSTIN · {address.gstin}</p>}
+                    {!isBilling && address.mobile && <p className="text-default-600">{address.mobile}</p>}
+                  </div>
+                ) : (
+                  <p className="text-sm text-default-500">{t(isBilling ? "checkout.addresses.deliveryFallback" : "address.chooseLocation")}</p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" className="text-sm" variant="bordered" onPress={() => open(purpose, "pick")}>
+                    {t(address ? "change" : "address.selectAddress")}
+                  </Button>
+                  <Button size="sm" className="text-sm" variant="flat" color="primary" startContent={<Plus className="size-4" />} onPress={() => open(purpose, "add")}>
+                    {t(isBilling ? "checkout.addresses.addBilling" : "address.addNew")}
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          );
+        })}
+      </div>
       {dialog?.mode === "pick" && (
         <AddressSelectionModal isOpen title={t(dialog.purpose === "billing" ? "checkout.addresses.billing" : "address.deliveryAddress")}
           onOpenChange={() => setDialog(null)} onAddNew={() => open(dialog.purpose, "add")}

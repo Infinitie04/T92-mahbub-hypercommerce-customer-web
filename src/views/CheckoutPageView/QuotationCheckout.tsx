@@ -30,6 +30,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const [paymentChoice, setPaymentChoice] = useState("");
   const [downloading, setDownloading] = useState(false);
   const paymentType = paymentChoice || (paymentSettings?.razorpayPayment === false && paymentSettings.cod ? "cod" : "razorpayPayment");
+  const directed = useSelector((state: RootState) => state.checkout.thirdPartyDelivery);
   const billing = useSelector((state: RootState) => state.checkout.billingAddress);
   const [files, setFiles] = useState<Record<number, AttachmentFile[]>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -45,8 +46,8 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const billingId = billing === "delivery" ? previewAddressId : billing ? Number(billing.id) : undefined;
   const canPreview = quote?.status === "ready_to_pay" && (quote.has_pending_order || previewAddressId !== undefined);
   const { data: preview, error: previewError, isValidating, mutate } = useSWR(
-    canPreview ? ["quotation-preview", userId, id, previewAddressId, paymentType, billingId] : null,
-    () => previewQuotation(id, previewAddressId, paymentType, billingId),
+    canPreview ? ["quotation-preview", userId, id, previewAddressId, paymentType, billingId, directed] : null,
+    () => previewQuotation(id, previewAddressId, paymentType, billingId, directed),
     { shouldRetryOnError: false, revalidateOnFocus: false },
   );
   const verifiedOrder = !previewError && preview && "order_slug" in preview ? preview : null;
@@ -60,6 +61,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const pay = async () => {
     if (!reviewed || !canPreview || previewAddressId === undefined || submitting) return;
     const body = new FormData();
+    if (directed) body.set("third_party_delivery", "1");
     body.set("payment_type", paymentType);
     body.set("address_id", String(previewAddressId));
     if (billing) body.set("billing_address_id", String(billing === "delivery" ? previewAddressId : billing.id));
@@ -102,7 +104,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
       <CheckoutLayout
         heading={t("pageTitle.checkout", { defaultValue: "Checkout" })}
         details={
-          <div className="space-y-4">
+          <div className="flex min-w-0 flex-col gap-6">
             {!quote.has_pending_order && <AddressSection onAddressSelected={onAddressSelected} />}
             <QuotationItems quote={quote} issues={shippingIssues} />
             {reviewed?.attachments.map((item) => (
@@ -141,7 +143,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
               !reviewed ? <Spinner size="sm" label={previewLoadingLabel} /> : (
                 <>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between gap-3"><span>{t("quotation.merchandise")}</span><span>{money(reviewed.totals.items_total)}</span></div>
+                    <div className="flex justify-between gap-3"><span>{t(reviewed.totals.tax_total > 0 ? "quotation.merchandise" : "quotation.goodsValue")}</span><span>{money(reviewed.totals.items_total)}</span></div>
                     <div className="flex justify-between gap-3"><span>{t("quotation.shipping")}</span><span>{money(reviewed.totals.total_delivery_charges)}</span></div>
                     <CheckoutShipping shipments={reviewed.seller_shipping_costs ?? []} formatPrice={money} />
                     <CheckoutTax total={reviewed.totals.tax_total} breakdown={reviewed.tax_breakdown} formatPrice={money} />

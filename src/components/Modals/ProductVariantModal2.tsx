@@ -81,7 +81,7 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
   const minQuantity = product.minimum_order_quantity || 1;
   const maxQuantity = stockLimit(
     selectedVariant.stock,
-    product.total_allowed_quantity || 9999,
+    product.total_allowed_quantity || Number.MAX_SAFE_INTEGER,
   );
   const stepSize = product.quantity_step_size || 1;
 
@@ -157,7 +157,7 @@ const ProductVariantModal: FC<ProductVariantModalProps> = ({
     setQuantity((prev) =>
       Math.min(
         prev,
-        stockLimit(variant.stock, product.total_allowed_quantity || 9999),
+        stockLimit(variant.stock, product.total_allowed_quantity || Number.MAX_SAFE_INTEGER),
       ),
     );
   };

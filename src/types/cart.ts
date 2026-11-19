@@ -90,6 +90,7 @@ export interface CartItemAddon {
 export interface CartItem {
   pricing_group_id?: number | null;
   unit_price?: number;
+  quotation_unit_price?: number | null;
   id: number;
   cart_id: number;
   product_id: number;

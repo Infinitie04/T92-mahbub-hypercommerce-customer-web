@@ -166,7 +166,7 @@ const ProductCardAddButton: FC<ProductCardAddButtonProps> = ({
   const handleQuantityChange = useCallback(
     (newQuantity: number) => {
       const minQuantity = product.minimum_order_quantity || 1;
-      const maxQuantity = product.total_allowed_quantity || 999;
+      const maxQuantity = product.total_allowed_quantity || Number.MAX_SAFE_INTEGER;
       const stock = defaultVariant.stock;
 
       if (newQuantity < 0) {

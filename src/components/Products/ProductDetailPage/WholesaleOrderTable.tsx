@@ -14,7 +14,6 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 
-const requestQuantityLimit = 999;
 const quantityButtonClass = "grid size-8 shrink-0 place-items-center text-foreground hover:bg-content2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-40 disabled:hover:bg-transparent";
 
 export default function WholesaleOrderTable({
@@ -42,7 +41,6 @@ export default function WholesaleOrderTable({
       groupsByVariant.has(item.product_variant_id) &&
       !("save_for_later" in item && item.save_for_later),
   );
-  const bucketQuantity = bucketItems.reduce((sum, item) => sum + Number(item.quantity), 0);
 
   const groups = (product.pricing_groups ?? []).flatMap((group) => {
     const variants = product.variants.filter((variant) => variant.pricing_group_id === group.id);
@@ -52,11 +50,14 @@ export default function WholesaleOrderTable({
       const quantity = Number(quantities[variant.id] || 0);
       const available = Boolean(variant.store_id) && isVariantInStock(variant);
       const customizable = Boolean(variant.addon_groups?.length);
-      const inBucket = bucketItems.reduce((sum, item) =>
-        item.product_variant_id === variant.id && item.store_id === variant.store_id
-          ? sum + Number(item.quantity)
-          : sum, 0);
-      const limit = Math.max(0, Math.min(requestQuantityLimit, stockLimit(variant.stock, Infinity) - inBucket));
+      const variantItems = bucketItems.filter((item) => item.product_variant_id === variant.id);
+      const variantQuantity = variantItems.reduce((sum, item) => sum + Number(item.quantity), 0);
+      const branchQuantity = variantItems.reduce((sum, item) =>
+        item.store_id === variant.store_id ? sum + Number(item.quantity) : sum, 0);
+      const limit = Math.max(0, Math.min(
+        (productMaximum || Infinity) - variantQuantity,
+        stockLimit(variant.stock, Infinity) - branchQuantity,
+      ));
       return { variant, quantity, available, customizable, limit };
     });
     const selected = rows.reduce((sum, row) => sum + row.quantity, 0);
@@ -79,12 +80,13 @@ export default function WholesaleOrderTable({
   });
 
   const selectedRows = groups.flatMap((group) => group.rows).filter((row) => row.quantity > 0);
-  const quoteRows = groups.flatMap(({ rows, minimum }) => rows
+  const quoteRows = groups.flatMap(({ rows, minimum, activeTier }) => rows
     .filter(({ available }) => available)
-    .map((row) => ({ ...row, minimum })));
+    .map((row) => ({ ...row, minimum, activeTier })));
   const quoteOptions = quoteRows.filter(({ customizable }) => !customizable)
     .sort((first, second) => Number(second.quantity > 0) - Number(first.quantity > 0))
-    .map(({ variant, quantity, minimum }) => ({
+    .map(({ variant, quantity, minimum, activeTier }) => ({
+      quotationUnitPrice: activeTier.quotation_unit_price,
       product_variant_id: variant.id,
       store_id: variant.store_id,
       quantity: quantity || minimum,
@@ -95,13 +97,11 @@ export default function WholesaleOrderTable({
   const customVariant = quoteRows.find(({ customizable }) => customizable)?.variant;
   const totalQuantity = groups.reduce((sum, group) => sum + group.selected, 0);
   const subtotal = groups.reduce((sum, group) => sum + group.subtotal, 0);
-  const atProductMaximum = productMaximum > 0 && bucketQuantity + totalQuantity >= productMaximum;
-  const exceedsMaximum = productMaximum > 0 && bucketQuantity + totalQuantity > productMaximum;
   const invalidQuantity = selectedRows.some(({ available, customizable, quantity, limit }) =>
     !available || customizable || !Number.isSafeInteger(quantity) || quantity > limit,
   );
   const meetsMinimum = groups.every((group) => group.selected === 0 || group.remaining === 0);
-  const canAdd = totalQuantity > 0 && meetsMinimum && !exceedsMaximum && !invalidQuantity;
+  const canAdd = totalQuantity > 0 && meetsMinimum && !invalidQuantity;
 
   function stepQuantity(variantId: number, delta: -1 | 1, limit: number) {
     setQuantities((previous) => {
@@ -238,7 +238,7 @@ export default function WholesaleOrderTable({
                             <button
                               type="button"
                               aria-label={t("wholesale.increaseVariantQuantity", "Increase quantity for {{variant}}", { variant: label })}
-                              disabled={isAdding || quantity >= limit || atProductMaximum}
+                              disabled={isAdding || quantity >= limit}
                               onClick={() => stepQuantity(variant.id, 1, limit)}
                               className={quantityButtonClass}
                             >
@@ -279,11 +279,6 @@ export default function WholesaleOrderTable({
         <span>{t("wholesale.units", "{{count}} units", { count: totalQuantity })}</span>
         <span>{t("subtotal")} {formatPrice(subtotal)}</span>
       </div>
-      {exceedsMaximum && (
-        <p role="alert" className="text-xs text-danger">
-          {t("wholesale.productMaximum", "You can have up to {{count}} units of this product in your bucket.", { count: productMaximum })}
-        </p>
-      )}
       <div className="grid gap-2 sm:grid-cols-2">
         <Button color="primary" className="w-full font-semibold"
           startContent={!isAdding && <Icon icon="solar:bag-4-linear" className="text-lg" />}

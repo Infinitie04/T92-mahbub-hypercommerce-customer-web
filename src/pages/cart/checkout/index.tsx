@@ -54,7 +54,7 @@ const CheckoutPage: NextPageWithLayout<CheckoutPageProps> = () => {
     <>
       <PageHead pageTitle={title} />
 
-      <div className="min-h-screen">
+      <div className="mx-auto min-h-screen w-full max-w-site px-4 sm:px-6">
         {router.isReady && (
           <>
             <MyBreadcrumbs breadcrumbs={breadcrumbs} />

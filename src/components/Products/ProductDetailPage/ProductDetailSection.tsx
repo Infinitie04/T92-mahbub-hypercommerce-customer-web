@@ -130,7 +130,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
             prev,
             stockLimit(
               matchingVariant.stock,
-              initialProduct.total_allowed_quantity || 9999,
+              initialProduct.total_allowed_quantity || Number.MAX_SAFE_INTEGER,
             ),
           ),
         );
@@ -417,7 +417,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
               setQuantity={setQuantity}
               min={lineMinimum}
               step={lineStep}
-              max={initialProduct.total_allowed_quantity || 9999}
+              max={initialProduct.total_allowed_quantity || Number.MAX_SAFE_INTEGER}
               stock={selectedVariant?.stock}
               disabled={loading.add || loading.buyNow}
             />
@@ -483,6 +483,7 @@ const ProductDetailSection: FC<ProductDetailSectionProps> = ({
           ) : (
             <div className="xs:col-span-2">
               <RequestQuotation source="item" lines={selectedVariant?.store_id ? [{
+                quotationUnitPrice: selectedVariant.quotation_unit_price,
                 product_variant_id: selectedVariant.id,
                 store_id: selectedVariant.store_id,
                 quantity,

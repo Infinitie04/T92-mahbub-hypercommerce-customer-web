@@ -56,6 +56,8 @@ export const updateCartData = async (
     }
     const cartRes: ApiResponse<CartResponse> = await getCart({
       address_id: requestAddress,
+      ...(requestAddress && state.checkout.thirdPartyDelivery && state.checkout.billingAddress && state.checkout.billingAddress !== "delivery"
+        ? { third_party_delivery: 1, billing_address_id: Number(state.checkout.billingAddress.id) } : {}),
       use_wallet: false,
       promo_code,
     });

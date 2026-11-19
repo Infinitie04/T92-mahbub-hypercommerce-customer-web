@@ -232,11 +232,6 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {order.proforma_url && (
-            <Button as="a" href={order.proforma_url} variant="bordered" className="text-sm font-bold">
-              {t("quotation.downloadExport")}
-            </Button>
-          )}
           {order.invoice && order.status !== "cancelled" && (
             <Button as="a" href={order.invoice} target="_blank" rel="noopener noreferrer"
               size="md" variant="bordered" className="px-4 text-sm font-bold" startContent={<Icon width={18} height={18} icon="solar:document-linear" />}>

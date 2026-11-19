@@ -21,7 +21,7 @@ const QtyInput: FC<QtyInputProps> = ({
   setQuantity,
   min = 1,
   step = 1,
-  max = 999,
+  max = 0,
   stock,
   id,
   label,
@@ -29,7 +29,7 @@ const QtyInput: FC<QtyInputProps> = ({
   compact = false,
 }) => {
   const { t } = useTranslation();
-  const maximum = max > 0 ? Math.min(max, 999) : 999;
+  const maximum = max > 0 ? max : Number.MAX_SAFE_INTEGER;
 
   const handleChange = (newQty: number) => {
     if (newQty < min) {

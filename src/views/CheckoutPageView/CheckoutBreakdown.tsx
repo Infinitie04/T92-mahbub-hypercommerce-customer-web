@@ -72,7 +72,7 @@ export function CheckoutTax({ total, breakdown, formatPrice }: {
 
   return (
     <>
-      <div className="flex justify-between text-foreground/50">
+      <div className="flex justify-between text-foreground/80">
         <span>
           {t("checkout.taxIncluded", {
             defaultValue: "Tax (included)",
@@ -83,7 +83,7 @@ export function CheckoutTax({ total, breakdown, formatPrice }: {
       {breakdown?.map((tax) => (
         <div
           key={tax.tax_rate_id}
-          className="flex justify-between ps-2 text-xs text-foreground/40"
+          className="flex justify-between ps-2 text-xs text-default-600"
         >
           <span>
             {tax.title} ({tax.rate}%)

@@ -51,6 +51,7 @@ export interface AddonGroup {
 export interface ProductPricingTier {
   min_quantity: number;
   unit_price: number;
+  quotation_unit_price?: number | null;
   formatted?: string | null;
 }
 
@@ -62,6 +63,7 @@ export interface ProductPricingGroup {
 }
 
 export interface ProductVariant {
+  quotation_unit_price?: number | null;
   pricing_group_id?: number | null;
   id: number;
   title: string;

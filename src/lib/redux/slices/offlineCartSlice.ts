@@ -70,11 +70,16 @@ const recalculateSummary = (items: OfflineCartItem[]) => {
   return summary;
 };
 
-const clampQuantity = (item: OfflineCartItem, desiredQuantity: number) => {
+const clampQuantity = (item: OfflineCartItem, desiredQuantity: number, items: OfflineCartItem[]) => {
   const minQuantity = item.minQuantity || 1;
   const stepSize = item.stepSize || 1;
-  const maxQuantity = item.maxQuantity || Number.MAX_SAFE_INTEGER;
+  const otherQuantity = items.reduce((sum, line) =>
+    line.product_variant_id === item.product_variant_id && line.id !== item.id ? sum + line.quantity : sum, 0);
+  const maxQuantity = (item.maxQuantity || Number.MAX_SAFE_INTEGER) - otherQuantity;
+
   const stock = stockLimit(item.stock, Number.MAX_SAFE_INTEGER);
+
+  if (Math.min(stock, maxQuantity) < minQuantity) return 0;
 
   let qty = Math.max(
     minQuantity,
@@ -94,8 +99,8 @@ const clampQuantity = (item: OfflineCartItem, desiredQuantity: number) => {
   return qty;
 };
 
-const normalizeItem = (item: OfflineCartItem) => {
-  const normalizedQuantity = clampQuantity(item, item.quantity);
+const normalizeItem = (item: OfflineCartItem, items: OfflineCartItem[]) => {
+  const normalizedQuantity = clampQuantity(item, item.quantity, items);
   return {
     ...item,
     quantity: normalizedQuantity,
@@ -122,7 +127,8 @@ const offlineCartSlice = createSlice({
       state.totalQuantity = summary.totalQuantity;
     },
     addOfflineCartItem: (state, action: PayloadAction<OfflineCartItem>) => {
-      const normalizedPayload = normalizeItem(action.payload);
+      const normalizedPayload = normalizeItem(action.payload, state.items);
+      if (!normalizedPayload.quantity) return;
       const existingIndex = state.items.findIndex(
         (item) => item.id === normalizedPayload.id
       );
@@ -135,7 +141,8 @@ const offlineCartSlice = createSlice({
         };
         mergedItem.quantity = clampQuantity(
           mergedItem,
-          existingItem.quantity + normalizedPayload.quantity
+          existingItem.quantity + normalizedPayload.quantity,
+          state.items
         );
         state.items[existingIndex] = mergedItem;
       } else {
@@ -171,10 +178,13 @@ const offlineCartSlice = createSlice({
         if (action.payload.stock !== undefined)
           targetItem.stock = action.payload.stock;
 
-        targetItem.quantity = clampQuantity(
+        const quantity = clampQuantity(
           targetItem,
-          action.payload.quantity
+          action.payload.quantity,
+          state.items
         );
+        if (!quantity) return;
+        targetItem.quantity = quantity;
         const summary = recalculateSummary(state.items);
         state.subtotal = summary.subtotal;
         state.totalQuantity = summary.totalQuantity;
@@ -199,7 +209,10 @@ const offlineCartSlice = createSlice({
 
       if (existingIndex >= 0) {
         // If the ID changed (due to different addons), we need to check if we should merge or replace
-        const nextId = action.payload.newItem.id;
+        const otherItems = state.items.filter((item) => item.id !== action.payload.id);
+        const nextItem = normalizeItem(action.payload.newItem, otherItems);
+        if (!nextItem.quantity) return;
+        const nextId = nextItem.id;
         if (nextId !== action.payload.id) {
           // Check if an item with nextId already exists
           const nextIndex = state.items.findIndex((item) => item.id === nextId);
@@ -208,16 +221,17 @@ const offlineCartSlice = createSlice({
             const mergeTarget = state.items[nextIndex];
             mergeTarget.quantity = clampQuantity(
               mergeTarget,
-              mergeTarget.quantity + action.payload.newItem.quantity
+              mergeTarget.quantity + nextItem.quantity,
+              otherItems
             );
             state.items.splice(existingIndex, 1);
           } else {
             // Just update the item at existing index
-            state.items[existingIndex] = action.payload.newItem;
+            state.items[existingIndex] = nextItem;
           }
         } else {
           // IDs match, just update
-          state.items[existingIndex] = action.payload.newItem;
+          state.items[existingIndex] = nextItem;
         }
 
         const summary = recalculateSummary(state.items);

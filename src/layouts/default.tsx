@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import CheckoutHeader from "@/views/CheckoutPageView/CheckoutHeader";
 import Footer from "@/components/Footer/Footer";
 import FirebaseInitializer from "@/components/Functional/FirebaseInitializer";
 import { Navbar } from "@/components/navbar";
@@ -60,6 +61,7 @@ export default function DefaultLayout({
   initialSettings?: Settings | null;
 }) {
   const router = useRouter();
+  const checkout = router.pathname === "/cart/checkout";
   const isWatchBuyRoute = router.pathname.startsWith("/watch-and-buy");
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [maintenanceState, setMaintenanceState] = useState(
@@ -235,19 +237,21 @@ export default function DefaultLayout({
             ) : (
               // Show normal layout with navbar, content, and footer
               <>
-                <Navbar />
+                {checkout ? (
+                  <CheckoutHeader />
+                ) : <Navbar />}
                 <main
                   className={
-                    isWatchBuyRoute
+                    checkout ? "w-full grow bg-background text-foreground" : isWatchBuyRoute
                       ? "w-full min-h-dvh grow"
                       : "w-full max-w-site mx-auto min-h-[80vh] px-4 sm:px-6 grow pb-4"
                   }
                 >
                   {children}
                 </main>
-                {isWatchBuyRoute ? null : <Footer />}
+                {isWatchBuyRoute || checkout ? null : <Footer />}
                 {isWatchBuyRoute ? null : <ScrollToTopButton />}
-                <BottomNavigation />
+                {!checkout && <BottomNavigation />}
                 <CookieConsent />
                 <RemovedItemsModal />
                 <FailedItemsModal />

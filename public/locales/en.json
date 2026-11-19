@@ -345,10 +345,16 @@
   "change": "Change",
   "check_back_later": "Check back later for new exciting offers!",
   "checkout": {
+    "secureCheckout": "Secure Checkout",
+    "backToCart": "Back to Cart",
+    "payAmount": "Pay {{amount}}",
+    "savingsApplied": "Savings already applied: {{amount}}",
+    "unitCount": "{{units}} units",
     "addresses": {
       "billing": "Billing address",
       "addBilling": "Add billing address",
       "same": "Same as delivery address",
+      "directedDelivery": "Deliver to a third party on our instructions. The billing address is our principal place of business.",
       "useDelivery": "Use delivery address",
       "deliveryFallback": "Your delivery address will appear on the invoice unless you choose another address.",
       "loadError": "Couldn’t load saved addresses.",
@@ -1609,7 +1615,7 @@
     },
     "razorpay": {
       "name": "Pay with Razorpay",
-      "tagline": "India's most popular gateway."
+      "tagline": "Credit / Debit card, UPI, Netbanking"
     },
     "stripe": {
       "name": "Pay with Stripe",
@@ -2496,6 +2502,7 @@
     "addOn": "Add-on {{name}} · {{amount}} each",
     "selectDelivery": "Select a delivery address to calculate your total.",
     "calculating": "Calculating total",
+    "goodsValue": "Goods value",
     "merchandise": "Merchandise (incl. tax)",
     "shipping": "Shipping",
     "total": "Total",

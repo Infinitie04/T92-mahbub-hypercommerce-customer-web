@@ -61,6 +61,8 @@ export const buyNowCart = async (params: {
 export const getCart = async (
   params: {
     address_id?: string | number;
+    third_party_delivery?: number;
+    billing_address_id?: number;
     promo_code?: string;
     use_wallet?: boolean;
     market?: string;

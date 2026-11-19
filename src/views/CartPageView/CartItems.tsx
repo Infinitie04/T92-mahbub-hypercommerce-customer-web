@@ -391,6 +391,7 @@ const CartItems: FC<CartItemsProps> = ({
         ) : <span className="col-start-1 row-start-1 size-12" aria-hidden="true" />}
 
         <div className="col-start-2 row-start-1 min-w-0 self-center">
+          {checkout && <p className="break-words font-semibold">{item.product.name}</p>}
           {renderVariantMeta(item, isLowStock)}
           {showBranch && (
             <p className="text-xs text-foreground/70">{item.store.name}</p>
@@ -451,6 +452,7 @@ const CartItems: FC<CartItemsProps> = ({
     );
   };
 
+  const multipleBranches = new Set(items.map((item) => item.store_id)).size > 1;
   const attachmentProducts = checkout
     ? Array.from(new Map(items.map((item) => [item.product.id, item])).values())
         .filter((item) => item.product.is_attachment_required)
@@ -458,7 +460,11 @@ const CartItems: FC<CartItemsProps> = ({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {[...productGroups].map(([key, { pricing, lines }]) => {
+      {checkout ? (
+        <ul className="divide-y divide-divider overflow-hidden rounded-medium border border-divider">
+          {items.map((item) => <li key={item.id}>{renderLine(item, multipleBranches)}</li>)}
+        </ul>
+      ) : [...productGroups].map(([key, { pricing, lines }]) => {
         const { product } = lines[0];
         const quantity = pricing?.quantity ?? lines.reduce((total, item) => total + item.quantity, 0);
         const subtotal = lines.reduce((total, item) => total + cartLineTotal(item), 0);
