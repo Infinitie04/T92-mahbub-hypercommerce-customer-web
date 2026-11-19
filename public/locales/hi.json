@@ -345,6 +345,16 @@
   "change": "बदलें",
   "check_back_later": "नई रोमांचक ऑफ़र के लिए बाद में जांचें!",
   "checkout": {
+    "addresses": {
+      "billing": "बिलिंग पता",
+      "addBilling": "बिलिंग पता जोड़ें",
+      "same": "डिलीवरी पते के समान",
+      "useDelivery": "डिलीवरी पता उपयोग करें",
+      "deliveryFallback": "दूसरा पता चुनने तक चालान पर डिलीवरी का पता दिखेगा।",
+      "loadError": "सहेजे गए पते लोड नहीं हो सके।",
+      "marketError": "इस देश के लिए मूल्य लोड नहीं हो सके।",
+      "downloadInvoice": "चालान PDF डाउनलोड करें"
+    },
     "pendingChargesTotal": "लंबित शुल्क",
     "platformFee": "प्लेटफ़ॉर्म शुल्क",
     "confirmingPayment": "भुगतान की पुष्टि हो रही है…",

@@ -36,6 +36,8 @@ interface AddressModalProps {
   onOpenChange: (isOpen: boolean) => void;
   onSave?: (addressData: AddressParams) => void;
   initialData?: Partial<Address>;
+  title?: string;
+  onSavedAddress?: (address: Address) => void;
 }
 
 type AddressFormData = {
@@ -132,6 +134,8 @@ const AddressModal: FC<AddressModalProps> = ({
   isOpen,
   onOpenChange,
   onSave,
+  title,
+  onSavedAddress,
   initialData,
 }) => {
   const { defaultLocation, demoMode } = useSettings();
@@ -527,6 +531,7 @@ const AddressModal: FC<AddressModalProps> = ({
           color: "success",
         });
         onSave?.(addressData);
+        onSavedAddress?.(response.data);
         onOpenChange(false);
       } else {
         let errorDescription = response?.message || t("address.toast.error");
@@ -580,11 +585,13 @@ const AddressModal: FC<AddressModalProps> = ({
       <ModalContent>
         <ModalHeader className="flex flex-col gap-0.5">
           <span className="text-lg font-bold">
-            {initialData ? t("address.update") : t("address.addNew")}
+            {title ?? (initialData ? t("address.update") : t("address.addNew"))}
           </span>
-          <span className="text-xs font-normal text-foreground/50">
-            {t("address.subtitle", "Tell us where to deliver your order")}
-          </span>
+          {!title && (
+            <span className="text-xs font-normal text-foreground/50">
+              {t("address.subtitle", "Tell us where to deliver your order")}
+            </span>
+          )}
         </ModalHeader>
         <ModalBody className="flex flex-col gap-5 pb-2">
           {/* Section: delivery location */}

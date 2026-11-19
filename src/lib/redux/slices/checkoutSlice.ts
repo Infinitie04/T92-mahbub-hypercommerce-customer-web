@@ -3,6 +3,7 @@ import { Address } from "@/types/ApiResponse";
 
 export interface CheckoutState {
   selectedAddress: Address | null;
+  billingAddress: Address | "delivery" | null;
   orderNote: string;
   promoCode: string;
   idempotencyKey: string;
@@ -10,6 +11,7 @@ export interface CheckoutState {
 
 const initialState: CheckoutState = {
   selectedAddress: null,
+  billingAddress: null,
   orderNote: "",
   promoCode: "",
   idempotencyKey: "",
@@ -21,6 +23,9 @@ const checkoutSlice = createSlice({
   reducers: {
     setSelectedAddress: (state, action: PayloadAction<Address | null>) => {
       state.selectedAddress = action.payload;
+    },
+    setBillingAddress: (state, action: PayloadAction<CheckoutState["billingAddress"]>) => {
+      state.billingAddress = action.payload;
     },
     setOrderNote: (state, action: PayloadAction<string>) => {
       state.orderNote = action.payload;
@@ -36,6 +41,7 @@ const checkoutSlice = createSlice({
 
 export const {
   setSelectedAddress,
+  setBillingAddress,
   setOrderNote,
   setPromoCode,
   setIdempotencyKey,

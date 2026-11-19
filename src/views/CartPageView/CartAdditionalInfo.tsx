@@ -1,8 +1,7 @@
 import { FC, useState, useEffect, useMemo } from "react";
-import { Textarea, useDisclosure } from "@/components/ui";
+import { Textarea } from "@/components/ui";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/redux/store";
-import AddressModal from "../../components/Modals/AddressModal";
 import AddressSection from "@/components/Cart/AddressSection";
 import CartItems from "./CartItems";
 import { setOrderNote } from "@/lib/redux/slices/checkoutSlice";
@@ -18,11 +17,6 @@ const CartAdditionalInfo: FC = () => {
   const { cartData, isLoading, error } = useSelector((state: RootState) => state.cart);
   const items = cartData?.items ?? [];
 
-  const {
-    isOpen: isAddressModalOpen,
-    onOpen: onAddressModalOpen,
-    onClose: onAddressModalClose,
-  } = useDisclosure();
   const dispatch = useDispatch();
 
   const debouncedDispatch = useMemo(() => {
@@ -38,7 +32,7 @@ const CartAdditionalInfo: FC = () => {
 
   return (
     <div className="space-y-4">
-      <AddressSection onAddAddressModalOpen={onAddressModalOpen} />
+      <AddressSection />
 
       {/* Cart items */}
       {items.length > 0 && !error && (!address || (!isLoading && Number(cartData?.address_id) === Number(address.id))) && (
@@ -74,15 +68,6 @@ const CartAdditionalInfo: FC = () => {
       {/* Promo Code */}
       <PromoCodeSection />
 
-      <AddressModal
-        isOpen={isAddressModalOpen}
-        onOpenChange={(state) =>
-          state ? onAddressModalOpen() : onAddressModalClose()
-        }
-        onSave={() => {
-          document.getElementById("reset-cart-addresses")?.click();
-        }}
-      />
     </div>
   );
 };

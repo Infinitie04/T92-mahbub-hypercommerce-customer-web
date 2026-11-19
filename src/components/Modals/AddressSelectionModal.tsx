@@ -10,13 +10,14 @@ import {
   RadioGroup,
   Chip,
   Spinner,
-} from "@heroui/react";
+} from "@/components/ui";
 import { MapPin, Plus, Check, Phone } from "lucide-react";
 import { Address } from "@/types/ApiResponse";
 import { useTranslation } from "react-i18next";
 
 type AddressSelectionModalProps = {
   isOpen: boolean;
+  title?: string;
   onOpenChange: () => void;
   onAddNew: () => void;
   addresses: Address[];
@@ -24,10 +25,8 @@ type AddressSelectionModalProps = {
   tempSelectedId: string;
   handleModalSelection: (id: string) => void;
   handleConfirmSelection: () => void;
-  getAddressTypeIcon: (type: string) => string;
-  getAddressTypeColor: (
-    type: string
-  ) => "success" | "primary" | "warning" | "default";
+  loadError?: boolean;
+  onRetry?: () => void;
   isLoading?: boolean;
   totalAddresses: number;
   onLoadMore?: () => void;
@@ -36,6 +35,7 @@ type AddressSelectionModalProps = {
 
 const AddressSelectionModal: React.FC<AddressSelectionModalProps> = ({
   isOpen,
+  title,
   onOpenChange,
   onAddNew,
   addresses,
@@ -43,8 +43,8 @@ const AddressSelectionModal: React.FC<AddressSelectionModalProps> = ({
   tempSelectedId,
   handleModalSelection,
   handleConfirmSelection,
-  getAddressTypeIcon,
-  getAddressTypeColor,
+  loadError,
+  onRetry,
   isLoading = false,
   totalAddresses,
   onLoadMore,
@@ -76,7 +76,7 @@ const AddressSelectionModal: React.FC<AddressSelectionModalProps> = ({
                 <MapPin className="w-5 h-5 text-primary" />
                 <div className="flex flex-col gap-0.5">
                   <h2 className="text-sm font-semibold">
-                    {t("addressSelection.header.title")}
+                    {title ?? t("addressSelection.header.title")}
                   </h2>
                   <p className="text-xs text-default-500 font-normal">
                     {totalAddresses > 0
@@ -98,6 +98,11 @@ const AddressSelectionModal: React.FC<AddressSelectionModalProps> = ({
                   <p className="text-sm text-default-500 mt-3">
                     {t("addressSelection.loading.message")}
                   </p>
+                </div>
+              ) : loadError ? (
+                <div className="space-y-2 text-center" role="alert">
+                  <p>{t("checkout.addresses.loadError")}</p>
+                  <Button size="sm" variant="bordered" onPress={onRetry}>{t("retry")}</Button>
                 </div>
               ) : totalAddresses === 0 || addresses.length === 0 ? (
                 <div className="text-center py-8">
@@ -136,15 +141,13 @@ const AddressSelectionModal: React.FC<AddressSelectionModalProps> = ({
                       >
                         <div className="flex items-start gap-3 w-full">
                           <div className="text-xl">
-                            {getAddressTypeIcon(address.address_type)}
+                            <MapPin className="size-4 text-default-500" aria-hidden="true" />
                           </div>
                           <div className="flex flex-col gap-2 flex-1 w-full">
                             <div className="flex items-center justify-start gap-4 w-full">
                               <Chip
                                 size="sm"
-                                color={getAddressTypeColor(
-                                  address.address_type
-                                )}
+                                color="default"
                                 variant="flat"
                                 className="text-xs capitalize"
                               >
@@ -164,6 +167,7 @@ const AddressSelectionModal: React.FC<AddressSelectionModalProps> = ({
                             </div>
                             <div className="text-start">
                               <p className="text-sm font-medium mb-1">
+                                {address.legal_name && <span className="block">{address.legal_name}</span>}
                                 {address.address_line1}
                                 {address.address_line2 &&
                                   `, ${address.address_line2}`}

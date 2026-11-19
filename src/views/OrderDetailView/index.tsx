@@ -211,7 +211,7 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
       <PageHead pageTitle={`${t("order")} #${order?.id || ""}`} />
 
       {/* Back + order id */}
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             isIconOnly
@@ -231,6 +231,13 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
             </p>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {order.invoice && order.status !== "cancelled" && (
+            <Button as="a" href={order.invoice_download_url || order.invoice} target="_blank" rel="noopener noreferrer"
+              size="sm" variant="bordered" startContent={<Icon icon={order.invoice_download_url ? "solar:download-minimalistic-linear" : "solar:document-linear"} />}>
+              {t(order.invoice_download_url ? "checkout.addresses.downloadInvoice" : "invoice")}
+            </Button>
+          )}
         <Button
           size="md"
           variant="bordered"
@@ -240,6 +247,7 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
         >
           {t("help", "Help")}
         </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
@@ -439,16 +447,7 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
                 onUpdated={() => void refreshData()}
               />
             )}
-            {order.invoice && order.status !== "cancelled" && (
-              <Button
-                size="md"
-                variant="bordered"
-                startContent={<Icon icon="solar:download-minimalistic-linear" />}
-                onPress={() => window.open(order.invoice, "_blank")}
-              >
-                {t("invoice")}
-              </Button>
-            )}
+
           </div>
 
           <OrderSummaryCard order={order} formatPrice={formatPrice} />

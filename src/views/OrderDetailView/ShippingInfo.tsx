@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { Avatar, Card, CardBody, CardHeader } from "@heroui/react";
+import { Avatar, Card, CardBody, CardHeader } from "@/components/ui";
 import { Order } from "@/types/ApiResponse";
 import { Icon } from "@iconify/react";
 import { useTranslation } from "react-i18next";
@@ -77,6 +77,14 @@ const ShippingInfo: FC<ShippingInfoProps> = ({ order }) => {
             )}
           </div>
         </div>
+        {order.billing_address && (
+          <section className="mt-4 space-y-1 border-t border-divider pt-3">
+            <h3 className="flex items-center gap-2 text-sm font-medium"><Icon icon="solar:bill-list-linear" />{t("checkout.addresses.billing")}</h3>
+            <p className="text-sm">{order.billing_address.name}</p>
+            <p className="text-xs text-default-500">{order.billing_address.lines.join(", ")}</p>
+            {order.billing_address.gstin && <p className="text-xs text-default-500">GSTIN · {order.billing_address.gstin}</p>}
+          </section>
+        )}
       </CardBody>
     </Card>
   );

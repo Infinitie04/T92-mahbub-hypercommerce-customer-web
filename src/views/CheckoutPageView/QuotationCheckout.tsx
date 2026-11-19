@@ -1,5 +1,4 @@
 import AddressSection from "@/components/Cart/AddressSection";
-import AddressModal from "@/components/Modals/AddressModal";
 import QuotationItems from "@/components/Quotations/QuotationItems";
 import { Button, ErrorState, Skeleton, Spinner } from "@/components/ui";
 import AttachmentUploader, { type AttachmentFile } from "@/components/Cart/AttachmentUploader";
@@ -25,7 +24,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const { data: quote, error: quoteError, mutate: reloadQuote } = useSWR(id && userId ? ["quotation", userId, id] : null, () => getQuotation(id));
   const selectedAddress = useSelector((state: RootState) => state.checkout.selectedAddress);
   const [addressId, setAddressId] = useState<number>();
-  const [addressModal, setAddressModal] = useState(false);
+  const billing = useSelector((state: RootState) => state.checkout.billingAddress);
   const [files, setFiles] = useState<Record<number, AttachmentFile[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -54,6 +53,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
     if (!reviewed || !canPreview || previewAddressId === undefined || submitting) return;
     const body = new FormData();
     body.set("address_id", String(previewAddressId));
+    if (billing) body.set("billing_address_id", String(billing === "delivery" ? previewAddressId : billing.id));
     body.set("pricing_review_token", reviewed.pricing_review_token);
     for (const [product, uploads] of Object.entries(files)) {
       for (const file of uploads) body.append(`attachments[${product}][]`, file.file);
@@ -94,7 +94,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
         heading={t("pageTitle.checkout", { defaultValue: "Checkout" })}
         details={
           <div className="space-y-4">
-            {!quote.has_pending_order && <AddressSection onAddAddressModalOpen={() => setAddressModal(true)} onAddressSelected={onAddressSelected} />}
+            {!quote.has_pending_order && <AddressSection onAddressSelected={onAddressSelected} />}
             <QuotationItems quote={quote} issues={shippingIssues} />
             {reviewed?.attachments.map((item) => (
               <section key={item.product_id} className="rounded-large border border-divider bg-content1 p-4">
@@ -159,11 +159,6 @@ export default function QuotationCheckout({ id }: { id: string }) {
               )}
           </div>
         }
-      />
-      <AddressModal
-        isOpen={addressModal}
-        onOpenChange={setAddressModal}
-        onSave={() => document.getElementById("reset-cart-addresses")?.click()}
       />
     </>
   );

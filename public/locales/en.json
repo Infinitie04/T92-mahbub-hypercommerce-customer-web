@@ -345,6 +345,16 @@
   "change": "Change",
   "check_back_later": "Check back later for new exciting offers!",
   "checkout": {
+    "addresses": {
+      "billing": "Billing address",
+      "addBilling": "Add billing address",
+      "same": "Same as delivery address",
+      "useDelivery": "Use delivery address",
+      "deliveryFallback": "Your delivery address will appear on the invoice unless you choose another address.",
+      "loadError": "Couldn’t load saved addresses.",
+      "marketError": "Couldn’t load pricing for this delivery country.",
+      "downloadInvoice": "Download invoice PDF"
+    },
     "pendingChargesTotal": "Pending charges",
     "platformFee": "Platform fee",
     "confirmingPayment": "Confirming payment…",

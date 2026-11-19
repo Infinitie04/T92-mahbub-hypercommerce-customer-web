@@ -30,6 +30,7 @@ import {
   setIdempotencyKey,
   setPromoCode,
   setSelectedAddress,
+  setBillingAddress,
 } from "@/lib/redux/slices/checkoutSlice";
 import { updateCartData } from "./updators";
 import {
@@ -503,6 +504,7 @@ export const ensureIdempotencyKey = (paymentMethod: string): string => {
 export const resetCheckOutState = () => {
   store.dispatch(setPromoCode(""));
   store.dispatch(setSelectedAddress(null));
+  store.dispatch(setBillingAddress(null));
   store.dispatch(setIdempotencyKey(""));
   // Clear attachments from window
   if (typeof window !== "undefined") {
@@ -545,6 +547,8 @@ export const handleCheckout = async (
     formData.append("gift_card", "");
     formData.append("gift_card_discount", "");
     formData.append("address_id", address_id.toString());
+    const billing = state.checkout.billingAddress;
+    if (billing) formData.append("billing_address_id", String(billing === "delivery" ? address_id : billing.id));
     formData.append("order_note", order_note);
     formData.append(
       "redirect_url",

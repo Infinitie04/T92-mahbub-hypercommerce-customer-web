@@ -18,6 +18,7 @@ export const getAddresses = async (
     access_token?: string;
     page?: number;
     per_page?: number;
+    is_default_billing?: 1;
   } = {},
 ): Promise<PaginatedResponse<Address[]>> => {
   try {

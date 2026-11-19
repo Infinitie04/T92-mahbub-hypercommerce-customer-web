@@ -107,6 +107,8 @@ export interface Order {
   /** Customer-friendly headline + canonical tracker (derived). */
   customer_status: CustomerStatus;
   invoice: string;
+  invoice_download_url?: string;
+  billing_address?: { name: string | null; lines: string[]; gstin: string | null };
   /** @deprecated delivery-boy model removed — null stubs from the backend. */
   fulfillment_type?: string;
   estimated_delivery_time?: number | null;

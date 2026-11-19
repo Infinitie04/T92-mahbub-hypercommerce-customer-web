@@ -345,6 +345,16 @@
   "change": "تغيير",
   "check_back_later": "تحقق لاحقًا للحصول على عروض جديدة ومثيرة!",
   "checkout": {
+    "addresses": {
+      "billing": "عنوان الفاتورة",
+      "addBilling": "إضافة عنوان الفاتورة",
+      "same": "نفس عنوان التوصيل",
+      "useDelivery": "استخدام عنوان التوصيل",
+      "deliveryFallback": "سيظهر عنوان التوصيل في الفاتورة ما لم تختر عنوانًا آخر.",
+      "loadError": "تعذّر تحميل العناوين المحفوظة.",
+      "marketError": "تعذّر تحميل الأسعار لبلد التوصيل.",
+      "downloadInvoice": "تنزيل الفاتورة بصيغة PDF"
+    },
     "pendingChargesTotal": "الرسوم المعلقة",
     "platformFee": "رسوم المنصة",
     "confirmingPayment": "جارٍ تأكيد الدفع…",
