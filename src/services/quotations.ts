@@ -46,8 +46,10 @@ export type QuotationSourceLine = { quantity: number; label: string; variantLabe
 );
 
 type QuotationPreview = {
+  cod_available: boolean;
+  export_proforma: { number: string } | null;
   totals: Record<
-    "items_total" | "tax_total" | "total_delivery_charges" | "platform_fee" | "pending_charges_total" | "payable_amount",
+    "items_total" | "tax_total" | "total_delivery_charges" | "cod_fee" | "platform_fee" | "pending_charges_total" | "payable_amount",
     number
   >;
   currency_code: string;
@@ -153,16 +155,29 @@ export async function cancelQuotation(id: number) {
 }
 
 type QuotationPaymentOrder = {
+  payment_method?: string;
   order_slug: string;
   payment_status: "pending" | "completed";
 };
 
-export async function previewQuotation(id: string, addressId?: number) {
+export async function previewQuotation(id: string, addressId?: number, paymentType?: string, billingId?: number) {
   const { data } = await api.post<ApiDataResponse<QuotationPreview | QuotationPaymentOrder>>(
     `/user/quotations/${id}/preview`,
-    { address_id: addressId },
+    { address_id: addressId, payment_type: paymentType, billing_address_id: billingId },
   );
   return unwrapApiData(data);
+}
+
+export async function downloadExportProforma(id: string, addressId: number, paymentType: string, billingId?: number) {
+  const { data } = await api.post<Blob>(`/user/quotations/${id}/preview`, {
+    address_id: addressId, billing_address_id: billingId, payment_type: paymentType, download: true,
+  }, { responseType: "blob" });
+  const url = URL.createObjectURL(data);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `PF-${id}.pdf`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export async function payQuotation(id: string, body: FormData) {

@@ -1,3 +1,5 @@
+import PaymentMethods from "@/components/PaymentMethods";
+import { useSettings } from "@/contexts/SettingsContext";
 import AddressSection from "@/components/Cart/AddressSection";
 import QuotationItems from "@/components/Quotations/QuotationItems";
 import { Button, ErrorState, Skeleton, Spinner } from "@/components/ui";
@@ -7,7 +9,7 @@ import { quotationPaymentHref } from "@/helpers/quotationCheckout";
 import { CheckoutShipping, CheckoutTax } from "./CheckoutBreakdown";
 import { useTranslation } from "react-i18next";
 import type { RootState } from "@/lib/redux/store";
-import { getQuotation, payQuotation, previewQuotation, quotationError, quotationValidation, type QuotationCheckoutErrors } from "@/services/quotations";
+import { downloadExportProforma, getQuotation, payQuotation, previewQuotation, quotationError, quotationValidation, type QuotationCheckoutErrors } from "@/services/quotations";
 import type { Address } from "@/types/ApiResponse";
 import CheckoutLayout from "./CheckoutLayout";
 import { isAxiosError } from "axios";
@@ -24,6 +26,10 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const { data: quote, error: quoteError, mutate: reloadQuote } = useSWR(id && userId ? ["quotation", userId, id] : null, () => getQuotation(id));
   const selectedAddress = useSelector((state: RootState) => state.checkout.selectedAddress);
   const [addressId, setAddressId] = useState<number>();
+  const { paymentSettings } = useSettings();
+  const [paymentChoice, setPaymentChoice] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const paymentType = paymentChoice || (paymentSettings?.razorpayPayment === false && paymentSettings.cod ? "cod" : "razorpayPayment");
   const billing = useSelector((state: RootState) => state.checkout.billingAddress);
   const [files, setFiles] = useState<Record<number, AttachmentFile[]>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -31,14 +37,16 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const [paymentIssues, setPaymentIssues] = useState<QuotationCheckoutErrors>();
   const onAddressSelected = useCallback((address: Address) => {
     setAddressId(Number(address.id));
+    setPaymentChoice("");
     setPaymentError("");
     setPaymentIssues(undefined);
   }, []);
   const previewAddressId = addressId === Number(selectedAddress?.id) ? addressId : undefined;
+  const billingId = billing === "delivery" ? previewAddressId : billing ? Number(billing.id) : undefined;
   const canPreview = quote?.status === "ready_to_pay" && (quote.has_pending_order || previewAddressId !== undefined);
   const { data: preview, error: previewError, isValidating, mutate } = useSWR(
-    canPreview ? ["quotation-preview", userId, id, previewAddressId] : null,
-    () => previewQuotation(id, previewAddressId),
+    canPreview ? ["quotation-preview", userId, id, previewAddressId, paymentType, billingId] : null,
+    () => previewQuotation(id, previewAddressId, paymentType, billingId),
     { shouldRetryOnError: false, revalidateOnFocus: false },
   );
   const verifiedOrder = !previewError && preview && "order_slug" in preview ? preview : null;
@@ -52,6 +60,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const pay = async () => {
     if (!reviewed || !canPreview || previewAddressId === undefined || submitting) return;
     const body = new FormData();
+    body.set("payment_type", paymentType);
     body.set("address_id", String(previewAddressId));
     if (billing) body.set("billing_address_id", String(billing === "delivery" ? previewAddressId : billing.id));
     body.set("pricing_review_token", reviewed.pricing_review_token);
@@ -63,7 +72,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
     setSubmitting(true);
     try {
       const result = await payQuotation(id, body);
-      await router.push(result.payment_status === "completed"
+      await router.push(result.payment_status === "completed" || result.payment_method === "cod"
         ? `/my-account/orders/${result.order_slug}`
         : quotationPaymentHref(result.order_slug, id));
     } catch (error) {
@@ -117,15 +126,16 @@ export default function QuotationCheckout({ id }: { id: string }) {
               previewError ? <ErrorState title={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "checkout.validation.title")}
                 description={quotationError(previewError, t("quotation.error"))}
                 retryLabel={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "retry")} onRetry={() => {
+                  setPaymentChoice("");
                   void reloadQuote();
                   void mutate();
                 }} /> :
               verifiedOrder ? (
                 <Button as={Link} color="primary" fullWidth isDisabled={isValidating}
-                  href={verifiedOrder.payment_status === "completed"
+                  href={verifiedOrder.payment_status === "completed" || verifiedOrder.payment_method === "cod"
                     ? `/my-account/orders/${verifiedOrder.order_slug}`
                     : quotationPaymentHref(verifiedOrder.order_slug, id)}>
-                  {t(verifiedOrder.payment_status === "completed" ? "quotation.viewOrder" : "quotation.pay")}
+                  {t(verifiedOrder.payment_status === "completed" || verifiedOrder.payment_method === "cod" ? "quotation.viewOrder" : "quotation.pay")}
                 </Button>
               ) :
               !reviewed ? <Spinner size="sm" label={previewLoadingLabel} /> : (
@@ -135,6 +145,9 @@ export default function QuotationCheckout({ id }: { id: string }) {
                     <div className="flex justify-between gap-3"><span>{t("quotation.shipping")}</span><span>{money(reviewed.totals.total_delivery_charges)}</span></div>
                     <CheckoutShipping shipments={reviewed.seller_shipping_costs ?? []} formatPrice={money} />
                     <CheckoutTax total={reviewed.totals.tax_total} breakdown={reviewed.tax_breakdown} formatPrice={money} />
+                    {reviewed.totals.cod_fee > 0 && (
+                      <div className="flex justify-between gap-3"><span>{t("orderMoneySummary.codFee")}</span><span>{money(reviewed.totals.cod_fee)}</span></div>
+                    )}
                     {reviewed.totals.platform_fee > 0 && (
                       <div className="flex justify-between gap-3"><span>{t("checkout.platformFee")}</span><span>{money(reviewed.totals.platform_fee)}</span></div>
                     )}
@@ -145,6 +158,20 @@ export default function QuotationCheckout({ id }: { id: string }) {
                       <span>{t("quotation.total")}</span><span>{money(reviewed.totals.payable_amount)}</span>
                     </div>
                   </div>
+                  <PaymentMethods selectedPayment={paymentType} setSelectedPayment={setPaymentChoice}
+                    hideCOD={!reviewed.cod_available} codEligible={reviewed.cod_available} isLoading={submitting} />
+                  {reviewed.export_proforma && previewAddressId && (
+                    <Button variant="bordered" fullWidth isLoading={downloading} onPress={async () => {
+                      setDownloading(true);
+                      try {
+                        await downloadExportProforma(id, previewAddressId, paymentType, billingId);
+                      } catch {
+                        setPaymentError(t("quotation.exportDownloadFailed"));
+                      } finally {
+                        setDownloading(false);
+                      }
+                    }}>{t("quotation.downloadExport")}</Button>
+                  )}
                   {paymentError && <p role="alert" className="text-sm text-danger">{paymentError}</p>}
                   <Button
                     color="primary"
@@ -153,7 +180,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
                     isDisabled={isValidating || reviewed.attachments.some((item) => item.required && !files[item.product_id]?.length)}
                     onPress={() => void pay()}
                   >
-                    {t("quotation.pay")}
+                    {paymentType === "cod" ? t("quotation.placeCod") : t("quotation.pay")}
                   </Button>
                 </>
               )}

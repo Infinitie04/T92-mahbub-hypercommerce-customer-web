@@ -2452,6 +2452,10 @@
     "change_profile_photo": "تغيير صورة الملف الشخصي"
   },
   "quotation": {
+    "downloadExport": "تنزيل الفاتورة الأولية للتصدير",
+    "exportDownloadFailed": "تعذّر تنزيل الفاتورة الأولية. حاول مرة أخرى.",
+    "placeCod": "تأكيد الطلب والدفع عند الاستلام",
+
     "quantityLabel": "الكمية",
     "history": "سجل عروض الأسعار",
     "details": "تفاصيل عرض السعر",

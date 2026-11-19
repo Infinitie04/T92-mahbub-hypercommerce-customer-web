@@ -2449,6 +2449,10 @@
     "change_profile_photo": "Change profile photo"
   },
   "quotation": {
+    "downloadExport": "Download export proforma",
+    "exportDownloadFailed": "Could not download the proforma. Please try again.",
+    "placeCod": "Place COD order",
+
     "quantityLabel": "Quantity",
     "history": "Quotation History",
     "details": "Quotation Details",

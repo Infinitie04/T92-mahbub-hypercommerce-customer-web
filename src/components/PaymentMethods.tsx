@@ -9,6 +9,7 @@ interface PaymentMethodsProps {
   selectedPayment: string;
   setSelectedPayment: (value: string) => void;
   hideCOD: boolean;
+  codEligible?: boolean;
   isLoading: boolean;
 }
 
@@ -16,6 +17,7 @@ const PaymentMethods: FC<PaymentMethodsProps> = ({
   selectedPayment,
   setSelectedPayment,
   hideCOD = false,
+  codEligible,
   isLoading = false,
 }) => {
   const { t } = useTranslation();
@@ -41,7 +43,7 @@ const PaymentMethods: FC<PaymentMethodsProps> = ({
       tagline: t("payments.cod.tagline"),
       icon: "/Payments/cod.png",
       isEnabled: paymentSettings?.cod === true && !hideCOD,
-      disabled: !codAvailable,
+      disabled: !(codEligible ?? codAvailable),
       disabledReason: t("payments.cod.notAvailable", {
         defaultValue: "Not available for this order",
       }),

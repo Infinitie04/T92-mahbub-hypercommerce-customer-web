@@ -108,6 +108,7 @@ export interface Order {
   /** Customer-friendly headline + canonical tracker (derived). */
   customer_status: CustomerStatus;
   invoice: string;
+  proforma_url?: string;
   invoice_download_url?: string;
   shipping_gstin?: string | null;
   billing_address?: { same_as_delivery?: boolean | null; name: string | null; lines: string[]; gstin: string | null };
