@@ -6,7 +6,6 @@ import AddressSection from "@/components/Cart/AddressSection";
 import CartItems from "./CartItems";
 import { setOrderNote } from "@/lib/redux/slices/checkoutSlice";
 import { debounce } from "lodash";
-import PromoCodeSection from "@/components/Cart/PromoCodeSection";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 
@@ -49,7 +48,6 @@ const CartAdditionalInfo: FC = () => {
         </div>
       )}
 
-      {/* Delivery note — promo-style card */}
       <div className="rounded-large border border-divider bg-content1 p-4">
         <h3 className="text-sm font-bold text-foreground">
           {t("cart.deliveryInstructions.title")}
@@ -64,10 +62,6 @@ const CartAdditionalInfo: FC = () => {
           isClearable
         />
       </div>
-
-      {/* Promo Code */}
-      <PromoCodeSection />
-
     </div>
   );
 };

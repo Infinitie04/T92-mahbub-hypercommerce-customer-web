@@ -11,7 +11,7 @@ import CheckoutLayout from "./CheckoutLayout";
 import ConfettiTrigger from "@/components/Functional/ConfettiTrigger";
 
 /**
- * Checkout page (redesign `/redesign/checkout`): delivery address + promo on the
+ * Checkout page (redesign `/redesign/checkout`): delivery and billing addresses on the
  * left, the order summary + payment on the right. Reached from the cart page's
  * "Proceed to Checkout".
  */

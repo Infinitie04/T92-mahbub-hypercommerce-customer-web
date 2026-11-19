@@ -54,6 +54,12 @@ export default function OrderSummaryCard({ order, formatPrice }: Props) {
             <dd className="text-end font-medium">{line.discount ? "− " : ""}{formatPrice(line.amount)}</dd>
           </div>
         ))}
+        {!!snapshot?.tax_total && snapshot.tax_total > 0 && (
+          <div className="flex justify-between gap-4 text-default-500">
+            <dt>{t("checkout.taxIncluded")}</dt>
+            <dd>{formatPrice(snapshot.tax_total)}</dd>
+          </div>
+        )}
         <div className="flex justify-between gap-4 border-t border-divider pt-3 font-semibold">
           <dt>{t("orderMoneySummary.total", "Order total")}</dt>
           <dd>{formatPrice(breakdown.order_total)}</dd>

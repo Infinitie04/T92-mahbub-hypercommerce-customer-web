@@ -234,7 +234,7 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
         <div className="flex flex-wrap items-center gap-2">
           {order.invoice && order.status !== "cancelled" && (
             <Button as="a" href={order.invoice_download_url || order.invoice} target="_blank" rel="noopener noreferrer"
-              size="sm" variant="bordered" startContent={<Icon icon={order.invoice_download_url ? "solar:download-minimalistic-linear" : "solar:document-linear"} />}>
+              size="md" variant="bordered" className="px-4 text-sm font-bold" startContent={<Icon width={18} height={18} icon={order.invoice_download_url ? "solar:download-minimalistic-linear" : "solar:document-linear"} />}>
               {t(order.invoice_download_url ? "checkout.addresses.downloadInvoice" : "invoice")}
             </Button>
           )}

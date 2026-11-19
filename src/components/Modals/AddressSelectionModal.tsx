@@ -183,6 +183,9 @@ const AddressSelectionModal: React.FC<AddressSelectionModalProps> = ({
                                   .filter(Boolean)
                                   .join(", ")}
                               </p>
+                              {address.gstin && (
+                                <p className="mt-1 text-xs text-default-600">GSTIN · {address.gstin}</p>
+                              )}
                               {address.mobile && (
                                 <p className="mt-1 flex items-center gap-1 text-xs text-default-500">
                                   <Phone className="h-3 w-3 shrink-0" />

@@ -44,6 +44,7 @@ export interface PaymentInitiationResponse {
 }
 
 export interface OrderMoneyBreakdown {
+  tax_total?: number;
   items_total?: number;
   delivery_charge?: number;
   platform_fee?: number;
@@ -108,7 +109,8 @@ export interface Order {
   customer_status: CustomerStatus;
   invoice: string;
   invoice_download_url?: string;
-  billing_address?: { name: string | null; lines: string[]; gstin: string | null };
+  shipping_gstin?: string | null;
+  billing_address?: { same_as_delivery?: boolean | null; name: string | null; lines: string[]; gstin: string | null };
   /** @deprecated delivery-boy model removed — null stubs from the backend. */
   fulfillment_type?: string;
   estimated_delivery_time?: number | null;

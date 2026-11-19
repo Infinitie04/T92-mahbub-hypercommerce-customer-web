@@ -59,8 +59,8 @@ const ShippingInfo: FC<ShippingInfoProps> = ({ order }) => {
                 [order.shipping_address_1, order.shipping_address_2]
                   .filter(Boolean)
                   .join(", "),
-                `${order.shipping_city}, ${order.shipping_state} ${order.shipping_zip}, ${order.shipping_country}`,
-              ].map((line, idx) => (
+                [order.shipping_city, [order.shipping_state, order.shipping_zip].filter(Boolean).join(" "), order.shipping_country].filter(Boolean).join(", "),
+              ].filter(Boolean).map((line, idx) => (
                 <div key={idx} className="flex items-start gap-1">
                   <Icon icon="solar:map-point-linear" className="w-3.5 h-3.5 mt-0.5 text-default-500" />
                   <span>{line}</span>
@@ -68,7 +68,7 @@ const ShippingInfo: FC<ShippingInfoProps> = ({ order }) => {
               ))}
             </div>
 
-            {/* Phone */}
+            {order.shipping_gstin && <p className="text-xs text-default-500">GSTIN · {order.shipping_gstin}</p>}
             {order.shipping_phone && (
               <div className="flex items-center gap-1 text-xs text-default-500 mt-1">
                 <Icon icon="solar:phone-linear" className="w-3.5 h-3.5 text-default-400" />
@@ -81,7 +81,7 @@ const ShippingInfo: FC<ShippingInfoProps> = ({ order }) => {
           <section className="mt-4 space-y-1 border-t border-divider pt-3">
             <h3 className="flex items-center gap-2 text-sm font-medium"><Icon icon="solar:bill-list-linear" />{t("checkout.addresses.billing")}</h3>
             <p className="text-sm">{order.billing_address.name}</p>
-            <p className="text-xs text-default-500">{order.billing_address.lines.join(", ")}</p>
+            <p className="text-xs text-default-500">{order.billing_address.same_as_delivery ? t("checkout.addresses.same") : order.billing_address.lines.join(", ")}</p>
             {order.billing_address.gstin && <p className="text-xs text-default-500">GSTIN · {order.billing_address.gstin}</p>}
           </section>
         )}
