@@ -9,10 +9,11 @@
 import type { MarketFormat } from "@/types/ApiResponse";
 export type { MarketFormat };
 
-const DEFAULT_FORMAT: Required<Omit<MarketFormat, "grouping_style">> = {
+const DEFAULT_FORMAT: Required<MarketFormat> = {
   symbol_position: "before",
   space_between_symbol: false,
   thousand_separator: ",",
+  grouping_style: "western",
   decimal_separator: ".",
   decimal_places: 2,
   negative_format: "-{n}",
@@ -21,9 +22,14 @@ const DEFAULT_FORMAT: Required<Omit<MarketFormat, "grouping_style">> = {
 /** Shown instead of a fabricated 0 when the amount is absent or unparseable. */
 export const MISSING_AMOUNT = "—";
 
-/** Group the integer part with the given thousands separator (western style). */
-const groupThousands = (intDigits: string, separator: string): string =>
-  intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, separator || "");
+const groupThousands = (digits: string, separator: string, style: string): string => {
+  if (!separator || digits.length <= 3) return digits;
+  if (style === "indian") {
+    const leading = digits.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, () => separator);
+    return leading + separator + digits.slice(-3);
+  }
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, () => separator);
+};
 
 /**
  * Format a numeric amount (already in the market currency) into a display
@@ -39,7 +45,7 @@ export const formatCurrency = (
   // before the spread rather than guarding each read.
   const supplied = Object.fromEntries(
     Object.entries(format || {}).filter(
-      ([, value]) => value !== null && value !== undefined && value !== ""
+      ([key, value]) => value != null && (value !== "" || key === "thousand_separator")
     )
   );
   const f = { ...DEFAULT_FORMAT, ...supplied };
@@ -62,7 +68,7 @@ export const formatCurrency = (
   const fixed = abs.toFixed(decimals);
   const [intPart, decPart] = fixed.split(".");
 
-  const grouped = groupThousands(intPart, f.thousand_separator);
+  const grouped = groupThousands(intPart, f.thousand_separator, f.grouping_style);
   let number =
     decimals > 0 && decPart !== undefined
       ? `${grouped}${f.decimal_separator}${decPart}`
