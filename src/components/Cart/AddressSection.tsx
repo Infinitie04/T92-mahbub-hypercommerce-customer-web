@@ -66,7 +66,7 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
     setDialog(null);
     if (purpose === "billing") {
       dispatch(setBillingAddress(address));
-      if (thirdPartyDelivery && !onAddressSelected && delivery) await updateCartData(true, false);
+      if (!onAddressSelected && delivery) await updateCartData(true, false);
       return;
     }
     if (onAddressSelected) {
@@ -103,10 +103,12 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
                     onValueChange={(checked) => {
                       if (checked) {
                         dispatch(setBillingAddress("delivery"));
-                        if (thirdPartyDelivery && !onAddressSelected) void updateCartData(true, false);
+                        if (!onAddressSelected && delivery) void updateCartData(true, false);
                       }
-                      else if (defaultBilling && defaultBilling.id !== delivery?.id) dispatch(setBillingAddress(defaultBilling));
-                      else open("billing", "pick");
+                      else if (defaultBilling && defaultBilling.id !== delivery?.id) {
+                        dispatch(setBillingAddress(defaultBilling));
+                        if (!onAddressSelected && delivery) void updateCartData(true, false);
+                      } else open("billing", "pick");
                     }}
                   >
                     {t("checkout.addresses.same")}

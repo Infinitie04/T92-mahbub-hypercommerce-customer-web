@@ -54,10 +54,12 @@ export const updateCartData = async (
         return;
       }
     }
+    const billing = state.checkout.billingAddress;
+    const billingId = billing === "delivery" ? requestAddress : billing?.id;
     const cartRes: ApiResponse<CartResponse> = await getCart({
       address_id: requestAddress,
-      ...(requestAddress && state.checkout.thirdPartyDelivery && state.checkout.billingAddress && state.checkout.billingAddress !== "delivery"
-        ? { third_party_delivery: 1, billing_address_id: Number(state.checkout.billingAddress.id) } : {}),
+      ...(requestAddress && billingId ? { billing_address_id: Number(billingId) } : {}),
+      ...(requestAddress && state.checkout.thirdPartyDelivery ? { third_party_delivery: 1 } : {}),
       use_wallet: false,
       promo_code,
     });

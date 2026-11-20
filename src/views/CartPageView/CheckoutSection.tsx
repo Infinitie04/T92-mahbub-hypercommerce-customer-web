@@ -59,7 +59,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const shipments = payment_summary.seller_shipping_costs ?? [];
   const shippingBlocked =
     Boolean(selectedAddress?.id) &&
-    shipments.some((shipment) => !shipment.is_fulfillable);
+    (payment_summary.pricing_available === false || shipments.some((shipment) => !shipment.is_fulfillable));
 
   const dispatch = useDispatch();
 
@@ -260,11 +260,8 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             </div>
           )}
 
-          {selectedAddress?.id && shipments.length > 0 && (
-            <details open={shippingBlocked || shipments.some((shipment) => !!shipment.shipping_type) || undefined} className="text-sm">
-              <summary className="cursor-pointer text-foreground/70">{t("shippingDetails", "Shipping details")}</summary>
-              <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />
-            </details>
+          {selectedAddress?.id && (
+            <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />
           )}
           <CheckoutTax total={payment_summary.tax_total} breakdown={payment_summary.tax_breakdown} formatPrice={formatPrice} />
 
@@ -342,7 +339,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
 
           <div className="flex justify-between text-base font-bold text-foreground">
             <span>{t("totalPayable")}</span>
-            <span>{formatPrice(displayedPayable)}</span>
+            <span>{shippingBlocked ? "—" : formatPrice(displayedPayable)}</span>
           </div>
 
           {payment_summary.total_saving > 0 && (

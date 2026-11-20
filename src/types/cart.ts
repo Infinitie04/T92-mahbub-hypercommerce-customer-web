@@ -23,6 +23,8 @@ export interface CartPricingGroup {
 
 export interface CartResponse {
   address_id?: number | string;
+  billing_address_id?: number | null;
+  third_party_delivery?: boolean;
   pricing_groups?: CartPricingGroup[];
   id: number;
   uuid: string;
@@ -194,6 +196,7 @@ export interface TaxBreakdownLine {
 }
 
 export interface PaymentSummary {
+  pricing_available?: boolean;
   pricing_review_token?: string | null;
   items_total: number;
   total_saving: number;

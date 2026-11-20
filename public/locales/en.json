@@ -386,13 +386,13 @@
       "description": "You cannot checkout items from closed stores: {{stores}}. Please remove them before proceeding.",
       "title": "Some stores are closed"
     },
-    "deliveryCharges": "Delivery Charges",
+    "deliveryCharges": "Shipping charges",
     "shippingDetails": "Shipping details",
     "baseFreight": "Base freight",
     "shippingType": {
       "courier": "Courier",
-      "air": "Air",
-      "sea": "Sea"
+      "air": "Air Freight",
+      "sea": "Sea Freight"
     },
     "freeShipping": "Free Shipping",
     "distanceCharges": "Distance Charges",
