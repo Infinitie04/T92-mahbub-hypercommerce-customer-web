@@ -163,7 +163,12 @@ export interface SellerShippingItem {
   shipping_zone_id: number | null;
 }
 
-export interface SellerShippingCost {
+export interface ShippingBreakdown {
+  shipping_type?: "courier" | "air" | "sea";
+  additional_charges?: { title: string; amount: number }[];
+}
+
+export interface SellerShippingCost extends ShippingBreakdown {
   store_id: number;
   store_name: string;
   shipping_cost: number | null;

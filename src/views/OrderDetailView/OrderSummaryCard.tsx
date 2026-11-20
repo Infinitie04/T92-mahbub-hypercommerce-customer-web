@@ -1,7 +1,9 @@
 import { useTranslation } from "react-i18next";
+import { Fragment } from "react";
 import type { Order } from "@/types/order";
 import { Card, useDisclosure } from "@/components/ui";
 import OrderRefundsModal from "./OrderRefundsModal";
+import { ShippingChargeDetails } from "../CheckoutPageView/CheckoutBreakdown";
 
 interface Props {
   order: Order;
@@ -28,7 +30,7 @@ export default function OrderSummaryCard({ order, formatPrice }: Props) {
   const refundOwed = (order.refunds ?? []).filter((refund) => refund.status === "owed" && !refund.settled_by_refund_id).reduce((total, refund) => total + Number(refund.amount), 0);
   const lines = [
     { key: "items_total", label: t("subtotal"), amount: breakdown.items_total, always: true },
-    { key: "delivery_charge", label: t("deliveryCharge"), amount: breakdown.delivery_charge },
+    { key: "delivery_charge", label: t("deliveryCharge"), amount: breakdown.delivery_charge, always: !!snapshot?.shipping_type },
     { key: "platform_fee", label: t("orderMoneySummary.platformFee", "Platform fee"), amount: breakdown.platform_fee },
     { key: "cod_fee", label: t("orderMoneySummary.codFee", "Cash on delivery fee"), amount: breakdown.cod_fee },
     { key: "promo_discount", label: t("discountAmount"), amount: breakdown.promo_discount, discount: true },
@@ -49,10 +51,18 @@ export default function OrderSummaryCard({ order, formatPrice }: Props) {
       </p>
       <dl className="mt-3 space-y-2 text-sm">
         {lines.filter((line) => line.amount != null && (line.always || line.amount > 0)).map((line) => (
-          <div key={line.label} className="flex justify-between gap-4">
-            <dt className="text-default-500">{line.label}</dt>
-            <dd className="text-end font-medium">{line.discount ? "− " : ""}{formatPrice(line.amount)}</dd>
-          </div>
+          <Fragment key={line.key}>
+            <div className="flex justify-between gap-4">
+              <dt className="text-default-500">{line.label}</dt>
+              <dd className="text-end font-medium">{line.discount ? "− " : ""}{formatPrice(line.amount)}</dd>
+            </div>
+            {line.key === "delivery_charge" && snapshot?.shipping_type && (
+              <div className="ps-2">
+                <dt className="sr-only">{t("checkout.shippingDetails")}</dt>
+                <dd><ShippingChargeDetails shipping={snapshot} total={line.amount ?? 0} formatPrice={formatPrice} /></dd>
+              </div>
+            )}
+          </Fragment>
         ))}
         {!!snapshot?.tax_total && snapshot.tax_total > 0 && (
           <div className="flex justify-between gap-4 text-default-500">

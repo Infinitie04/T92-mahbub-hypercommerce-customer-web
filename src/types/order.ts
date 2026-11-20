@@ -1,4 +1,5 @@
 import type { MarketFormat } from "./market";
+import type { ShippingBreakdown } from "./cart";
 import type { SellerFeedbackItem } from "./reviews";
 
 /** Shopper-facing derived status (read-only tracker headline). */
@@ -43,7 +44,7 @@ export interface PaymentInitiationResponse {
   expires_at?: string | null;
 }
 
-export interface OrderMoneyBreakdown {
+export interface OrderMoneyBreakdown extends ShippingBreakdown {
   tax_total?: number;
   items_total?: number;
   delivery_charge?: number;

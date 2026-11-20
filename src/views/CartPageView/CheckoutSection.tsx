@@ -161,23 +161,6 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const validationErrors: string[] = [];
 
   if (
-    systemSettings?.checkoutType === "single_store" &&
-    items?.length > 0
-  ) {
-    const uniqueStoreIds = new Set(
-      items.map((item) => item.store?.id).filter(Boolean),
-    );
-    if (uniqueStoreIds.size > 1) {
-      validationErrors.push(
-        t("checkout.validation.multipleBranches", {
-          defaultValue:
-            "Your order must ship from one branch. Remove items assigned to another branch to continue.",
-        }),
-      );
-    }
-  }
-
-  if (
     systemSettings?.maximumItemsAllowedInCart &&
     items.length > systemSettings.maximumItemsAllowedInCart
   ) {

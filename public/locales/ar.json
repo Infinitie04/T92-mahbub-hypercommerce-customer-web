@@ -386,6 +386,13 @@
       "title": "بعض المتاجر مغلقة"
     },
     "deliveryCharges": "رسوم التوصيل",
+    "shippingDetails": "تفاصيل الشحن",
+    "baseFreight": "أجرة الشحن الأساسية",
+    "shippingType": {
+      "courier": "البريد السريع",
+      "air": "الشحن الجوي",
+      "sea": "الشحن البحري"
+    },
     "freeShipping": "شحن مجاني",
     "distanceCharges": "رسوم المسافة",
     "dropOffFee": "رسوم التسليم",

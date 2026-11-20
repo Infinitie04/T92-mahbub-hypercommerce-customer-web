@@ -1,9 +1,41 @@
 import { formatDeliveryByDate } from "@/helpers/delivery";
-import type { PaymentSummary, SellerShippingCost } from "@/types/cart";
+import type { PaymentSummary, SellerShippingCost, ShippingBreakdown } from "@/types/cart";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
 type FormatPrice = (amount: number | string | null | undefined) => string;
+
+export function ShippingChargeDetails({ shipping, total, formatPrice }: {
+  shipping: ShippingBreakdown;
+  total: number;
+  formatPrice: FormatPrice;
+}) {
+  const { t } = useTranslation();
+  if (!shipping.shipping_type) return null;
+
+  const charges = shipping.additional_charges ?? [];
+  const base = Math.max(0, total - charges.reduce((sum, charge) => sum + charge.amount, 0));
+
+  return (
+    <div className="space-y-1 text-xs text-default-600">
+      <p>{t(`checkout.shippingType.${shipping.shipping_type}`)}</p>
+      {charges.length > 0 && (
+        <ul className="space-y-1 ps-2">
+          <li className="flex justify-between gap-2">
+            <span>{t("checkout.baseFreight")}</span>
+            <span>{formatPrice(base)}</span>
+          </li>
+          {charges.map(({ title, amount }) => (
+            <li key={title} className="flex justify-between gap-2">
+              <span className="break-words">{title}</span>
+              <span className="shrink-0">{formatPrice(amount)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export function CheckoutShipping({ shipments, formatPrice, itemLink }: {
   shipments: SellerShippingCost[];
@@ -36,6 +68,9 @@ export function CheckoutShipping({ shipments, formatPrice, itemLink }: {
                 </span>
               )}
             </div>
+            {store.is_fulfillable && (
+              <ShippingChargeDetails shipping={store} total={store.shipping_cost ?? 0} formatPrice={formatPrice} />
+            )}
             {eta && (
               <p className="text-foreground/60">
                 {t("cart.deliveryBy", { date: eta, defaultValue: `Delivery by ${eta}` })}

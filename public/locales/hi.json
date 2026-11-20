@@ -386,6 +386,13 @@
       "title": "कुछ स्टोर बंद हैं"
     },
     "deliveryCharges": "डिलीवरी शुल्क",
+    "shippingDetails": "शिपिंग विवरण",
+    "baseFreight": "मूल माल ढुलाई शुल्क",
+    "shippingType": {
+      "courier": "कूरियर",
+      "air": "हवाई माल ढुलाई",
+      "sea": "समुद्री माल ढुलाई"
+    },
     "freeShipping": "फ्री शिपिंग",
     "distanceCharges": "दूरी शुल्क",
     "dropOffFee": "ड्रॉप-ऑफ शुल्क",

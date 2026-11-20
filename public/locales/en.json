@@ -386,6 +386,13 @@
       "title": "Some stores are closed"
     },
     "deliveryCharges": "Delivery Charges",
+    "shippingDetails": "Shipping details",
+    "baseFreight": "Base freight",
+    "shippingType": {
+      "courier": "Courier",
+      "air": "Air",
+      "sea": "Sea"
+    },
     "freeShipping": "Free Shipping",
     "distanceCharges": "Distance Charges",
     "dropOffFee": "Drop-off Fee",
