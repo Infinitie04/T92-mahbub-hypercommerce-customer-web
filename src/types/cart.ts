@@ -1,6 +1,7 @@
 import { Product } from "@/types/ApiResponse";
 import type { ProductPricingTier } from "./catalog";
 import type { DeliveryZone } from "./delivery";
+import type { MarketFormat } from "./market";
 
 export interface CartApiResponse {
   success: boolean;
@@ -219,7 +220,7 @@ export interface PaymentSummary {
   minimum_cart_amount: number;
   currency_code: string;
   currency_symbol: string;
-  format?: Record<string, unknown>;
+  format?: MarketFormat;
 }
 
 export interface PromoCode {

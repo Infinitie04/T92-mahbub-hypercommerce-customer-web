@@ -355,6 +355,7 @@
       "addBilling": "Add billing address",
       "same": "Same as delivery address",
       "directedDelivery": "Deliver to a third party on our instructions. The billing address is our principal place of business.",
+      "directedDeliveryHint": "Choose two different Indian addresses and a billing address with a GSTIN to use third-party delivery.",
       "useDelivery": "Use delivery address",
       "deliveryFallback": "Your delivery address will appear on the invoice unless you choose another address.",
       "loadError": "Couldn’t load saved addresses.",

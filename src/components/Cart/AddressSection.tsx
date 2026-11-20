@@ -34,6 +34,12 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
   );
   const usesDelivery = choice === "delivery" || (choice === null && defaultBilling === null);
   const billing = choice === "delivery" ? delivery : choice ?? defaultBilling ?? delivery;
+  const canDirectDelivery = Boolean(
+    billing?.gstin?.trim() &&
+    billing.country_code?.trim().toUpperCase() === "IN" &&
+    delivery?.country_code?.trim().toUpperCase() === "IN" &&
+    String(billing.id) !== String(delivery.id),
+  );
   const { data: pages, size, setSize, isValidating, mutate: reloadList, error } = useSWRInfinite(
     (index, previous) => userId && dialog?.mode === "pick" && (!previous || previous.data.length === 10)
       ? ["checkout-address-book", userId, index + 1] : null,
@@ -106,12 +112,28 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
                     {t("checkout.addresses.same")}
                   </Checkbox>
                 )}
-                {isBilling && billing?.gstin && billing.country_code === "IN" && delivery?.country_code === "IN" && billing.id !== delivery.id && (
-                  <Checkbox size="sm" isSelected={thirdPartyDelivery} onValueChange={(checked) => {
-                    dispatch(setBillingAddress(billing));
-                    dispatch(setThirdPartyDelivery(checked));
-                    if (!onAddressSelected) void updateCartData(true, false);
-                  }}>{t("checkout.addresses.directedDelivery")}</Checkbox>
+                {isBilling && (
+                  <div className="space-y-1">
+                    <Checkbox
+                      size="sm"
+                      isSelected={canDirectDelivery && thirdPartyDelivery}
+                      isDisabled={!canDirectDelivery}
+                      aria-describedby={canDirectDelivery ? undefined : "checkout-directed-delivery-hint"}
+                      onValueChange={(checked) => {
+                        if (!canDirectDelivery || !billing) return;
+                        dispatch(setBillingAddress(billing));
+                        dispatch(setThirdPartyDelivery(checked));
+                        if (!onAddressSelected) void updateCartData(true, false);
+                      }}
+                    >
+                      {t("checkout.addresses.directedDelivery")}
+                    </Checkbox>
+                    {!canDirectDelivery && (
+                      <p id="checkout-directed-delivery-hint" className="text-xs text-default-600">
+                        {t("checkout.addresses.directedDeliveryHint")}
+                      </p>
+                    )}
+                  </div>
                 )}
                 {waitingForDefault ? (
                   <p role="status" className="text-sm text-default-500">

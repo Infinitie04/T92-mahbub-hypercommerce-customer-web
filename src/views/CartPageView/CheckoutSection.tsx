@@ -4,6 +4,7 @@ import { CartResponse } from "@/types/ApiResponse";
 import { Button, toast, Divider, Alert } from "@/components/ui";
 import { Icon } from "@iconify/react";
 import PaymentMethods from "@/components/PaymentMethods";
+import { useCurrency } from "@/components/Functional/Price";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/redux/store";
@@ -22,8 +23,11 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const [loading, setLoading] = useState(false);
   const [paymentChoice, setSelectedPayment] = useState("razorpayPayment");
   const router = useRouter();
-  const { formatPrice, paymentSettings, systemSettings } = useSettings();
+  const { paymentSettings, systemSettings } = useSettings();
+  const { formatWith } = useCurrency();
   const { payment_summary, items } = cart;
+  const formatPrice = (amount: number | string | null | undefined) =>
+    formatWith(amount, payment_summary.currency_symbol, payment_summary.format);
   const selectedAddress = useSelector(
     (state: RootState) => state.checkout.selectedAddress,
   );
@@ -257,7 +261,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
           )}
 
           {selectedAddress?.id && shipments.length > 0 && (
-            <details open={shippingBlocked || undefined} className="text-sm">
+            <details open={shippingBlocked || shipments.some((shipment) => !!shipment.shipping_type) || undefined} className="text-sm">
               <summary className="cursor-pointer text-foreground/70">{t("shippingDetails", "Shipping details")}</summary>
               <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />
             </details>
