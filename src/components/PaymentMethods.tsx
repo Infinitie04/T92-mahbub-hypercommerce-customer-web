@@ -1,6 +1,7 @@
 import { useSettings } from "@/contexts/SettingsContext";
 import type { RootState } from "@/lib/redux/store";
-import { Alert, Image, Radio, RadioGroup } from "@/components/ui";
+import { Image, Radio, RadioGroup } from "@/components/ui";
+import { Info } from "lucide-react";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
@@ -106,13 +107,12 @@ const PaymentMethods: FC<PaymentMethodsProps> = ({
         ))}
       </RadioGroup>
       {selectedPayment === "manualPayment" && paymentSettings?.manualPayment && includeManualPayment && (
-        <Alert
-          color="primary"
-          variant="faded"
-          description={t("manualPayment.checkoutInstructions",
+        <div role="status" className="flex items-start gap-2 rounded-medium border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-950 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-100">
+          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <p>{t("manualPayment.checkoutInstructions",
             "After placing your order, transfer the amount using the details in Order Details. Upload your payment receipt there within {{hours}} hours.",
-            { hours: paymentSettings.manualPaymentProofWindowHours ?? 48 })}
-        />
+            { hours: paymentSettings.manualPaymentProofWindowHours ?? 48 })}</p>
+        </div>
       )}
     </div>
   );

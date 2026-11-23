@@ -137,35 +137,37 @@ export default function ManualPayment({ order, embedded = false }: { order: Orde
 
       {activePayment && (
         <section aria-labelledby="manual-payment-instructions" className="space-y-2 border-t border-divider pt-3">
-          <h3 id="manual-payment-instructions" className="text-sm font-semibold">
-            {t("manualPayment.instructions", "Payment instructions")}
-          </h3>
-          {instructions?.notes ? (
-            <HTMLRenderer html={instructions.notes} className="break-words text-sm leading-relaxed" />
-          ) : (
-            <p className="text-sm text-default-600">
-              {pendingReview
-                ? t("manualPayment.reviewInstructions", "Your receipt is under review. You can replace it if needed.")
-                : transferFields.length > 0
-                  ? t("manualPayment.transferInstructions", "Transfer the order amount using the bank details below, then upload your receipt.")
-                  : t("manualPayment.missingBankDetails", "Contact support for bank details before sending a transfer.")}
-            </p>
-          )}
           {transferFields.length > 0 && (
-            <details open={!pendingReview && canUpload}>
-              <summary className="cursor-pointer text-sm font-medium text-primary">
+            <div className="space-y-1.5 rounded-medium bg-default-100 px-3 py-2">
+              <h3 className="text-sm font-semibold">
                 {t("manualPayment.transferDetails", "Transfer details")}
-              </summary>
-              <dl className={`mt-2 grid gap-2 rounded-medium bg-default-100 p-3 ${embedded ? "" : "sm:grid-cols-2"}`}>
+              </h3>
+              <dl className={`grid gap-x-4 gap-y-1.5 ${embedded ? "" : "sm:grid-cols-2"}`}>
                 {transferFields.map(({ title, value }, index) => (
                   <div key={index} className="min-w-0">
-                    <dt className="text-sm text-default-600">{title}</dt>
+                    <dt className="break-words text-xs text-default-600">{title}</dt>
                     <dd className="whitespace-pre-wrap break-words text-sm font-medium">{value}</dd>
                   </div>
                 ))}
               </dl>
-            </details>
+            </div>
           )}
+          <div className="space-y-1 text-xs leading-normal text-default-700">
+            <h3 id="manual-payment-instructions" className="font-semibold">
+              {t("manualPayment.instructions", "Payment instructions")}
+            </h3>
+            {instructions?.notes ? (
+              <HTMLRenderer html={instructions.notes} className="break-words [&_h4]:my-1! [&_h4]:text-xs! [&_li]:mb-0! [&_p]:mb-1! [&_p:last-child]:mb-0!" />
+            ) : (
+              <p>
+                {pendingReview
+                  ? t("manualPayment.reviewInstructions", "Your receipt is under review. You can replace it if needed.")
+                  : transferFields.length > 0
+                    ? t("manualPayment.transferInstructions", "Transfer the order amount, then upload your receipt.")
+                    : t("manualPayment.missingBankDetails", "Contact support for bank details before sending a transfer.")}
+              </p>
+            )}
+          </div>
         </section>
       )}
 
