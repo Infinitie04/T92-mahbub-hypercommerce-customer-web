@@ -9,10 +9,12 @@ export default function ManualPaymentProofPreview({
   slug,
   proofId,
   filename,
+  compact = false,
 }: {
   slug: string;
   proofId: number;
   filename: string;
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -64,14 +66,19 @@ export default function ManualPaymentProofPreview({
   return (
     <>
       <div className="flex flex-wrap gap-2 pt-1">
-        <Button size="md" variant="bordered" startContent={<Eye size={17} />} onPress={() => {
+        <Button size="md" variant="bordered" isIconOnly={compact} title={t("manualPayment.preview", "Preview receipt")}
+          aria-label={t("manualPayment.preview", "Preview receipt")} startContent={<Eye size={17} />} onPress={() => {
           setPreview(undefined);
           setUnavailable(false);
           onOpen();
         }}>
-          {t("manualPayment.preview", "Preview receipt")}
+          {!compact && t("manualPayment.preview", "Preview receipt")}
         </Button>
-        {downloadButton}
+        {compact ? (
+          <Button size="md" variant="bordered" isIconOnly title={t("manualPayment.download", "Download receipt")}
+            aria-label={t("manualPayment.download", "Download receipt")} startContent={<Download size={17} />}
+            isLoading={downloading} onPress={download} />
+        ) : downloadButton}
       </div>
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" scrollBehavior="inside">
         <ModalContent>

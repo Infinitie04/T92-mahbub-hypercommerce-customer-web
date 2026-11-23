@@ -253,8 +253,6 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
         </div>
       </div>
 
-      {order.manual_payment && <ManualPayment key={order.slug} order={order} embedded />}
-
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
         {/* MAIN — selected item */}
         <div className="flex flex-col gap-4 min-w-0">
@@ -497,83 +495,90 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
 
         </div>
 
-        {/* SIDE — item switcher + address + meta (below on mobile) */}
-        <div className="flex flex-col gap-4 min-w-0">
-          {items.length > 1 && (
-            <Card shadow="none" radius="lg" className="border border-divider p-4">
-              <div className="mb-3 text-sm font-semibold">
-                {t("pages.order.otherItems", "Other items in this order")}
-              </div>
-              <div className="flex flex-col gap-2">
-                {items.map((it) => {
-                  const active = it.id === selected.id;
-                  return (
-                    <button
-                      key={it.id}
-                      type="button"
-                      onClick={() => selectItem(it.id)}
-                      className={`flex items-center gap-3 rounded-medium border p-2 text-start transition-colors ${
-                        active
-                          ? "border-primary bg-primary-50"
-                          : "border-divider hover:border-primary"
-                      }`}
-                    >
-                      <Thumb item={it} size={44} />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-medium line-clamp-1">
-                          {it.product?.name || it.title}
-                        </div>
-                        <div className="text-[11px] text-default-500">
-                          {it.customer_status?.label || it.status_label} ·{" "}
-                          {formatPrice(it.subtotal)}
-                        </div>
-                      </div>
-                      {active && (
-                        <Icon icon="solar:check-circle-bold" className="text-primary-600" width={18} height={18} />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </Card>
-          )}
-
-          <ShippingInfo order={order} />
-
-          <Card shadow="none" radius="lg" className="border border-divider p-4 space-y-1">
-            <div className="mb-1 text-sm font-semibold">
-              {t("pages.order.orderDetails", "Order details")}
+        {/* SIDE — payment, address, and order details */}
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
+          {order.manual_payment && (
+            <div className="order-first min-w-0 lg:order-none">
+              <ManualPayment key={order.slug} order={order} embedded />
             </div>
-            <LabelValue
-              label={t("pages.order.orderedOn", "Ordered on")}
-              value={getFormattedDate(order.created_at)}
-            />
-            <LabelValue label={t("order_id")} value={`#${order.id}`} />
-            {order.quotation_id && (
-              <LabelValue
-                label={t("pages.order.orderSource")}
-                value={
-                  <Link
-                    href={`/my-account/quotations/${order.quotation_id}`}
-                    className="inline-flex min-h-8 gap-1.5 text-sm font-semibold hover:underline"
-                  >
-                    <Icon icon="solar:document-text-linear" width={16} height={16} aria-hidden="true" />
-                    {t("quotation.number", { id: order.quotation_id })}
-                  </Link>
-                }
-              />
-            )}
-          </Card>
-
-          {order.order_note && (
-            <Card shadow="none" radius="lg" className="border border-divider p-4">
-              <div className="mb-1 flex items-center gap-2 text-sm font-semibold">
-                <Icon icon="solar:notes-linear" width={16} height={16} className="text-primary-600" />
-                {t("orderNote", "Order note")}
-              </div>
-              <p className="text-sm text-default-500">{order.order_note}</p>
-            </Card>
           )}
+          <div className="flex min-w-0 flex-col gap-4">
+            {items.length > 1 && (
+              <Card shadow="none" radius="lg" className="border border-divider p-4">
+                <div className="mb-3 text-sm font-semibold">
+                  {t("pages.order.otherItems", "Other items in this order")}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {items.map((it) => {
+                    const active = it.id === selected.id;
+                    return (
+                      <button
+                        key={it.id}
+                        type="button"
+                        onClick={() => selectItem(it.id)}
+                        className={`flex items-center gap-3 rounded-medium border p-2 text-start transition-colors ${
+                          active
+                            ? "border-primary bg-primary-50"
+                            : "border-divider hover:border-primary"
+                        }`}
+                      >
+                        <Thumb item={it} size={44} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-medium line-clamp-1">
+                            {it.product?.name || it.title}
+                          </div>
+                          <div className="text-[11px] text-default-500">
+                            {it.customer_status?.label || it.status_label} ·{" "}
+                            {formatPrice(it.subtotal)}
+                          </div>
+                        </div>
+                        {active && (
+                          <Icon icon="solar:check-circle-bold" className="text-primary-600" width={18} height={18} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
+
+            <ShippingInfo order={order} />
+
+            <Card shadow="none" radius="lg" className="border border-divider p-4 space-y-1">
+              <div className="mb-1 text-sm font-semibold">
+                {t("pages.order.orderDetails", "Order details")}
+              </div>
+              <LabelValue
+                label={t("pages.order.orderedOn", "Ordered on")}
+                value={getFormattedDate(order.created_at)}
+              />
+              <LabelValue label={t("order_id")} value={`#${order.id}`} />
+              {order.quotation_id && (
+                <LabelValue
+                  label={t("pages.order.orderSource")}
+                  value={
+                    <Link
+                      href={`/my-account/quotations/${order.quotation_id}`}
+                      className="inline-flex min-h-8 gap-1.5 text-sm font-semibold hover:underline"
+                    >
+                      <Icon icon="solar:document-text-linear" width={16} height={16} aria-hidden="true" />
+                      {t("quotation.number", { id: order.quotation_id })}
+                    </Link>
+                  }
+                />
+              )}
+            </Card>
+
+            {order.order_note && (
+              <Card shadow="none" radius="lg" className="border border-divider p-4">
+                <div className="mb-1 flex items-center gap-2 text-sm font-semibold">
+                  <Icon icon="solar:notes-linear" width={16} height={16} className="text-primary-600" />
+                  {t("orderNote", "Order note")}
+                </div>
+                <p className="text-sm text-default-500">{order.order_note}</p>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
 

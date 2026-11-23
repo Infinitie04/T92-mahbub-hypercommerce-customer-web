@@ -88,7 +88,10 @@ export interface ManualPaymentProof {
   filename: string;
   status?: "pending" | "superseded" | "rejected" | "verified";
   created_at?: string | null;
+  reviewed_at?: string | null;
   rejection_reason: string | null;
+  view_url?: string;
+  download_url?: string;
 }
 
 export interface ManualPaymentState {

@@ -2,7 +2,7 @@ import PaymentMethods from "@/components/PaymentMethods";
 import { useSettings } from "@/contexts/SettingsContext";
 import AddressSection from "@/components/Cart/AddressSection";
 import QuotationItems from "@/components/Quotations/QuotationItems";
-import { Button, ErrorState, Skeleton, Spinner } from "@/components/ui";
+import { Button, ErrorState, Skeleton, Spinner, toastSuccess } from "@/components/ui";
 import AttachmentUploader, { type AttachmentFile } from "@/components/Cart/AttachmentUploader";
 import { useQuotationMoney } from "@/components/Quotations/quotationPresentation";
 import { quotationPaymentHref } from "@/helpers/quotationCheckout";
@@ -80,6 +80,12 @@ export default function QuotationCheckout({ id }: { id: string }) {
     setSubmitting(true);
     try {
       const result = await payQuotation(id, body);
+      if (result.payment_method === "manualPayment" && result.payment_status === "pending") {
+        toastSuccess(
+          t("manualPayment.orderPlaced", "Order placed"),
+          t("manualPayment.orderPlacedHelp", "Follow the payment instructions in Order Details and upload your receipt."),
+        );
+      }
       await router.push(result.payment_status === "completed" || ["cod", "manualPayment"].includes(result.payment_method ?? "")
         ? `/my-account/orders/${result.order_slug}`
         : quotationPaymentHref(result.order_slug, id));

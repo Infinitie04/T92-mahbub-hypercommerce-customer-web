@@ -603,6 +603,11 @@ export const handleCheckout = async (
       ].includes(payment_type);
 
       if (payment_type === "manualPayment") {
+        addToast({
+          title: i18n.t("manualPayment.orderPlaced", "Order placed"),
+          description: i18n.t("manualPayment.orderPlacedHelp", "Follow the payment instructions in Order Details and upload your receipt."),
+          color: "success",
+        });
         resetCheckOutState();
       } else if (!opensSdk) {
         addToast({
