@@ -9,7 +9,7 @@ import { quotationPaymentHref } from "@/helpers/quotationCheckout";
 import { CheckoutShipping, CheckoutTax } from "./CheckoutBreakdown";
 import { useTranslation } from "react-i18next";
 import type { RootState } from "@/lib/redux/store";
-import { downloadExportProforma, getQuotation, payQuotation, previewQuotation, quotationCheckoutFeedback, quotationError, type QuotationItemIssue } from "@/services/quotations";
+import { downloadExportProforma, getQuotation, payQuotation, previewQuotation, quotationCheckoutFeedback, requestSeaFreight, quotationError, type QuotationItemIssue } from "@/services/quotations";
 import type { Address } from "@/types/ApiResponse";
 import CheckoutLayout from "./CheckoutLayout";
 import { isAxiosError } from "axios";
@@ -34,8 +34,10 @@ export default function QuotationCheckout({ id }: { id: string }) {
       ? paymentSettings.manualPayment ? "manualPayment" : paymentSettings.cod ? "cod" : "razorpayPayment"
       : "razorpayPayment"
   );
-  const directed = useSelector((state: RootState) => state.checkout.thirdPartyDelivery);
-  const billing = useSelector((state: RootState) => state.checkout.billingAddress);
+  const savedDirected = useSelector((state: RootState) => state.checkout.thirdPartyDelivery);
+  const savedBilling = useSelector((state: RootState) => state.checkout.billingAddress);
+  const directed = !quote?.sea_freight && savedDirected;
+  const billing = quote?.sea_freight ? undefined : savedBilling;
   const [files, setFiles] = useState<Record<number, AttachmentFile[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -46,7 +48,8 @@ export default function QuotationCheckout({ id }: { id: string }) {
     setPaymentError("");
     setPaymentIssues(undefined);
   }, []);
-  const previewAddressId = addressId === Number(selectedAddress?.id) ? addressId : undefined;
+  const previewAddressId = quote?.sea_freight?.address_id ??
+    (addressId === Number(selectedAddress?.id) ? addressId : undefined);
   const billingId = billing === "delivery" ? previewAddressId : billing ? Number(billing.id) : undefined;
   const canPreview = quote?.status === "ready_to_pay" && (quote.has_pending_order || previewAddressId !== undefined);
   const { data: preview, error: previewError, isValidating, mutate } = useSWR(
@@ -62,6 +65,22 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const itemIssues = previewFeedback?.issues ??
     (paymentIssues?.token === reviewed?.pricing_review_token ? paymentIssues?.issues : undefined);
   const title = t("quotation.number", { id });
+  const freightRequired = previewFeedback?.issues.some((issue) => issue.code === "shipping_quote_required") || false;
+
+  const requestFreight = async () => {
+    if (!quote || !previewAddressId) return;
+    setSubmitting(true);
+    setPaymentError("");
+    try {
+      await requestSeaFreight(previewAddressId, quote.id, billingId);
+      await router.push(`/my-account/quotations/${id}`);
+    } catch (error) {
+      setPaymentError(quotationError(error, t("quotation.error")));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const previewLoadingLabel = t(quote?.has_pending_order ? "checkout.confirmingPayment" : "quotation.calculating");
 
   const pay = async () => {
@@ -118,7 +137,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
         heading={t("pageTitle.checkout", { defaultValue: "Checkout" })}
         details={
           <div className="flex min-w-0 flex-col gap-6">
-            {!quote.has_pending_order && <AddressSection onAddressSelected={onAddressSelected} />}
+            {!quote.has_pending_order && !quote.sea_freight && <AddressSection onAddressSelected={onAddressSelected} />}
             <QuotationItems quote={quote} issues={itemIssues} />
             {reviewed?.attachments.map((item) => (
               <section key={item.product_id} className="rounded-large border border-divider bg-content1 p-4">
@@ -137,6 +156,15 @@ export default function QuotationCheckout({ id }: { id: string }) {
           <div className="space-y-3 rounded-large border border-divider bg-content1 p-4 md:sticky md:top-24">
             <h2 className="font-bold">{t("cart.billDetails")}</h2>
             {!canPreview ? <p className="text-sm text-default-600">{t("quotation.selectDelivery")}</p> :
+              freightRequired ? (
+                <div className="space-y-2">
+                  <p>{t("checkout.shippingQuoteRequired", "Shipping quote required")}</p>
+                  <Button color="primary" fullWidth isLoading={submitting} onPress={requestFreight}>
+                    {t("checkout.requestShippingQuote", "Request shipping quote")}
+                  </Button>
+                  {paymentError && <p className="text-danger">{paymentError}</p>}
+                </div>
+              ) :
               previewError && isValidating ? <Spinner size="sm" label={previewLoadingLabel} /> :
               previewFeedback && !previewFeedback.summary ? (
                 <Button variant="bordered" fullWidth onPress={() => void mutate()}>{t("retry")}</Button>

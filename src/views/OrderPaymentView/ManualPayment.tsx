@@ -110,7 +110,13 @@ export default function ManualPayment({ order, embedded = false }: { order: Orde
             </p>}
           </div>
         </div>
-        <Chip role="status" variant="flat" color={closed ? "default" : statusColor}>
+        <Chip
+          role="status"
+          size="lg"
+          variant="flat"
+          color={closed ? "default" : statusColor}
+          classNames={{ base: "h-auto max-w-full px-2 py-1.5", content: "whitespace-normal text-base font-semibold leading-snug" }}
+        >
           {closed ? t("manualPayment.closed", "Closed for payment") : manualPaymentStatusLabel(status, t)}
         </Chip>
       </header>

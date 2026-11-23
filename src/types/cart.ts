@@ -166,8 +166,17 @@ export interface SellerShippingItem {
   shipping_zone_id: number | null;
 }
 
+export interface SeaFreight {
+  status: "quote_required" | "confirmed";
+  estimated_amount?: number | null;
+  containers?: { name: string; count: number }[];
+  delivery_note?: string | null;
+  additional_charges?: { title: string; amount: number }[];
+}
+
 export interface ShippingBreakdown {
   shipping_type?: "courier" | "air" | "sea";
+  sea_freight?: SeaFreight;
   additional_charges?: { title: string; amount: number }[];
 }
 

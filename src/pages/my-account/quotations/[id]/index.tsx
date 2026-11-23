@@ -77,6 +77,22 @@ function QuotationDetailPage() {
           <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="min-w-0 space-y-4">
               <QuotationItems quote={quote} />
+              {quote.sea_freight && (
+                <section className="space-y-1 rounded-large border border-divider bg-content1 p-4">
+                  <h2 className="font-semibold">{t("checkout.shippingType.sea", "Sea freight")}</h2>
+                  {quote.sea_freight.status === "quote_required" ? (
+                    <p>{t("checkout.shippingQuoteRequired", "Shipping quote required")}</p>
+                  ) : (
+                    <>
+                      {quote.sea_freight.containers?.map(({ name, count }, index) => <p key={`${name}-${index}`}>{count} × {name}</p>)}
+                      <p>{quote.sea_freight.currency} {quote.sea_freight.rate?.toLocaleString(i18n.resolvedLanguage, {
+                        minimumFractionDigits: 2, maximumFractionDigits: 2,
+                      })}</p>
+                      {quote.sea_freight.delivery_note && <p className="whitespace-pre-wrap">{quote.sea_freight.delivery_note}</p>}
+                    </>
+                  )}
+                </section>
+              )}
               {quote.customer_note && (
                 <section className="space-y-1 rounded-large border border-divider bg-content1 p-4">
                   <h2 className="font-semibold">{t("quotation.customerNote")}</h2>

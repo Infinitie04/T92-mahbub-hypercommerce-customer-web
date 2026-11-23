@@ -11,6 +11,7 @@ import { RootState } from "@/lib/redux/store";
 import { updateCartData } from "@/helpers/updators";
 import { setPromoCode } from "@/lib/redux/slices/checkoutSlice";
 import { useRouter } from "next/router";
+import { quotationError, requestSeaFreight } from "@/services/quotations";
 import { useTranslation } from "react-i18next";
 import { handleCheckout, ensureIdempotencyKey } from "@/helpers/functionalHelpers";
 
@@ -60,12 +61,26 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const wholesaleBlocked = Boolean(exceedsVariantMaximum) ||
     Boolean(cart.pricing_groups?.some((group) => group.quantity_remaining > 0 || !group.quantity_step_valid));
   const shipments = payment_summary.seller_shipping_costs ?? [];
+  const freightRequired = shipments.some((shipment) => shipment.sea_freight?.status === "quote_required");
   const itemPricingBlocked = Boolean(payment_summary.item_issues?.length);
   const shippingBlocked =
     Boolean(selectedAddress?.id) &&
     !itemPricingBlocked &&
     (payment_summary.pricing_available === false || shipments.some((shipment) => !shipment.is_fulfillable));
   const pricingBlocked = itemPricingBlocked || shippingBlocked;
+
+  const requestShippingQuote = async () => {
+    if (!selectedAddress?.id || Number(cart.address_id) !== Number(selectedAddress.id)) return;
+    setLoading(true);
+    try {
+      const quote = await requestSeaFreight(Number(selectedAddress.id), undefined, cart.billing_address_id ?? undefined);
+      await router.push(`/my-account/quotations/${quote.id}`);
+    } catch (error) {
+      toast({ color: "danger", title: quotationError(error, t("quotation.error")) });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dispatch = useDispatch();
 
@@ -248,7 +263,9 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
                 {t("checkout.deliveryCharges")}
               </span>
 
-              {pricingBlocked ? (
+              {freightRequired ? (
+                <span>{t("checkout.shippingQuoteRequired", "Shipping quote required")}</span>
+              ) : pricingBlocked ? (
                 <span className="text-danger">
                   {t("checkout.notAvailable", { defaultValue: "Not available" })}
                 </span>
@@ -385,16 +402,22 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
         />
       ) : (
         <section className="w-full space-y-3 rounded-large border border-divider bg-content1 p-4">
-          <h2 className="text-base font-bold">{t("paymentMethod")}</h2>
-          <div className="mt-3">
-            <PaymentMethods
-              selectedPayment={selectedPayment}
-              setSelectedPayment={setSelectedPayment}
-              hideCOD={!selectedAddress?.id}
-              includeManualPayment
-              isLoading={loading || isLoading}
-            />
-          </div>
+          {freightRequired ? (
+            <h2 className="text-base font-bold">{t("checkout.shippingType.sea", "Sea freight")}</h2>
+          ) : (
+            <>
+              <h2 className="text-base font-bold">{t("paymentMethod")}</h2>
+              <div className="mt-3">
+                <PaymentMethods
+                  selectedPayment={selectedPayment}
+                  setSelectedPayment={setSelectedPayment}
+                  hideCOD={!selectedAddress?.id}
+                  includeManualPayment
+                  isLoading={loading || isLoading}
+                />
+              </div>
+            </>
+          )}
           {wholesaleBlocked && (
             <p id="checkout-wholesale-blocked" className="text-sm text-danger">
               {exceedsVariantMaximum
@@ -406,7 +429,12 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
                 : t("wholesale.checkoutBlocked", "Adjust the wholesale group quantities above to continue.")}
             </p>
           )}
-          {shippingBlocked && (
+          {freightRequired && (
+            <p id="checkout-freight-required" className="text-sm text-foreground/70" role="status">
+              {t("checkout.shippingQuoteExplanation", "We’ll confirm the shipping amount before you pay.")}
+            </p>
+          )}
+          {shippingBlocked && !freightRequired && (
             <p id="checkout-shipping-blocked" className="text-sm text-danger" role="status">
               {t("checkout.shippingBlocked", {
                 defaultValue: "Update the unavailable items above to continue.",
@@ -418,7 +446,13 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
               {t("checkout.refreshTotals", "Refresh totals")}
             </Button>
           )}
-          <Button
+          {freightRequired ? (
+            <Button color="primary" fullWidth className="font-semibold" isLoading={loading}
+              isDisabled={isLoading || wholesaleBlocked || itemPricingBlocked || needsAddressReview}
+              aria-describedby="checkout-freight-required" onPress={requestShippingQuote}>
+              {t("checkout.requestShippingQuote", "Request shipping quote")}
+            </Button>
+          ) : <Button
             color="primary"
             fullWidth
             className="font-semibold"
@@ -433,7 +467,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             {selectedPayment === "razorpayPayment" && !pricingBlocked
               ? t("checkout.payAmount", { amount: formatPrice(displayedPayable) })
               : t("checkout.placeOrder", { defaultValue: "Place Order" })}
-          </Button>
+          </Button>}
         </section>
       )}
 

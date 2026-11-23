@@ -19,6 +19,10 @@ export function ShippingChargeDetails({ shipping, total, formatPrice }: {
   return (
     <div className="space-y-1 text-xs text-default-600">
       <p>{t(`checkout.shippingType.${shipping.shipping_type}`)}</p>
+      {shipping.sea_freight?.containers?.map(({ name, count }, index) => (
+        <p key={`${name}-${index}`}>{count} × {name}</p>
+      ))}
+      {shipping.sea_freight?.delivery_note && <p>{shipping.sea_freight.delivery_note}</p>}
       {charges.length > 0 && (
         <ul className="space-y-1 ps-2">
           <li className="flex justify-between gap-2">
@@ -50,6 +54,19 @@ export function CheckoutShipping({ shipments, formatPrice, itemLink }: {
       <summary className="cursor-pointer text-foreground/70">{t("checkout.shippingDetails")}</summary>
       <div className="mt-1 space-y-1 rounded-lg bg-content2 p-2 text-xs">
         {shipments.map((store) => {
+          if (store.sea_freight?.status === "quote_required") {
+            const freight = store.sea_freight;
+            return (
+              <div key={store.store_id} className="space-y-1">
+                <p>{store.store_name} · {t("checkout.shippingType.sea", "Sea freight")}</p>
+                <p>{t("checkout.shippingQuoteRequired", "Shipping quote required")}</p>
+                {freight.containers?.map(({ name, count }) => <p key={name}>{count} × {name}</p>)}
+                {freight.estimated_amount != null && (
+                  <p>{t("checkout.estimatedShipping", "Estimated shipping")} {formatPrice(freight.estimated_amount)}</p>
+                )}
+              </div>
+            );
+          }
           const eta = store.is_fulfillable
             ? formatDeliveryByDate(store.delivery_eta)
             : null;

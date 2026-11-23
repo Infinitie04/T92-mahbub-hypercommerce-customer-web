@@ -1,5 +1,5 @@
 import type { Product, ProductVariant } from "@/types/catalog";
-import type { PaymentSummary, SellerShippingCost } from "@/types/cart";
+import type { PaymentSummary, SeaFreight, SellerShippingCost } from "@/types/cart";
 import { isAxiosError } from "axios";
 import { api } from "./client";
 import { unwrapApiData, type ApiDataResponse } from "./responseData";
@@ -18,6 +18,7 @@ export type Quotation = {
   created_at: string;
   order_slug: string | null;
   has_pending_order?: boolean;
+  sea_freight?: SeaFreight & { address_id: number; currency: string; rate?: number };
 };
 
 export type QuotationDetail = Quotation & {
@@ -103,7 +104,7 @@ export type QuotationCheckoutErrors = {
   shipping_issues?: QuotationItemIssue[];
 };
 
-export type QuotationItemIssue = { cart_item_id: number; reason: string };
+export type QuotationItemIssue = { cart_item_id: number; reason: string; code?: string };
 
 export function quotationCheckoutFeedback(error: unknown, fallback: string) {
   const validation = quotationValidation(error);
@@ -127,6 +128,16 @@ export function quotationCheckoutFeedback(error: unknown, fallback: string) {
 export async function getQuotationCurrency() {
   const { data } = await api.get<ApiDataResponse<{ currency_code: string }>>("/user/quotations/currency");
   return unwrapApiData(data).currency_code;
+}
+
+export async function requestSeaFreight(addressId: number, quotationId?: number, billingAddressId?: number) {
+  const { data } = await api.post<ApiDataResponse<Quotation>>("/user/quotations", {
+    source: "sea_freight",
+    address_id: addressId,
+    quotation_id: quotationId,
+    billing_address_id: billingAddressId,
+  });
+  return unwrapApiData(data);
 }
 
 export async function submitQuotation(
