@@ -1,12 +1,12 @@
 import QuotationThumbnail from "./QuotationThumbnail";
 import { useQuotationMoney } from "./quotationPresentation";
-import type { QuotationCheckoutErrors, QuotationDetail } from "@/services/quotations";
+import type { QuotationDetail, QuotationItemIssue } from "@/services/quotations";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 
 export default function QuotationItems({ quote, issues }: {
   quote: QuotationDetail;
-  issues?: QuotationCheckoutErrors["shipping_issues"];
+  issues?: QuotationItemIssue[];
 }) {
   const { t } = useTranslation();
   const money = useQuotationMoney(quote.currency_code);

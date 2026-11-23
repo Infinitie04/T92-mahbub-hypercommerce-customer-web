@@ -9,7 +9,7 @@ import { quotationPaymentHref } from "@/helpers/quotationCheckout";
 import { CheckoutShipping, CheckoutTax } from "./CheckoutBreakdown";
 import { useTranslation } from "react-i18next";
 import type { RootState } from "@/lib/redux/store";
-import { downloadExportProforma, getQuotation, payQuotation, previewQuotation, quotationError, quotationValidation, type QuotationCheckoutErrors } from "@/services/quotations";
+import { downloadExportProforma, getQuotation, payQuotation, previewQuotation, quotationCheckoutFeedback, quotationError, type QuotationItemIssue } from "@/services/quotations";
 import type { Address } from "@/types/ApiResponse";
 import CheckoutLayout from "./CheckoutLayout";
 import { isAxiosError } from "axios";
@@ -35,7 +35,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const [files, setFiles] = useState<Record<number, AttachmentFile[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState("");
-  const [paymentIssues, setPaymentIssues] = useState<QuotationCheckoutErrors>();
+  const [paymentIssues, setPaymentIssues] = useState<{ token: string; issues: QuotationItemIssue[] }>();
   const onAddressSelected = useCallback((address: Address) => {
     setAddressId(Number(address.id));
     setPaymentChoice("");
@@ -54,7 +54,9 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const reviewed = preview && "totals" in preview ? preview : null;
 
   const money = useQuotationMoney(reviewed?.currency_code);
-  const shippingIssues = (paymentIssues ?? quotationValidation(previewError)?.details)?.shipping_issues;
+  const previewFeedback = previewError ? quotationCheckoutFeedback(previewError, t("quotation.error")) : undefined;
+  const itemIssues = previewFeedback?.issues ??
+    (paymentIssues?.token === reviewed?.pricing_review_token ? paymentIssues?.issues : undefined);
   const title = t("quotation.number", { id });
   const previewLoadingLabel = t(quote?.has_pending_order ? "checkout.confirmingPayment" : "quotation.calculating");
 
@@ -78,8 +80,9 @@ export default function QuotationCheckout({ id }: { id: string }) {
         ? `/my-account/orders/${result.order_slug}`
         : quotationPaymentHref(result.order_slug, id));
     } catch (error) {
-      setPaymentError(quotationError(error, t("quotation.error")));
-      setPaymentIssues(quotationValidation(error)?.details);
+      const feedback = quotationCheckoutFeedback(error, t("quotation.error"));
+      setPaymentError(feedback.summary);
+      setPaymentIssues({ token: reviewed.pricing_review_token, issues: feedback.issues });
       if (isAxiosError(error) && [409, 503].includes(error.response?.status ?? 0)) {
         void reloadQuote();
         void mutate();
@@ -106,7 +109,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
         details={
           <div className="flex min-w-0 flex-col gap-6">
             {!quote.has_pending_order && <AddressSection onAddressSelected={onAddressSelected} />}
-            <QuotationItems quote={quote} issues={shippingIssues} />
+            <QuotationItems quote={quote} issues={itemIssues} />
             {reviewed?.attachments.map((item) => (
               <section key={item.product_id} className="rounded-large border border-divider bg-content1 p-4">
                 <h2 className="mb-2 text-sm font-medium">
@@ -125,8 +128,11 @@ export default function QuotationCheckout({ id }: { id: string }) {
             <h2 className="font-bold">{t("cart.billDetails")}</h2>
             {!canPreview ? <p className="text-sm text-default-600">{t("quotation.selectDelivery")}</p> :
               previewError && isValidating ? <Spinner size="sm" label={previewLoadingLabel} /> :
-              previewError ? <ErrorState title={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "checkout.validation.title")}
-                description={quotationError(previewError, t("quotation.error"))}
+              previewFeedback && !previewFeedback.summary ? (
+                <Button variant="bordered" fullWidth onPress={() => void mutate()}>{t("retry")}</Button>
+              ) :
+              previewFeedback ? <ErrorState title={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "checkout.validation.title")}
+                description={previewFeedback.summary}
                 retryLabel={t(quote.has_pending_order ? "checkout.checkPaymentStatus" : "retry")} onRetry={() => {
                   setPaymentChoice("");
                   void reloadQuote();

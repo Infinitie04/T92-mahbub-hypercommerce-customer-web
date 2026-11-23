@@ -100,8 +100,29 @@ export function quotationError(error: unknown, fallback: string) {
 }
 
 export type QuotationCheckoutErrors = {
-  shipping_issues?: { cart_item_id: number; reason: string }[];
+  shipping_issues?: QuotationItemIssue[];
 };
+
+export type QuotationItemIssue = { cart_item_id: number; reason: string };
+
+export function quotationCheckoutFeedback(error: unknown, fallback: string) {
+  const validation = quotationValidation(error);
+  const issues = [...(validation?.details?.shipping_issues ?? [])];
+  let summary = "";
+  for (const [field, messages] of Object.entries(validation?.errors ?? {})) {
+    const item = /^items\.(\d+)$/.exec(field);
+    if (item) {
+      for (const reason of messages) issues.push({ cart_item_id: Number(item[1]) + 1, reason });
+    } else {
+      summary ||= messages[0] ?? "";
+    }
+  }
+
+  return {
+    issues,
+    summary: summary || (issues.length === 0 ? validation?.message || fallback : ""),
+  };
+}
 
 export async function getQuotationCurrency() {
   const { data } = await api.get<ApiDataResponse<{ currency_code: string }>>("/user/quotations/currency");
