@@ -18,7 +18,7 @@ interface OrderCardProps {
 
 /**
  * Order list row — amber redesign. A single clickable row (image · order id +
- * date · quantity and unit price · status · line subtotal).
+ * date · quantity and unit price · status · order total).
  * Inline actions (reorder / cancel / return) live on the order detail screen.
  */
 const OrderCard: FC<OrderCardProps> = ({ item }) => {
@@ -30,7 +30,7 @@ const OrderCard: FC<OrderCardProps> = ({ item }) => {
   const formatPrice = (amount: number | string | null | undefined) =>
     formatWith(
       amount,
-      item.order?.currency_symbol ?? undefined,
+      item.order?.currency_symbol || item.order?.currency,
       item.order?.format,
     );
 
@@ -57,6 +57,7 @@ const OrderCard: FC<OrderCardProps> = ({ item }) => {
   const productImage = item.variant?.image || item.product?.image || null;
   const productName = item.product?.name || item.title;
   const orderDate = getFormattedDate(item.order?.order_date || item.created_at);
+  const orderTotal = item.order?.final_total;
 
   return (
     <Link
@@ -127,10 +128,12 @@ const OrderCard: FC<OrderCardProps> = ({ item }) => {
           </Chip>
           <div className="text-end">
             <div className="text-xs text-default-500">
-              {t("orderLine.subtotal", "Line subtotal")}
+              {orderTotal == null
+                ? t("orderLine.subtotal", "Line subtotal")
+                : t("orderMoneySummary.total", "Order total")}
             </div>
             <div className="text-sm font-bold text-foreground tabular-nums">
-              {formatPrice(item.subtotal)}
+              {formatPrice(orderTotal ?? item.subtotal)}
             </div>
           </div>
         </div>
