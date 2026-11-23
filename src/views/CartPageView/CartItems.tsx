@@ -1,5 +1,6 @@
 import { FC, useState, ReactNode } from "react";
 import { CartItem, CartPricingGroup, Product, ProductVariant } from "@/types/ApiResponse";
+import type { CartItemIssue } from "@/types/cart";
 import {
   toast,
   Button,
@@ -37,12 +38,14 @@ import { cartLineTotal } from "@/helpers/cartPricing";
 interface CartItemsProps {
   items: CartItem[];
   pricingGroups?: CartPricingGroup[];
+  itemIssues?: CartItemIssue[];
   checkout?: boolean;
 }
 
 const CartItems: FC<CartItemsProps> = ({
   items = [],
   pricingGroups = [],
+  itemIssues = [],
   checkout = false,
 }) => {
   const { t } = useTranslation();
@@ -448,6 +451,11 @@ const CartItems: FC<CartItemsProps> = ({
             </div>
           </div>
         )}
+        {itemIssues.filter((issue) => issue.cart_item_id === item.id).map((issue) => (
+          <p key={issue.reason} role="alert" className="col-span-full rounded-small bg-danger-50 px-2 py-1 text-sm text-danger">
+            {issue.reason}
+          </p>
+        ))}
       </div>
     );
   };

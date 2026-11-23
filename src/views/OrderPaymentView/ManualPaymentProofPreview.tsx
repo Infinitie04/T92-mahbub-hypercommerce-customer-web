@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { Download, Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { Image } from "@/components/ui";
-import { getManualPaymentProof } from "@/services/orders";
+import { Button, Image, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, toastError, useDisclosure } from "@/components/ui";
+import { downloadManualPaymentProof, getManualPaymentProof } from "@/services/orders";
 
 export default function ManualPaymentProofPreview({
   slug,
@@ -14,76 +15,91 @@ export default function ManualPaymentProofPreview({
   filename: string;
 }) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [preview, setPreview] = useState<{ url: string; isPdf: boolean }>();
   const [unavailable, setUnavailable] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    if (!expanded) return;
+    if (!isOpen) return;
 
     const request = new AbortController();
     let url: string | undefined;
-
     getManualPaymentProof(slug, proofId, { preview: true, signal: request.signal })
       .then((file) => {
         if (request.signal.aborted) return;
-
         const isPdf = file.type === "application/pdf";
         if (isPdf ? navigator.pdfViewerEnabled === false : !["image/png", "image/jpeg"].includes(file.type)) {
           setUnavailable(true);
           return;
         }
-
         url = URL.createObjectURL(file);
         setPreview({ url, isPdf });
       })
-      .catch(() => {
-        if (!request.signal.aborted) setUnavailable(true);
-      });
+      .catch(() => { if (!request.signal.aborted) setUnavailable(true); });
 
     return () => {
       request.abort();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [expanded, proofId, slug]);
+  }, [isOpen, proofId, slug]);
 
-  const title = t("manualPayment.previewTitle", "Payment receipt preview for {{filename}}", { filename });
+  const download = async () => {
+    setDownloading(true);
+    try {
+      await downloadManualPaymentProof(slug, proofId, filename);
+    } catch {
+      toastError(t("manualPayment.downloadError", "The receipt could not be downloaded. Try again."));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const downloadButton = (
+    <Button size="md" variant="bordered" startContent={<Download size={17} />} isLoading={downloading} onPress={download}>
+      {t("manualPayment.download", "Download receipt")}
+    </Button>
+  );
 
   return (
-    <details
-      onToggle={(event) => {
-        setExpanded(event.currentTarget.open);
-        if (!event.currentTarget.open) {
+    <>
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button size="md" variant="bordered" startContent={<Eye size={17} />} onPress={() => {
           setPreview(undefined);
           setUnavailable(false);
-        }
-      }}
-    >
-      <summary className="cursor-pointer text-sm font-medium text-primary">
-        {t("manualPayment.preview", "Preview receipt")}
-      </summary>
-      {expanded && (
-        <div className="mt-2">
-          {unavailable ? (
-            <p role="status" className="text-sm text-default-600">
-              {t("manualPayment.previewUnavailable", "Preview unavailable. Download the receipt to open it.")}
-            </p>
-          ) : preview?.isPdf ? (
-            <iframe src={preview.url} title={title} className="h-[30rem] w-full rounded-medium border border-divider" />
-          ) : preview ? (
-            <Image
-              src={preview.url}
-              alt={title}
-              className="max-h-[32rem] w-auto max-w-full object-contain"
-              onError={() => setUnavailable(true)}
-            />
-          ) : (
-            <p role="status" className="text-sm text-default-600">
-              {t("manualPayment.previewLoading", "Loading receipt preview…")}
-            </p>
+          onOpen();
+        }}>
+          {t("manualPayment.preview", "Preview receipt")}
+        </Button>
+        {downloadButton}
+      </div>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" scrollBehavior="inside">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="break-all pe-12">{filename}</ModalHeader>
+              <ModalBody>
+                {unavailable ? (
+                  <p role="status" className="py-8 text-center text-default-600">
+                    {t("manualPayment.previewUnavailable", "Preview unavailable. Download the receipt to open it.")}
+                  </p>
+                ) : preview?.isPdf ? (
+                  <iframe src={preview.url} title={filename} className="h-[min(65vh,35rem)] w-full rounded-medium border border-divider" />
+                ) : preview ? (
+                  <div className="flex justify-center rounded-medium bg-default-100 p-3">
+                    <Image src={preview.url} alt={filename} className="max-h-[65vh] w-auto max-w-full object-contain"
+                      onError={() => setUnavailable(true)} />
+                  </div>
+                ) : <Spinner label={t("manualPayment.previewLoading", "Loading receipt preview…")} className="py-10" />}
+              </ModalBody>
+              <ModalFooter className="flex-wrap">
+                <Button size="md" variant="light" onPress={onClose}>{t("close", "Close")}</Button>
+                {downloadButton}
+              </ModalFooter>
+            </>
           )}
-        </div>
-      )}
-    </details>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }

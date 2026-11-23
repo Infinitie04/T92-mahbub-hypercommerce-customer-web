@@ -83,6 +83,14 @@ export interface OrderRefund {
   items: { order_item_id: number; quantity: number; amount: number }[];
 }
 
+export interface ManualPaymentProof {
+  id: number;
+  filename: string;
+  status?: "pending" | "superseded" | "rejected" | "verified";
+  created_at?: string | null;
+  rejection_reason: string | null;
+}
+
 export interface ManualPaymentState {
   instructions: {
     title: string;
@@ -93,7 +101,8 @@ export interface ManualPaymentState {
   status: "awaiting_proof" | "pending_verification" | "proof_rejected" | "verified";
   can_upload: boolean;
   due_at: string | null;
-  proof: { id: number; filename: string; rejection_reason: string | null } | null;
+  proof: ManualPaymentProof | null;
+  proof_history?: ManualPaymentProof[];
 }
 
 export interface Order {
@@ -449,6 +458,7 @@ export interface OrderUser {
 
 export interface OrderCheckoutResponse {
   cart?: import("./cart").CartResponse;
+  item_issues?: import("./cart").CartItemIssue[];
   shipping_issues?: { cart_item_id: number; code: string; reason: string }[];
   id: number;
   uuid: string;

@@ -198,6 +198,7 @@ export interface TaxBreakdownLine {
 export interface PaymentSummary {
   pricing_available?: boolean;
   pricing_review_token?: string | null;
+  item_issues?: CartItemIssue[];
   items_total: number;
   total_saving: number;
   cod_available: boolean;
@@ -224,6 +225,11 @@ export interface PaymentSummary {
   currency_code: string;
   currency_symbol: string;
   format?: MarketFormat;
+}
+
+export interface CartItemIssue {
+  cart_item_id: number;
+  reason: string;
 }
 
 export interface PromoCode {

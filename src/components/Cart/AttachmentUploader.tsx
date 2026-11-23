@@ -15,12 +15,16 @@ interface AttachmentUploaderProps {
   attachment: AttachmentFile[];
   onAttachmentChange: (attachment: AttachmentFile[]) => void;
   maxSizeMB?: number;
+  paymentReceipt?: boolean;
+  disabled?: boolean;
 }
 
 const AttachmentUploader: FC<AttachmentUploaderProps> = ({
   attachment,
   onAttachmentChange,
   maxSizeMB = 10,
+  paymentReceipt = false,
+  disabled = false,
 }) => {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +55,11 @@ const AttachmentUploader: FC<AttachmentUploaderProps> = ({
       return false;
     }
 
+    if (paymentReceipt && !["image/jpeg", "image/png", "application/pdf"].includes(file.type)) {
+      addToast({ title: t("manualPayment.invalidFileType", "Choose a JPEG, PNG or PDF receipt."), color: "danger" });
+      return false;
+    }
+
     const fileType = getFileType(file.type);
     if (!fileType) {
       addToast({
@@ -67,16 +76,13 @@ const AttachmentUploader: FC<AttachmentUploaderProps> = ({
     return true;
   };
 
-  const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+  const selectFiles = async (files: FileList | null) => {
+    if (!files?.length || disabled || uploading) return;
 
     setUploading(true);
 
     try {
-      const selectedFiles = Array.from(files);
+      const selectedFiles = paymentReceipt ? [files[0]] : Array.from(files);
       const validAttachments: AttachmentFile[] = [];
 
       for (const file of selectedFiles) {
@@ -107,7 +113,8 @@ const AttachmentUploader: FC<AttachmentUploaderProps> = ({
         return;
       }
 
-      onAttachmentChange([...(attachment || []), ...validAttachments]);
+      onAttachmentChange(paymentReceipt ? validAttachments : [...(attachment || []), ...validAttachments]);
+      if (paymentReceipt) return;
       addToast({
         title: t("cart.attachments.uploadSuccess.title"),
         description: t("cart.attachments.uploadSuccess.description", {
@@ -136,6 +143,7 @@ const AttachmentUploader: FC<AttachmentUploaderProps> = ({
       (_, idx) => idx !== index,
     );
     onAttachmentChange(nextAttachments);
+    if (paymentReceipt) return;
     addToast({
       title: t("cart.attachments.removeSuccess.title"),
       description: t("cart.attachments.removeSuccess.description"),
@@ -191,50 +199,70 @@ const AttachmentUploader: FC<AttachmentUploaderProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx"
-        multiple
-        onChange={handleFileSelect}
+        accept={paymentReceipt ? "image/jpeg,image/png,application/pdf" : ".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx"}
+        multiple={!paymentReceipt}
+        disabled={disabled}
+        onChange={(event) => { void selectFiles(event.target.files); }}
         className="hidden"
       />
 
-      <div className="flex flex-wrap gap-2 items-center">
-        <Button
-          size="sm"
-          variant="flat"
-          color="primary"
-          startContent={<Upload size={14} />}
-          onPress={() => fileInputRef.current?.click()}
-          isLoading={uploading}
-          isDisabled={uploading}
-          className="text-xs"
-        >
-          {t("cart.attachments.uploadButton", {
-            defaultValue: "Upload Attachments",
-          })}
-        </Button>
-        {attachment?.length > 0 && (
-          <span className="text-xxs text-foreground/60">
-            {t("cart.attachments.count", {
-              count: attachment.length,
-              defaultValue: `${attachment.length} file(s) uploaded`,
+      {paymentReceipt ? (
+        attachment.length === 0 && (
+          <div
+            className="rounded-medium border border-dashed border-default-300 bg-default-50 px-4 py-6 text-center"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              void selectFiles(event.dataTransfer.files);
+            }}
+          >
+            <Button type="button" size="md" variant="bordered" startContent={<Upload size={18} />}
+              onPress={() => fileInputRef.current?.click()} isDisabled={disabled} isLoading={uploading}
+            >
+              {t("manualPayment.chooseReceipt", "Choose or drop a receipt")}
+            </Button>
+            <p className="mt-2 text-sm text-default-600">{t("manualPayment.fileTypes", "JPEG, PNG or PDF, up to 10 MB")}</p>
+          </div>
+        )
+      ) : (
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button
+            size="sm"
+            variant="flat"
+            color="primary"
+            startContent={<Upload size={14} />}
+            onPress={() => fileInputRef.current?.click()}
+            isLoading={uploading}
+            isDisabled={uploading}
+            className="text-xs"
+          >
+            {t("cart.attachments.uploadButton", {
+              defaultValue: "Upload Attachments",
             })}
-          </span>
-        )}
-      </div>
-
+          </Button>
+          {attachment?.length > 0 && (
+            <span className="text-xxs text-foreground/60">
+              {t("cart.attachments.count", {
+                count: attachment.length,
+                defaultValue: `${attachment.length} file(s) uploaded`,
+              })}
+            </span>
+          )}
+        </div>
+      )}
       {attachment && attachment.length > 0 && (
         <div className="grid gap-2">
           {attachment.map((fileItem, index) => (
             <Card key={`${fileItem.file.name}-${index}`} shadow="none">
-              <CardBody className="p-2">
+              <CardBody className={paymentReceipt ? "border border-divider p-3" : "p-2"}>
                 <div className="flex gap-2">
                   <div className="w-20 shrink-0">{renderPreview(fileItem)}</div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">
+                    <p className={paymentReceipt ? "break-words text-sm font-medium" : "truncate text-xs font-medium"}>
                       {fileItem.file.name}
                     </p>
-                    <p className="text-xxs text-foreground/60">
+                    <p className={paymentReceipt ? "text-sm text-default-600" : "text-xxs text-foreground/60"}>
                       {formatFileSize(fileItem.file.size)}
                     </p>
                   </div>
@@ -242,9 +270,10 @@ const AttachmentUploader: FC<AttachmentUploaderProps> = ({
                   <Button
                     isIconOnly
                     aria-label={t("a11y.remove_attachment")}
-                    size="sm"
+                    size={paymentReceipt ? "md" : "sm"}
                     variant="light"
                     color="danger"
+                    isDisabled={disabled}
                     className="shrink-0"
                     onPress={() => handleRemoveAttachment(index)}
                   >
@@ -257,13 +286,13 @@ const AttachmentUploader: FC<AttachmentUploaderProps> = ({
         </div>
       )}
 
-      <p className="text-xxs text-foreground/50 mt-1">
+      {!paymentReceipt && <p className="text-xxs text-foreground/50 mt-1">
         {t("cart.attachments.helperText", {
           maxFiles: "multiple",
           maxSize: maxSizeMB,
           defaultValue: `Upload one or more files (image, PDF, or DOCX). Max ${maxSizeMB}MB per file.`,
         })}
-      </p>
+      </p>}
     </div>
   );
 };

@@ -613,6 +613,22 @@ export const handleCheckout = async (
         resetCheckOutState();
       }
     } else {
+      const itemIssues = response.data?.item_issues;
+      if (itemIssues?.length) {
+        const currentCart = store.getState().cart.cartData;
+        if (currentCart && currentCart === state.cart.cartData) {
+          store.dispatch(setCartData({
+            ...currentCart,
+            payment_summary: {
+              ...currentCart.payment_summary,
+              pricing_available: false,
+              pricing_review_token: null,
+              item_issues: itemIssues,
+            },
+          }));
+        }
+        return response;
+      }
       if (response.data?.cart) store.dispatch(setCartData(response.data.cart));
       addToast({
         title: response.message || i18n.t("checkout.error_title"),

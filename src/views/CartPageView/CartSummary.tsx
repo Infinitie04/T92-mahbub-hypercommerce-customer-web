@@ -52,7 +52,7 @@ const CartSummary: FC<CartSummaryProps> = ({ cart }) => {
     payment_summary.minimum_cart_amount ||
     systemSettings?.minimumCartAmount ||
     0;
-  if (minimumCartAmount && payment_summary.items_total < minimumCartAmount) {
+  if (!payment_summary.item_issues?.length && minimumCartAmount && payment_summary.items_total < minimumCartAmount) {
     const remainingAmount = minimumCartAmount - payment_summary.items_total;
     validationErrors.push(
       t("checkout.validation.minCartAmount", {

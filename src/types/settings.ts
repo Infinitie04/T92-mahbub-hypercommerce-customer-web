@@ -113,6 +113,7 @@ export type SystemSettings = {
 
 export interface PaymentSettings {
   manualPayment?: boolean;
+  manualPaymentProofWindowHours?: number;
   manualPaymentTitle?: string;
   manualPaymentImage?: string | null;
   stripePayment: boolean;

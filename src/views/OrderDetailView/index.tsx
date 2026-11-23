@@ -1,4 +1,4 @@
-import { manualPaymentStatusLabel } from "../OrderPaymentView/ManualPayment";
+import ManualPayment from "../OrderPaymentView/ManualPayment";
 import type {
   Order,
   OrderItem,
@@ -235,22 +235,6 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {order.manual_payment && (
-            <>
-              {order.status !== "cancelled" && (
-                <Chip
-                  variant="flat"
-                  color={order.manual_payment.status === "verified" ? "success" : "warning"}
-                >
-                  {manualPaymentStatusLabel(order.manual_payment.status, t)}
-                </Chip>
-              )}
-              <Button as="a" href={`/payment/${order.slug}`} size="md" variant="bordered">
-                {order.payment_status === "pending" ? t("manualPayment.manage", "Manage payment proof")
-                  : t("manualPayment.view", "View payment proof")}
-              </Button>
-            </>
-          )}
           {order.invoice && order.status !== "cancelled" && (
             <Button as="a" href={order.invoice} target="_blank" rel="noopener noreferrer"
               size="md" variant="bordered" className="px-4 text-sm font-bold" startContent={<Icon width={18} height={18} icon="solar:document-linear" />}>
@@ -268,6 +252,8 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
         </Button>
         </div>
       </div>
+
+      {order.manual_payment && <ManualPayment key={order.slug} order={order} embedded />}
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
         {/* MAIN — selected item */}

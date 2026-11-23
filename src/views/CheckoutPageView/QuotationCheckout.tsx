@@ -80,7 +80,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
     setSubmitting(true);
     try {
       const result = await payQuotation(id, body);
-      await router.push(result.payment_status === "completed" || result.payment_method === "cod"
+      await router.push(result.payment_status === "completed" || ["cod", "manualPayment"].includes(result.payment_method ?? "")
         ? `/my-account/orders/${result.order_slug}`
         : quotationPaymentHref(result.order_slug, id));
     } catch (error) {
@@ -144,10 +144,10 @@ export default function QuotationCheckout({ id }: { id: string }) {
                 }} /> :
               verifiedOrder ? (
                 <Button as={Link} color="primary" fullWidth isDisabled={isValidating}
-                  href={verifiedOrder.payment_status === "completed" || verifiedOrder.payment_method === "cod"
+                  href={verifiedOrder.payment_status === "completed" || ["cod", "manualPayment"].includes(verifiedOrder.payment_method ?? "")
                     ? `/my-account/orders/${verifiedOrder.order_slug}`
                     : quotationPaymentHref(verifiedOrder.order_slug, id)}>
-                  {t(verifiedOrder.payment_status === "completed" || verifiedOrder.payment_method === "cod" ? "quotation.viewOrder" : "quotation.pay")}
+                  {t(verifiedOrder.payment_status === "completed" || ["cod", "manualPayment"].includes(verifiedOrder.payment_method ?? "") ? "quotation.viewOrder" : "quotation.pay")}
                 </Button>
               ) :
               !reviewed ? <Spinner size="sm" label={previewLoadingLabel} /> : (

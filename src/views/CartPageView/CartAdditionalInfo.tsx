@@ -61,7 +61,7 @@ const CartAdditionalInfo: FC = () => {
               {t("checkout.editCart", "Edit cart")}
             </Link>
           </div>
-          <CartItems items={items} pricingGroups={cartData?.pricing_groups} checkout />
+          <CartItems items={items} pricingGroups={cartData?.pricing_groups} itemIssues={cartData?.payment_summary.item_issues} checkout />
         </section>
       )}
     </div>

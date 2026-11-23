@@ -60,9 +60,12 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const wholesaleBlocked = Boolean(exceedsVariantMaximum) ||
     Boolean(cart.pricing_groups?.some((group) => group.quantity_remaining > 0 || !group.quantity_step_valid));
   const shipments = payment_summary.seller_shipping_costs ?? [];
+  const itemPricingBlocked = Boolean(payment_summary.item_issues?.length);
   const shippingBlocked =
     Boolean(selectedAddress?.id) &&
+    !itemPricingBlocked &&
     (payment_summary.pricing_available === false || shipments.some((shipment) => !shipment.is_fulfillable));
+  const pricingBlocked = itemPricingBlocked || shippingBlocked;
 
   const dispatch = useDispatch();
 
@@ -118,7 +121,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
       return;
     }
 
-    if (shippingBlocked || wholesaleBlocked || attachmentsMissing()) return;
+    if (pricingBlocked || wholesaleBlocked || attachmentsMissing()) return;
 
     if (!selectedPayment) {
       toast({ title: t("please_select_payment_method"), color: "warning" });
@@ -131,7 +134,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
       const res = await handleCheckout(selectedPayment, {});
 
       if (!res?.success) {
-        if (!res?.data?.cart) updateCartData(true, false);
+        if (!res?.data?.cart && !res?.data?.item_issues?.length) updateCartData(true, false);
         return;
       }
 
@@ -142,8 +145,12 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
           slug ? `/my-account/orders/${slug}` : "/my-account/orders",
         );
       } else {
-        if (selectedPayment === "manualPayment") updateCartData(true, false);
-        await router.push(`/payment/${slug}`);
+        if (selectedPayment === "manualPayment") {
+          updateCartData(true, false);
+          await router.push(`/my-account/orders/${slug}`);
+        } else {
+          await router.push(`/payment/${slug}`);
+        }
       }
     } catch (error) {
       console.error("Error in handlePlaceOrder:", error);
@@ -187,7 +194,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
     payment_summary.minimum_cart_amount ||
     systemSettings?.minimumCartAmount ||
     0;
-  if (minimumCartAmount && payment_summary.items_total < minimumCartAmount) {
+  if (!itemPricingBlocked && minimumCartAmount && payment_summary.items_total < minimumCartAmount) {
     const remainingAmount = minimumCartAmount - payment_summary.items_total;
     validationErrors.push(
       t("checkout.validation.minCartAmount", {
@@ -241,7 +248,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
                 {t("checkout.deliveryCharges")}
               </span>
 
-              {shippingBlocked ? (
+              {pricingBlocked ? (
                 <span className="text-danger">
                   {t("checkout.notAvailable", { defaultValue: "Not available" })}
                 </span>
@@ -264,7 +271,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             </div>
           )}
 
-          {selectedAddress?.id && (
+          {selectedAddress?.id && !itemPricingBlocked && (
             <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />
           )}
           <CheckoutTax total={payment_summary.tax_total} breakdown={payment_summary.tax_breakdown} formatPrice={formatPrice} />
@@ -343,7 +350,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
 
           <div className="flex justify-between text-base font-bold text-foreground">
             <span>{t("totalPayable")}</span>
-            <span>{shippingBlocked ? "—" : formatPrice(displayedPayable)}</span>
+            <span>{pricingBlocked ? "—" : formatPrice(displayedPayable)}</span>
           </div>
 
           {payment_summary.total_saving > 0 && (
@@ -406,19 +413,24 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
               })}
             </p>
           )}
+          {itemPricingBlocked && (
+            <Button variant="bordered" fullWidth onPress={() => void updateCartData(true, false)}>
+              {t("checkout.refreshTotals", "Refresh totals")}
+            </Button>
+          )}
           <Button
             color="primary"
             fullWidth
             className="font-semibold"
             isLoading={loading}
-            isDisabled={isLoading || shippingBlocked || wholesaleBlocked}
+            isDisabled={isLoading || pricingBlocked || wholesaleBlocked}
             aria-describedby={
               [shippingBlocked && "checkout-shipping-blocked", wholesaleBlocked && "checkout-wholesale-blocked"]
                 .filter(Boolean).join(" ") || undefined
             }
             onPress={handlePlaceOrder}
           >
-            {selectedPayment === "razorpayPayment"
+            {selectedPayment === "razorpayPayment" && !pricingBlocked
               ? t("checkout.payAmount", { amount: formatPrice(displayedPayable) })
               : t("checkout.placeOrder", { defaultValue: "Place Order" })}
           </Button>
