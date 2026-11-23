@@ -1,5 +1,6 @@
 import { isAxiosError } from "axios";
 import { api } from "./client";
+import type { ManualPaymentState } from "@/types/order";
 import { unwrapApiData, type ApiDataResponse } from "./responseData";
 import {
   ApiResponse,
@@ -14,6 +15,38 @@ import {
   fallbackApiRes,
   fallbackPaginateRes,
 } from "@/config/constants";
+
+export async function uploadManualPaymentProof(slug: string, file: File): Promise<ManualPaymentState> {
+  const payload = new FormData();
+  payload.set("proof", file);
+  const { data } = await api.post<ApiDataResponse<ManualPaymentState>>(
+    `/user/orders/${encodeURIComponent(slug)}/manual-payment-proof`,
+    payload,
+  );
+  return unwrapApiData(data);
+}
+
+export async function getManualPaymentProof(
+  slug: string,
+  proofId: number,
+  options: { preview?: boolean; signal?: AbortSignal } = {},
+): Promise<Blob> {
+  const { data } = await api.get<Blob>(`/user/orders/${encodeURIComponent(slug)}/manual-payment-proof/${proofId}`, {
+    responseType: "blob",
+    params: options.preview ? { preview: 1 } : undefined,
+    signal: options.signal,
+  });
+  return data;
+}
+
+export async function downloadManualPaymentProof(slug: string, proofId: number, filename: string): Promise<void> {
+  const url = URL.createObjectURL(await getManualPaymentProof(slug, proofId));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 // Orders
 export const getOrders = async (

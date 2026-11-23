@@ -29,7 +29,11 @@ export default function QuotationCheckout({ id }: { id: string }) {
   const { paymentSettings } = useSettings();
   const [paymentChoice, setPaymentChoice] = useState("");
   const [downloading, setDownloading] = useState(false);
-  const paymentType = paymentChoice || (paymentSettings?.razorpayPayment === false && paymentSettings.cod ? "cod" : "razorpayPayment");
+  const paymentType = paymentChoice || (
+    paymentSettings?.razorpayPayment === false
+      ? paymentSettings.manualPayment ? "manualPayment" : paymentSettings.cod ? "cod" : "razorpayPayment"
+      : "razorpayPayment"
+  );
   const directed = useSelector((state: RootState) => state.checkout.thirdPartyDelivery);
   const billing = useSelector((state: RootState) => state.checkout.billingAddress);
   const [files, setFiles] = useState<Record<number, AttachmentFile[]>>({});
@@ -166,7 +170,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
                       <span>{t("quotation.total")}</span><span>{money(reviewed.totals.payable_amount)}</span>
                     </div>
                   </div>
-                  <PaymentMethods selectedPayment={paymentType} setSelectedPayment={setPaymentChoice}
+                  <PaymentMethods selectedPayment={paymentType} setSelectedPayment={setPaymentChoice} includeManualPayment
                     hideCOD={!reviewed.cod_available} codEligible={reviewed.cod_available} isLoading={submitting} />
                   {reviewed.export_proforma && previewAddressId && (
                     <Button variant="bordered" fullWidth isLoading={downloading} onPress={async () => {

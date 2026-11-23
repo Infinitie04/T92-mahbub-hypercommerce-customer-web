@@ -22,6 +22,10 @@ const withPWA = withPWAInit({
         options: { cacheName: "storefront-manifest" },
       },
       {
+        urlPattern: ({ url }) => /\/api\/user\/orders\/[^/]+\/manual-payment-proof\/\d+$/.test(url.pathname),
+        handler: "NetworkOnly" as const,
+      },
+      {
         urlPattern: /^\/(my-account|cart|payment|quotation|shopping-list)(\/|$)/,
         handler: "NetworkOnly" as const,
       },

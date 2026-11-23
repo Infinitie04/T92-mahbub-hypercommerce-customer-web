@@ -14,6 +14,7 @@ import XenditPayment from "@/components/PaymentGateway/XenditPayment";
 import MercadoPagoPayment from "@/components/PaymentGateway/MercadoPagoPayment";
 import { getSpecificOrders, verifyRazorpayOrderPayment } from "@/services/orders";
 import { Order } from "@/types/order";
+import ManualPayment from "./ManualPayment";
 
 type Phase = "loading" | "checking" | "pay" | "waiting" | "success" | "failed";
 
@@ -52,7 +53,7 @@ const OrderPaymentView: FC = () => {
         router.replace("/my-account/orders");
         return;
       }
-      if (o.payment_status === "completed") {
+      if (o.payment_status === "completed" && o.payment_method !== "manualPayment") {
         if (!o.quotation_id) dispatch(setIdempotencyKey(""));
         router.replace(`/my-account/orders/${slug}`);
         return;
@@ -153,6 +154,10 @@ const OrderPaymentView: FC = () => {
         </p>
       </div>
     );
+  }
+
+  if (order.manual_payment) {
+    return <ManualPayment key={order.slug} order={order} />;
   }
 
   // ---------- Waiting screen ----------

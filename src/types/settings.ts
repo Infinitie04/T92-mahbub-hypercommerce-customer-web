@@ -112,6 +112,9 @@ export type SystemSettings = {
 };
 
 export interface PaymentSettings {
+  manualPayment?: boolean;
+  manualPaymentTitle?: string;
+  manualPaymentImage?: string | null;
   stripePayment: boolean;
   stripePaymentMode: "test" | "live";
   stripePublishableKey: string;

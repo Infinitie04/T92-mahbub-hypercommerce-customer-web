@@ -11,6 +11,7 @@ interface PaymentMethodsProps {
   hideCOD: boolean;
   codEligible?: boolean;
   isLoading: boolean;
+  includeManualPayment?: boolean;
 }
 
 const PaymentMethods: FC<PaymentMethodsProps> = ({
@@ -19,6 +20,7 @@ const PaymentMethods: FC<PaymentMethodsProps> = ({
   hideCOD = false,
   codEligible,
   isLoading = false,
+  includeManualPayment = false,
 }) => {
   const { t } = useTranslation();
   const { paymentSettings } = useSettings();
@@ -34,6 +36,15 @@ const PaymentMethods: FC<PaymentMethodsProps> = ({
       tagline: t("payments.razorpay.tagline"),
       icon: "/Payments/razorpay.png",
       isEnabled: paymentSettings?.razorpayPayment === true,
+      disabled: false,
+      disabledReason: "",
+    },
+    {
+      id: "manualPayment",
+      name: paymentSettings?.manualPaymentTitle || t("manualPayment.title", "Manual Payment"),
+      tagline: t("manualPayment.tagline", "Transfer to our bank account and upload a receipt."),
+      icon: paymentSettings?.manualPaymentImage,
+      isEnabled: includeManualPayment && paymentSettings?.manualPayment === true,
       disabled: false,
       disabledReason: "",
     },
@@ -76,13 +87,9 @@ const PaymentMethods: FC<PaymentMethodsProps> = ({
           }}
         >
           <div className="flex items-center gap-2.5">
-            <Image
-              src={method.icon}
-              alt=""
-              width={28}
-              height={28}
-              className="rounded-md"
-            />
+            {method.icon && (
+              <Image src={method.icon} alt="" width={28} height={28} className="rounded-md" />
+            )}
             <div>
               <h4 className="text-sm font-semibold text-foreground">
                 {method.name}

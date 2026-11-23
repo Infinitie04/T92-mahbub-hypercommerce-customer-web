@@ -1,3 +1,4 @@
+import { manualPaymentStatusLabel } from "../OrderPaymentView/ManualPayment";
 import type {
   Order,
   OrderItem,
@@ -193,7 +194,9 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
 
   const savings =
     Number(order.promo_discount || 0) + Number(order.gift_card_discount || 0);
-  const paymentMethod = order.payment_method?.toLowerCase() === "cod"
+  const paymentMethod = order.manual_payment
+    ? order.manual_payment.instructions?.title || t("manualPayment.title", "Manual Payment")
+    : order.payment_method?.toLowerCase() === "cod"
     ? t("paymentMethods.cashOnDelivery", "Cash on delivery")
     : t("paymentMethods.onlineProvider", {
         provider: paymentProviderName(order.payment_method || ""),
@@ -232,6 +235,22 @@ const OrderDetailPageView: React.FC<OrderDetailPageViewProps> = ({ order }) => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {order.manual_payment && (
+            <>
+              {order.status !== "cancelled" && (
+                <Chip
+                  variant="flat"
+                  color={order.manual_payment.status === "verified" ? "success" : "warning"}
+                >
+                  {manualPaymentStatusLabel(order.manual_payment.status, t)}
+                </Chip>
+              )}
+              <Button as="a" href={`/payment/${order.slug}`} size="md" variant="bordered">
+                {order.payment_status === "pending" ? t("manualPayment.manage", "Manage payment proof")
+                  : t("manualPayment.view", "View payment proof")}
+              </Button>
+            </>
+          )}
           {order.invoice && order.status !== "cancelled" && (
             <Button as="a" href={order.invoice} target="_blank" rel="noopener noreferrer"
               size="md" variant="bordered" className="px-4 text-sm font-bold" startContent={<Icon width={18} height={18} icon="solar:document-linear" />}>

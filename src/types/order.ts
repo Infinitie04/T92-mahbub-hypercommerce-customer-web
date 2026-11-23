@@ -83,7 +83,21 @@ export interface OrderRefund {
   items: { order_item_id: number; quantity: number; amount: number }[];
 }
 
+export interface ManualPaymentState {
+  instructions: {
+    title: string;
+    image: string | null;
+    fields: { title: string; value: string }[];
+    notes: string;
+  } | null;
+  status: "awaiting_proof" | "pending_verification" | "proof_rejected" | "verified";
+  can_upload: boolean;
+  due_at: string | null;
+  proof: { id: number; filename: string; rejection_reason: string | null } | null;
+}
+
 export interface Order {
+  manual_payment?: ManualPaymentState;
   quotation_id?: number | null;
   payment_started?: boolean;
   order_summary?: OrderSummarySnapshot | null;

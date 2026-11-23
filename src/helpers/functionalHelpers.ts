@@ -580,7 +580,7 @@ export const handleCheckout = async (
     if (response.success) {
       const { data } = response;
 
-      if (data) {
+      if (data && payment_type !== "manualPayment") {
         trackPurchase(
           data?.id?.toString?.() || "",
           data?.final_total || 0,
@@ -602,7 +602,9 @@ export const handleCheckout = async (
         "mercadoPagoPayment",
       ].includes(payment_type);
 
-      if (!opensSdk) {
+      if (payment_type === "manualPayment") {
+        resetCheckOutState();
+      } else if (!opensSdk) {
         addToast({
           title: i18n.t("checkout.success"),
           size: "lg",

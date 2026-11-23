@@ -35,9 +35,12 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
   const codAvailable = Boolean(selectedAddress?.id && paymentSettings?.cod && payment_summary.cod_available);
   const selectedPayment =
     (paymentChoice === "cod" && codAvailable) ||
-    (paymentChoice === "razorpayPayment" && paymentSettings?.razorpayPayment)
+    (paymentChoice === "razorpayPayment" && paymentSettings?.razorpayPayment) ||
+    (paymentChoice === "manualPayment" && paymentSettings?.manualPayment)
       ? paymentChoice
-      : "";
+      : paymentSettings?.manualPayment && !paymentSettings.razorpayPayment && !codAvailable
+        ? "manualPayment"
+        : "";
   const codFee = selectedPayment === "cod"
     ? payment_summary.eligible_cod_fee ?? payment_summary.cod_fee
     : 0;
@@ -139,6 +142,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
           slug ? `/my-account/orders/${slug}` : "/my-account/orders",
         );
       } else {
+        if (selectedPayment === "manualPayment") updateCartData(true, false);
         await router.push(`/payment/${slug}`);
       }
     } catch (error) {
@@ -380,6 +384,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
               selectedPayment={selectedPayment}
               setSelectedPayment={setSelectedPayment}
               hideCOD={!selectedAddress?.id}
+              includeManualPayment
               isLoading={loading || isLoading}
             />
           </div>
