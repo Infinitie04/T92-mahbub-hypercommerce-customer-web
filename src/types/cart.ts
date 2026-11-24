@@ -167,7 +167,7 @@ export interface SellerShippingItem {
 }
 
 export interface SeaFreight {
-  status: "quote_required" | "confirmed";
+  status: "quote_required" | "calculated" | "confirmed";
   estimated_amount?: number | null;
   containers?: { name: string; count: number }[];
   delivery_note?: string | null;
