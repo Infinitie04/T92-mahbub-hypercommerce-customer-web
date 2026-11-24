@@ -288,7 +288,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             </div>
           )}
 
-          {selectedAddress?.id && !itemPricingBlocked && (
+          {selectedAddress?.id && !itemPricingBlocked && payment_summary.checkout_display?.show_shipping_details && (
             <CheckoutShipping shipments={shipments} formatPrice={formatPrice} itemLink={(id) => `/cart#cart-item-${id}`} />
           )}
           <CheckoutTax total={payment_summary.tax_total} breakdown={payment_summary.tax_breakdown} formatPrice={formatPrice} />
@@ -370,7 +370,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             <span>{pricingBlocked ? "—" : formatPrice(displayedPayable)}</span>
           </div>
 
-          {payment_summary.total_saving > 0 && (
+          {payment_summary.checkout_display?.show_savings && (
             <div className="flex items-center gap-2 rounded-medium bg-success/10 px-3 py-2 text-sm font-semibold text-success-700 dark:text-success-400">
               <Icon icon="solar:check-circle-bold" className="shrink-0 text-base" />
               <span>

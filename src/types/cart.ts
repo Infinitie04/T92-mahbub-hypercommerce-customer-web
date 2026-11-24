@@ -205,6 +205,10 @@ export interface TaxBreakdownLine {
 }
 
 export interface PaymentSummary {
+  checkout_display?: {
+    show_savings: boolean;
+    show_shipping_details: boolean;
+  };
   pricing_available?: boolean;
   pricing_review_token?: string | null;
   item_issues?: CartItemIssue[];
