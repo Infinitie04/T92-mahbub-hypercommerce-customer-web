@@ -13,15 +13,20 @@ import { setBillingAddress, setThirdPartyDelivery, setSelectedAddress } from "@/
 import { RootState } from "@/lib/redux/store";
 import { getAddresses } from "@/routes/api";
 import { Address } from "@/types/ApiResponse";
+import type { QuotationAddress } from "@/services/quotations";
 
 type Purpose = "delivery" | "billing";
 type Dialog = { purpose: Purpose; mode: "pick" | "add" };
 
-export default function AddressSection({ onAddressSelected }: { onAddressSelected?: (address: Address) => void }) {
+export default function AddressSection({ onAddressSelected, lockedDelivery }: {
+  onAddressSelected?: (address: Address) => void;
+  lockedDelivery?: QuotationAddress;
+}) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.auth.user?.id);
-  const { selectedAddress: delivery, billingAddress: choice, thirdPartyDelivery } = useSelector((state: RootState) => state.checkout);
+  const { selectedAddress, billingAddress: choice, thirdPartyDelivery } = useSelector((state: RootState) => state.checkout);
+  const delivery = lockedDelivery ?? selectedAddress;
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [pickedId, setPickedId] = useState("");
   const { data: defaultBilling, error: defaultError, mutate: reloadDefault } = useSWR(
@@ -33,7 +38,8 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
     },
   );
   const usesDelivery = choice === "delivery" || (choice === null && defaultBilling === null);
-  const billing = choice === "delivery" ? delivery : choice ?? defaultBilling ?? delivery;
+  const billingAddress = choice === "delivery" ? null : choice ?? defaultBilling;
+  const billing = billingAddress ?? delivery;
   const canDirectDelivery = Boolean(
     billing?.gstin?.trim() &&
     billing.country_code?.trim().toUpperCase() === "IN" &&
@@ -122,8 +128,8 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
                       isDisabled={!canDirectDelivery}
                       aria-describedby={canDirectDelivery ? undefined : "checkout-directed-delivery-hint"}
                       onValueChange={(checked) => {
-                        if (!canDirectDelivery || !billing) return;
-                        dispatch(setBillingAddress(billing));
+                        if (!canDirectDelivery || !billingAddress) return;
+                        dispatch(setBillingAddress(billingAddress));
                         dispatch(setThirdPartyDelivery(checked));
                         if (!onAddressSelected) void updateCartData(true, false);
                       }}
@@ -151,14 +157,14 @@ export default function AddressSection({ onAddressSelected }: { onAddressSelecte
                 ) : (
                   <p className="text-sm text-default-500">{t(isBilling ? "checkout.addresses.deliveryFallback" : "address.chooseLocation")}</p>
                 )}
-                <div className="flex flex-wrap gap-2">
+                {(isBilling || !lockedDelivery) && <div className="flex flex-wrap gap-2">
                   <Button size="sm" className="text-sm" variant="bordered" onPress={() => open(purpose, "pick")}>
                     {t(address ? "change" : "address.selectAddress")}
                   </Button>
                   <Button size="sm" className="text-sm" variant="flat" color="primary" startContent={<Plus className="size-4" />} onPress={() => open(purpose, "add")}>
                     {t(isBilling ? "checkout.addresses.addBilling" : "address.addNew")}
                   </Button>
-                </div>
+                </div>}
               </CardBody>
             </Card>
           );

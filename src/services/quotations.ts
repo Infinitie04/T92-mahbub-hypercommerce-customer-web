@@ -1,8 +1,11 @@
 import type { Product, ProductVariant } from "@/types/catalog";
 import type { PaymentSummary, SeaFreight, SellerShippingCost } from "@/types/cart";
+import type { Address } from "@/types/user";
 import { isAxiosError } from "axios";
 import { api } from "./client";
 import { unwrapApiData, type ApiDataResponse } from "./responseData";
+
+export type QuotationAddress = Pick<Address, "id" | "address_line1" | "address_line2" | "city" | "landmark" | "state" | "zipcode" | "country" | "country_code" | "legal_name" | "gstin" | "mobile">;
 
 export type Quotation = {
   id: number;
@@ -18,10 +21,13 @@ export type Quotation = {
   created_at: string;
   order_slug: string | null;
   has_pending_order?: boolean;
+  address_id?: number | null;
   sea_freight?: SeaFreight & { address_id: number; currency: string; rate?: number };
 };
 
 export type QuotationDetail = Quotation & {
+  delivery_address?: QuotationAddress | null;
+  accepted_shipping?: { currency_code: string; total_delivery_charges: number; seller_shipping_costs: SellerShippingCost[] } | null;
   proforma_url?: string;
   can_cancel?: boolean;
   cancelled_at?: string | null;
@@ -145,6 +151,7 @@ export async function submitQuotation(
   currency: string,
   lines: QuotationSourceLine[],
   prices: string[],
+  addressId: number,
   customerNote?: string,
 ) {
   const items = lines.map((line, index) => ({
@@ -158,6 +165,7 @@ export async function submitQuotation(
     source,
     currency_code: currency,
     items,
+    address_id: addressId,
     customer_note: customerNote?.trim() || undefined,
   });
   return unwrapApiData(data);
@@ -175,11 +183,13 @@ export async function requoteQuotation(
   id: number,
   currency: string,
   items: { item_index: number; quantity: number; unit_price: string }[],
+  addressId: number,
   customerNote: string,
 ) {
   const { data } = await api.post<ApiDataResponse<Quotation>>(`/user/quotations/${id}/requote`, {
     currency_code: currency,
     items,
+    address_id: addressId,
     customer_note: customerNote.trim() || undefined,
   });
   return unwrapApiData(data);
@@ -187,6 +197,11 @@ export async function requoteQuotation(
 
 export async function getQuotation(id: string) {
   const { data } = await api.get<ApiDataResponse<QuotationDetail>>(`/user/quotations/${id}`);
+  return unwrapApiData(data);
+}
+
+export async function updateQuotationAddress(id: number, addressId: number) {
+  const { data } = await api.patch<ApiDataResponse<QuotationDetail>>(`/user/quotations/${id}`, { address_id: addressId });
   return unwrapApiData(data);
 }
 

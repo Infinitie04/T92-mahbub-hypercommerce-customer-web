@@ -1,12 +1,13 @@
 import { Button, EmptyState, ErrorState, Input, Select, SelectItem, Skeleton, Textarea } from "@/components/ui";
 import { useSettings } from "@/contexts/SettingsContext";
-import { getQuotationCurrency, quotationError, quotationValidation, requoteQuotation, submitQuotation, type QuotationDetail, type QuotationDraft } from "@/services/quotations";
+import { getQuotationCurrency, quotationError, quotationValidation, requoteQuotation, submitQuotation, type QuotationAddress, type QuotationDetail, type QuotationDraft } from "@/services/quotations";
 import { X } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import useSWR from "swr";
 import { useQuotationMoney } from "./quotationPresentation";
 import QuotationThumbnail from "./QuotationThumbnail";
+import QuotationAddressField from "./QuotationAddressField";
 
 function validPrice(price: string) {
   return /^\d{1,8}(?:\.\d{1,2})?$/.test(price) && Number(price) >= 0.01;
@@ -39,6 +40,7 @@ export default function QuotationRequestForm({ draft, previousQuote, onSubmitted
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [message, setMessage] = useState("");
   const [customerNote, setCustomerNote] = useState("");
+  const [address, setAddress] = useState<QuotationAddress | null>(previousQuote?.delivery_address ?? null);
   const [submitting, setSubmitting] = useState(false);
   const inFlight = useRef(false);
   const selectVariant = draft?.source === "item";
@@ -63,16 +65,18 @@ export default function QuotationRequestForm({ draft, previousQuote, onSubmitted
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
+    if (event.target !== event.currentTarget) return;
     event.preventDefault();
     if (!currency || !activeRows.length || inFlight.current) return;
     const invalid: Record<string, string[]> = {};
+    if (!address) invalid.address_id = [t("quotation.selectDelivery")];
     activeRows.forEach((row, index) => {
       if (!validPrice(proposedPrice(row))) invalid[`items.${index}.unit_price`] = [t("quotation.invalidPrice")];
       if (!validQuantity(row.quantity)) invalid[`items.${index}.quantity`] = [t("quotation.invalidQuantity")];
     });
     setMessage("");
     setErrors(invalid);
-    if (Object.keys(invalid).length) return;
+    if (!address || Object.keys(invalid).length) return;
 
     inFlight.current = true;
     setSubmitting(true);
@@ -82,15 +86,15 @@ export default function QuotationRequestForm({ draft, previousQuote, onSubmitted
             item_index: row.id,
             quantity: Number(row.quantity),
             unit_price: proposedPrice(row),
-          })), customerNote)
+          })), address.id, customerNote)
         : await submitQuotation(draft.source, currency,
             activeRows.map((row) => ({ ...draft.lines[row.id], quantity: Number(row.quantity) })),
-            activeRows.map(proposedPrice), customerNote);
+            activeRows.map(proposedPrice), address.id, customerNote);
       onSubmitted(quote.id);
     } catch (submitError) {
       const fields = quotationValidation(submitError)?.errors ?? {};
       setErrors(fields);
-      if (!Object.keys(fields).length || Object.keys(fields).some((key) => key !== "customer_note" && !/^items\.\d+\.(unit_price|quantity)$/.test(key))) {
+      if (!Object.keys(fields).length || Object.keys(fields).some((key) => !["customer_note", "address_id"].includes(key) && !/^items\.\d+\.(unit_price|quantity)$/.test(key))) {
         setMessage(quotationError(submitError, t("quotation.error")));
       }
     } finally {
@@ -106,6 +110,10 @@ export default function QuotationRequestForm({ draft, previousQuote, onSubmitted
   return (
     <form onSubmit={submit} noValidate className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <div className="space-y-3">
+        <QuotationAddressField address={address} disabled={submitting} errorMessage={errors.address_id?.[0]} onChange={(next) => {
+          setAddress(next);
+          setErrors((current) => ({ ...current, address_id: [] }));
+        }} />
         {selectVariant && rows.length > 1 && (
           <Select label={t("quotation.variant")} selectedKeys={[String(variantIndex)]} isDisabled={submitting}
             onChange={(event) => {

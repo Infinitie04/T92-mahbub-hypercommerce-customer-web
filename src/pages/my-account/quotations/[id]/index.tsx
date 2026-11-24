@@ -6,13 +6,16 @@ import MyBreadcrumbs from "@/components/custom/MyBreadcrumbs";
 import PageHeader from "@/components/custom/PageHeader";
 import QuotationItems from "@/components/Quotations/QuotationItems";
 import QuotationRequestForm from "@/components/Quotations/QuotationRequestForm";
+import QuotationAddressField from "@/components/Quotations/QuotationAddressField";
+import { CheckoutShipping } from "@/views/CheckoutPageView/CheckoutBreakdown";
 import { quotationStatusColors, useQuotationMoney } from "@/components/Quotations/quotationPresentation";
 import { withAuth } from "@/guards/withAuth";
 import { getFormattedDate } from "@/helpers/getters";
 import type { RootState } from "@/lib/redux/store";
 import PageHead from "@/SEO/PageHead";
-import { cancelQuotation, getQuotation, quotationError } from "@/services/quotations";
+import { cancelQuotation, getQuotation, quotationError, updateQuotationAddress } from "@/services/quotations";
 import { isAxiosError } from "axios";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
@@ -28,6 +31,9 @@ function QuotationDetailPage() {
   const cancellation = useDisclosure();
   const requote = useDisclosure();
   const money = useQuotationMoney(quote?.currency_code);
+  const shippingMoney = useQuotationMoney(quote?.accepted_shipping?.currency_code);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [addressError, setAddressError] = useState("");
   const activity = quote ? [
     { label: t("quotation.submitted"), time: quote.created_at },
     ...(quote.reviewed_at ? [{
@@ -49,6 +55,20 @@ function QuotationDetailPage() {
     } catch (cancelError) {
       toastError(quotationError(cancelError, t("quotation.cancelError")));
       void mutate();
+    }
+  }
+
+  async function saveAddress(addressId: number) {
+    if (!quote || savingAddress) return;
+    setSavingAddress(true);
+    setAddressError("");
+    try {
+      await mutate(await updateQuotationAddress(quote.id, addressId), { revalidate: false });
+    } catch (failure) {
+      setAddressError(quotationError(failure, t("quotation.error")));
+      void mutate();
+    } finally {
+      setSavingAddress(false);
     }
   }
 
@@ -77,7 +97,18 @@ function QuotationDetailPage() {
           <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="min-w-0 space-y-4">
               <QuotationItems quote={quote} />
-              {quote.sea_freight && (
+              <QuotationAddressField address={quote.delivery_address} disabled={savingAddress} errorMessage={addressError}
+                onChange={quote.status === "pending" ? (address) => void saveAddress(address.id) : undefined} />
+              {quote.accepted_shipping && (
+                <section className="space-y-2 rounded-large border border-divider bg-content1 p-4">
+                  <div className="flex justify-between gap-2">
+                    <h2 className="font-semibold">{t("quotation.acceptedShipping", "Accepted shipping")}</h2>
+                    <strong>{shippingMoney(quote.accepted_shipping.total_delivery_charges)}</strong>
+                  </div>
+                  <CheckoutShipping shipments={quote.accepted_shipping.seller_shipping_costs} formatPrice={shippingMoney} />
+                </section>
+              )}
+              {!quote.accepted_shipping && quote.sea_freight && (
                 <section className="space-y-1 rounded-large border border-divider bg-content1 p-4">
                   <h2 className="font-semibold">{t("checkout.shippingType.sea", "Sea freight")}</h2>
                   {quote.sea_freight.status === "quote_required" ? (

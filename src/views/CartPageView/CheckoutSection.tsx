@@ -450,7 +450,7 @@ const CheckoutSection: FC<CheckoutSectionProps> = ({ cart }) => {
             <Button color="primary" fullWidth className="font-semibold" isLoading={loading}
               isDisabled={isLoading || wholesaleBlocked || itemPricingBlocked || needsAddressReview}
               aria-describedby="checkout-freight-required" onPress={requestShippingQuote}>
-              {t("checkout.requestShippingQuote", "Request shipping quote")}
+              {t("checkout.sendShippingQuotation", "Send shipping quotation")}
             </Button>
           ) : <Button
             color="primary"

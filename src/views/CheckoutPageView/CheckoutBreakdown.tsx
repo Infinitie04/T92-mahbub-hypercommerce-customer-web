@@ -61,9 +61,6 @@ export function CheckoutShipping({ shipments, formatPrice, itemLink }: {
                 <p>{store.store_name} · {t("checkout.shippingType.sea", "Sea freight")}</p>
                 <p>{t("checkout.shippingQuoteRequired", "Shipping quote required")}</p>
                 {freight.containers?.map(({ name, count }) => <p key={name}>{count} × {name}</p>)}
-                {freight.estimated_amount != null && (
-                  <p>{t("checkout.estimatedShipping", "Estimated shipping")} {formatPrice(freight.estimated_amount)}</p>
-                )}
               </div>
             );
           }

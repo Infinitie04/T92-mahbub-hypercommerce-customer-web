@@ -1,6 +1,7 @@
 import PaymentMethods from "@/components/PaymentMethods";
 import { useSettings } from "@/contexts/SettingsContext";
 import AddressSection from "@/components/Cart/AddressSection";
+import QuotationAddressField from "@/components/Quotations/QuotationAddressField";
 import QuotationItems from "@/components/Quotations/QuotationItems";
 import { Button, ErrorState, Skeleton, Spinner, toastSuccess } from "@/components/ui";
 import AttachmentUploader, { type AttachmentFile } from "@/components/Cart/AttachmentUploader";
@@ -48,7 +49,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
     setPaymentError("");
     setPaymentIssues(undefined);
   }, []);
-  const previewAddressId = quote?.sea_freight?.address_id ??
+  const previewAddressId = quote?.address_id ?? quote?.sea_freight?.address_id ??
     (addressId === Number(selectedAddress?.id) ? addressId : undefined);
   const billingId = billing === "delivery" ? previewAddressId : billing ? Number(billing.id) : undefined;
   const canPreview = quote?.status === "ready_to_pay" && (quote.has_pending_order || previewAddressId !== undefined);
@@ -137,7 +138,9 @@ export default function QuotationCheckout({ id }: { id: string }) {
         heading={t("pageTitle.checkout", { defaultValue: "Checkout" })}
         details={
           <div className="flex min-w-0 flex-col gap-6">
-            {!quote.has_pending_order && !quote.sea_freight && <AddressSection onAddressSelected={onAddressSelected} />}
+            {!quote.has_pending_order && !quote.sea_freight && <AddressSection
+              onAddressSelected={onAddressSelected} lockedDelivery={quote.accepted_shipping ? quote.delivery_address ?? undefined : undefined} />}
+            {quote.sea_freight && quote.delivery_address && <QuotationAddressField address={quote.delivery_address} />}
             <QuotationItems quote={quote} issues={itemIssues} />
             {reviewed?.attachments.map((item) => (
               <section key={item.product_id} className="rounded-large border border-divider bg-content1 p-4">
@@ -160,7 +163,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
                 <div className="space-y-2">
                   <p>{t("checkout.shippingQuoteRequired", "Shipping quote required")}</p>
                   <Button color="primary" fullWidth isLoading={submitting} onPress={requestFreight}>
-                    {t("checkout.requestShippingQuote", "Request shipping quote")}
+                    {t("checkout.sendShippingQuotation", "Send shipping quotation")}
                   </Button>
                   {paymentError && <p className="text-danger">{paymentError}</p>}
                 </div>
