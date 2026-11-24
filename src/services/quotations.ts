@@ -10,7 +10,8 @@ export type QuotationAddress = Pick<Address, "id" | "address_line1" | "address_l
 export type Quotation = {
   id: number;
   source: "item" | "cart";
-  status: "pending" | "accepted" | "rejected" | "ready_to_pay" | "ordered" | "cancelled";
+  status: "pending" | "negotiating" | "awaiting_customer_confirmation" | "ready_for_approval" | "accepted" | "rejected" | "ready_to_pay" | "ordered" | "cancelled";
+  item_negotiation?: boolean;
   currency_code: string;
   subtotal: number;
   item_count?: number;
@@ -25,15 +26,37 @@ export type Quotation = {
   sea_freight?: SeaFreight & { address_id: number; currency: string; rate?: number };
 };
 
+export type QuotationResponse = {
+  item_id: number;
+  offer_id: number;
+  action: "accept" | "counter" | "reject";
+  unit_price?: string;
+};
+
 export type QuotationDetail = Quotation & {
   delivery_address?: QuotationAddress | null;
+  can_update_address?: boolean;
   accepted_shipping?: { currency_code: string; total_delivery_charges: number; seller_shipping_costs: SellerShippingCost[] } | null;
   proforma_url?: string;
   can_cancel?: boolean;
   cancelled_at?: string | null;
   reviewed_at?: string | null;
+  partial_confirmed_at?: string | null;
   payment_requested_at?: string | null;
   items: {
+    id?: number;
+    status?: "awaiting_admin" | "awaiting_customer" | "agreed" | "rejected";
+    current_offer_id?: number;
+    can_respond?: boolean;
+    history?: {
+      id: number;
+      action: QuotationResponse["action"] | "offer";
+      actor_role: "admin" | "customer" | "system";
+      unit_price: string | null;
+      responds_to_offer_id: number | null;
+      reason: string | null;
+      created_at: string;
+    }[];
     product_id: number;
     product_slug?: string | null;
     title: string;
@@ -197,6 +220,20 @@ export async function requoteQuotation(
 
 export async function getQuotation(id: string) {
   const { data } = await api.get<ApiDataResponse<QuotationDetail>>(`/user/quotations/${id}`);
+  return unwrapApiData(data);
+}
+
+export async function respondToQuotationItems(id: number, responses: QuotationResponse[]) {
+  const { data } = await api.post<ApiDataResponse<QuotationDetail>>(
+    `/user/quotations/${id}/negotiation/responses`, { responses },
+  );
+  return unwrapApiData(data);
+}
+
+export async function confirmPartialQuotation(id: number, decision: "confirm" | "decline") {
+  const { data } = await api.post<ApiDataResponse<QuotationDetail>>(
+    `/user/quotations/${id}/negotiation/confirmation`, { decision },
+  );
   return unwrapApiData(data);
 }
 

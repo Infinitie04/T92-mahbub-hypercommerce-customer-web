@@ -5,6 +5,7 @@ import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import MyBreadcrumbs from "@/components/custom/MyBreadcrumbs";
 import PageHeader from "@/components/custom/PageHeader";
 import QuotationItems from "@/components/Quotations/QuotationItems";
+import QuotationNegotiation from "@/components/Quotations/QuotationNegotiation";
 import QuotationRequestForm from "@/components/Quotations/QuotationRequestForm";
 import QuotationAddressField from "@/components/Quotations/QuotationAddressField";
 import { CheckoutShipping } from "@/views/CheckoutPageView/CheckoutBreakdown";
@@ -36,6 +37,7 @@ function QuotationDetailPage() {
   const [addressError, setAddressError] = useState("");
   const activity = quote ? [
     { label: t("quotation.submitted"), time: quote.created_at },
+    ...(quote.partial_confirmed_at ? [{ label: t("quotation.negotiation.partialConfirmed"), time: quote.partial_confirmed_at }] : []),
     ...(quote.reviewed_at ? [{
       label: t(quote.status === "rejected" ? "quotation.status.rejected" : "quotation.status.accepted"),
       time: quote.reviewed_at,
@@ -87,7 +89,7 @@ function QuotationDetailPage() {
           <PageHeader title={t("quotation.details")} subtitle={`${title} · ${getFormattedDate(quote.created_at, i18n.resolvedLanguage)}`} />
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-large border border-divider bg-content1 p-4">
             <div className="space-y-1">
-              <p className="text-sm text-default-600">{t("quotation.subtotal")}</p>
+              <p className="text-sm text-default-600">{t(quote.item_negotiation ? "quotation.negotiation.agreedSubtotal" : "quotation.subtotal")}</p>
               <p className="text-lg font-bold">{money(quote.subtotal)}</p>
             </div>
             <Chip size="md" variant="flat" color={quotationStatusColors[quote.status]} className="font-semibold">
@@ -96,9 +98,12 @@ function QuotationDetailPage() {
           </div>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="min-w-0 space-y-4">
-              <QuotationItems quote={quote} />
+              {quote.item_negotiation
+                ? <QuotationNegotiation key={quote.id} quote={quote}
+                    onUpdated={(updated) => updated ? mutate(updated, { revalidate: false }) : mutate()} />
+                : <QuotationItems quote={quote} />}
               <QuotationAddressField address={quote.delivery_address} disabled={savingAddress} errorMessage={addressError}
-                onChange={quote.status === "pending" ? (address) => void saveAddress(address.id) : undefined} />
+                onChange={(quote.can_update_address ?? quote.status === "pending") ? (address) => void saveAddress(address.id) : undefined} />
               {quote.accepted_shipping && (
                 <section className="space-y-2 rounded-large border border-divider bg-content1 p-4">
                   <div className="flex justify-between gap-2">

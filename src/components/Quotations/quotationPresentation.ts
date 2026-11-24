@@ -4,6 +4,9 @@ import type { Quotation } from "@/services/quotations";
 
 export const quotationStatusColors = {
   pending: "warning",
+  negotiating: "primary",
+  awaiting_customer_confirmation: "warning",
+  ready_for_approval: "success",
   accepted: "success",
   rejected: "danger",
   ready_to_pay: "primary",

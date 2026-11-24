@@ -141,7 +141,7 @@ export default function QuotationCheckout({ id }: { id: string }) {
             {!quote.has_pending_order && !quote.sea_freight && <AddressSection
               onAddressSelected={onAddressSelected} lockedDelivery={quote.accepted_shipping ? quote.delivery_address ?? undefined : undefined} />}
             {quote.sea_freight && quote.delivery_address && <QuotationAddressField address={quote.delivery_address} />}
-            <QuotationItems quote={quote} issues={itemIssues} />
+            <QuotationItems quote={quote} issues={itemIssues} agreedOnly />
             {reviewed?.attachments.map((item) => (
               <section key={item.product_id} className="rounded-large border border-divider bg-content1 p-4">
                 <h2 className="mb-2 text-sm font-medium">

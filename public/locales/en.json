@@ -2516,8 +2516,37 @@
     "total": "Total",
     "pay": "Pay with Razorpay",
     "attachmentFor": "Attachment for {{item}}",
+    "negotiation": {
+      "title": "Item negotiation",
+      "agreedSubtotal": "Agreed merchandise subtotal",
+      "responseFor": "Response for {{item}}",
+      "history": "Offer history",
+      "accept": "Accept",
+      "counter": "Counter",
+      "reject": "Reject",
+      "send": "Send responses",
+      "offerTotal": "Offer total: {{total}}",
+      "continue": "Continue with agreed items",
+      "decline": "Decline quotation",
+      "partialExplanation": "Only the agreed items will proceed. Shipping is still under review.",
+      "partialConfirmed": "Reduced quotation confirmed",
+      "itemStatus": {
+        "awaiting_admin": "Waiting for admin",
+        "awaiting_customer": "Waiting for you",
+        "agreed": "Agreed",
+        "rejected": "Rejected · excluded from checkout"
+      },
+      "event": {
+        "admin": {"offer": "Admin made an offer", "counter": "Admin countered", "accept": "Admin accepted", "reject": "Admin rejected"},
+        "customer": {"offer": "You made an offer", "counter": "You countered", "accept": "You accepted", "reject": "You rejected"},
+        "system": {"offer": "Original quoted price"}
+      }
+    },
     "status": {
       "pending": "Pending review",
+      "negotiating": "Negotiation in progress",
+      "awaiting_customer_confirmation": "Awaiting your confirmation",
+      "ready_for_approval": "Waiting for admin approval",
       "accepted": "Accepted",
       "rejected": "Rejected",
       "ready_to_pay": "Ready to pay",
