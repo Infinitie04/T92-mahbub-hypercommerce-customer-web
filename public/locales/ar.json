@@ -2466,6 +2466,46 @@
     "change_profile_photo": "تغيير صورة الملف الشخصي"
   },
   "quotation": {
+    "detail": {
+      "title": "تفاصيل عرض السعر",
+      "identifier": "معرّف عرض السعر: {{id}}",
+      "created": "أُنشئ في {{date}}",
+      "itemsTitle": "أصناف عرض السعر",
+      "itemsDescription": "راجع سعر كل صنف وردّ عليه على حدة.",
+      "deliveryAddress": "عنوان التوصيل",
+      "changeAddress": "تغيير العنوان",
+      "priceSummary": "ملخص السعر",
+      "extraCharges": "رسوم إضافية",
+      "merchandiseAndShipping": "إجمالي البضائع والشحن",
+      "customerActions": "خيارات العميل",
+      "requestNew": "طلب عرض سعر جديد",
+      "unitPrice": "سعر الوحدة",
+      "agreedPrice": "السعر المتفق عليه",
+      "adminPrice": "السعر المضاد من المسؤول",
+      "requestedPrice": "السعر الذي طلبه العميل",
+      "previousPrice": "السعر السابق",
+      "perUnit": "{{price}} لكل وحدة",
+      "priceDecrease": "{{percent}} (أقل بـ {{amount}} لكل وحدة)",
+      "priceIncrease": "{{percent}} (أعلى بـ {{amount}} لكل وحدة)",
+      "history_other": "سجل التفاوض · عدد التحديثات: {{count}}",
+      "history_one": "سجل التفاوض · تحديث واحد",
+      "responseNeeded": "يلزم ردّك",
+      "counterPrice": "السعر المضاد الذي تقترحه لكل وحدة ({{currency}})",
+      "actor": {
+        "admin": "المسؤول",
+        "customer": "العميل",
+        "system": "النظام"
+      },
+      "action": {
+        "accept": "قبول السعر",
+        "counter": "تقديم عرض مضاد",
+        "reject": "رفض"
+      },
+      "history_zero": "سجل التفاوض · عدد التحديثات: {{count}}",
+      "history_two": "سجل التفاوض · عدد التحديثات: {{count}}",
+      "history_few": "سجل التفاوض · عدد التحديثات: {{count}}",
+      "history_many": "سجل التفاوض · عدد التحديثات: {{count}}"
+    },
     "downloadExport": "تنزيل الفاتورة الأولية للتصدير",
     "exportDownloadFailed": "تعذّر تنزيل الفاتورة الأولية. حاول مرة أخرى.",
     "placeCod": "تأكيد الطلب والدفع عند الاستلام",

@@ -2463,6 +2463,42 @@
     "change_profile_photo": "Change profile photo"
   },
   "quotation": {
+    "detail": {
+      "title": "Quotation details",
+      "identifier": "Quotation ID: {{id}}",
+      "created": "Created {{date}}",
+      "itemsTitle": "Items in your quotation",
+      "itemsDescription": "Review each price and respond item by item.",
+      "deliveryAddress": "Delivery address",
+      "changeAddress": "Change address",
+      "priceSummary": "Price summary",
+      "extraCharges": "Extra charges",
+      "merchandiseAndShipping": "Merchandise + shipping",
+      "customerActions": "Customer actions",
+      "requestNew": "Request new quotation",
+      "unitPrice": "Unit price",
+      "agreedPrice": "Agreed price",
+      "adminPrice": "Admin counter price",
+      "requestedPrice": "Customer requested price",
+      "previousPrice": "Previous price",
+      "perUnit": "{{price}} / unit",
+      "priceDecrease": "{{percent}} ({{amount}} less per unit)",
+      "priceIncrease": "{{percent}} ({{amount}} more per unit)",
+      "history_other": "Negotiation history · {{count}} updates",
+      "history_one": "Negotiation history · {{count}} update",
+      "responseNeeded": "Your response needed",
+      "counterPrice": "Your counter price per unit ({{currency}})",
+      "actor": {
+        "admin": "Admin",
+        "customer": "Customer",
+        "system": "System"
+      },
+      "action": {
+        "accept": "Accept price",
+        "counter": "Counter offer",
+        "reject": "Decline"
+      }
+    },
     "downloadExport": "Download export proforma",
     "exportDownloadFailed": "Could not download the proforma. Please try again.",
     "placeCod": "Place COD order",

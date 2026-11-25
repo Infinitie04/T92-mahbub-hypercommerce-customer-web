@@ -8,12 +8,15 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import useSWRInfinite from "swr/infinite";
+import { ArrowRight } from "lucide-react";
+import styles from "./QuotationDetail.module.css";
 
-export default function QuotationAddressField({ address, onChange, disabled, errorMessage }: {
+export default function QuotationAddressField({ address, onChange, disabled, errorMessage, detail }: {
   address?: QuotationAddress | null;
   onChange?: (address: QuotationAddress) => void;
   disabled?: boolean;
   errorMessage?: string;
+  detail?: boolean;
 }) {
   const { t } = useTranslation();
   const userId = useSelector((state: RootState) => state.auth.user?.id);
@@ -36,18 +39,21 @@ export default function QuotationAddressField({ address, onChange, disabled, err
   }
 
   return (
-    <section className="space-y-2 rounded-large border border-divider bg-content1 p-4">
-      <h2 className="font-semibold">{t("address.deliveryAddress")}</h2>
-      <p className="break-words text-sm text-default-600">
+    <section className={detail ? styles.panel : "space-y-2 rounded-large border border-divider bg-content1 p-4"}>
+      <h2 className={detail ? styles.panelTitle : "font-semibold"}>{t(detail ? "quotation.detail.deliveryAddress" : "address.deliveryAddress")}</h2>
+      <p className={detail ? "break-words leading-snug" : "break-words text-sm text-default-600"}>
         {address ? [address.address_line1, address.address_line2, address.landmark, address.city, address.state,
           address.zipcode, address.country].filter(Boolean).join(", ") : t("quotation.selectDelivery")}
       </p>
       {errorMessage && <p role="alert" className="text-sm text-danger">{errorMessage}</p>}
       {onChange && (
-        <Button type="button" size="sm" variant="bordered" isDisabled={disabled} onPress={() => {
+        <Button type="button" size="sm" variant={detail ? "light" : "bordered"}
+          className={detail ? styles.textAction : undefined}
+          endContent={detail ? <ArrowRight size={17} aria-hidden="true" /> : undefined}
+          isDisabled={disabled} onPress={() => {
           setPicked(String(address?.id ?? ""));
           setDialog("pick");
-        }}>{t(address ? "change" : "address.selectAddress")}</Button>
+        }}>{address && detail ? t("quotation.detail.changeAddress") : t(address ? "change" : "address.selectAddress")}</Button>
       )}
       {dialog === "pick" && (
         <AddressSelectionModal isOpen onOpenChange={(open?: boolean) => setDialog(open ? "pick" : null)}

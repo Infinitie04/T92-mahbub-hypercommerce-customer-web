@@ -1,23 +1,25 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Chip, Input } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import { getFormattedDate } from "@/helpers/getters";
+import { CircleCheck, CircleX, Clock } from "lucide-react";
 import {
   confirmPartialQuotation, quotationError, respondToQuotationItems,
   type QuotationDetail, type QuotationResponse,
 } from "@/services/quotations";
 import QuotationItems from "./QuotationItems";
 import { useQuotationMoney } from "./quotationPresentation";
+import styles from "./QuotationDetail.module.css";
 
 const actions = ["accept", "counter", "reject"] as const;
-const statusColors = { awaiting_admin: "default", awaiting_customer: "warning", agreed: "success", rejected: "danger" } as const;
+const statusColors = { awaiting_admin: styles.neutral, awaiting_customer: styles.warning, agreed: styles.success, rejected: styles.danger };
+const statusIcons = { awaiting_admin: Clock, awaiting_customer: Clock, agreed: CircleCheck, rejected: CircleX };
 
 export default function QuotationNegotiation({ quote, onUpdated }: {
   quote: QuotationDetail;
   onUpdated: (quote?: QuotationDetail) => Promise<unknown>;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const money = useQuotationMoney(quote.currency_code);
   const [selected, setSelected] = useState<Record<number, QuotationResponse>>({});
   const [saving, setSaving] = useState(false);
@@ -47,60 +49,44 @@ export default function QuotationNegotiation({ quote, onUpdated }: {
         event.preventDefault();
         if (!saving && responses.length) void save(() => respondToQuotationItems(quote.id, responses));
       }}>
-        <QuotationItems quote={quote} renderActions={(item) => {
+        <QuotationItems quote={quote} detail renderActions={(item) => {
           const itemId = item.id;
           const offerId = item.current_offer_id;
           const response = itemId === undefined ? undefined : selected[itemId];
           const draft = response?.offer_id === offerId ? response : undefined;
-          const history = item.history ?? [];
+          const StatusIcon = item.status ? statusIcons[item.status] : null;
 
           return (
             <>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                {item.status && <Chip size="sm" variant="flat" color={statusColors[item.status]}>
-                  {t(`quotation.negotiation.itemStatus.${item.status}`)}
-                </Chip>}
-                {!!history.length && (
-                  <details className="text-sm">
-                    <summary className="cursor-pointer text-primary">{t("quotation.negotiation.history")}</summary>
-                    <ul className="mt-2 space-y-2">
-                      {[...history].reverse().map((event) => {
-                        const price = event.unit_price ?? history.find((offer) => offer.id === event.responds_to_offer_id)?.unit_price;
-                        return (
-                          <li key={event.id}>
-                            {t(`quotation.negotiation.event.${event.actor_role}.${event.action}`)}
-                            {price != null && ` · ${money(price)}`}
-                            <time className="block text-xs text-default-500" dateTime={event.created_at}>
-                              {getFormattedDate(event.created_at, i18n.resolvedLanguage)}
-                            </time>
-                            {event.reason && <p className="break-words">{event.reason}</p>}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </details>
-                )}
-              </div>
+              {item.status && (
+                <span className={`${styles.badge} ${statusColors[item.status]}`}>
+                  {StatusIcon && <StatusIcon size={18} aria-hidden="true" />}
+                  {item.status === "awaiting_customer"
+                    ? t("quotation.detail.responseNeeded")
+                    : t(`quotation.negotiation.itemStatus.${item.status}`)}
+                </span>
+              )}
               {item.can_respond && itemId !== undefined && offerId !== undefined && (
                 <fieldset className="space-y-2" disabled={saving}>
                   <legend className="sr-only">{t("quotation.negotiation.responseFor", { item: item.title })}</legend>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid gap-1.5">
                     {actions.map((action) => (
-                      <Button key={action} size="sm" variant={draft?.action === action ? "solid" : "bordered"}
-                        color={action === "reject" ? "danger" : "primary"} aria-pressed={draft?.action === action}
+                      <Button key={action} type="button" size="sm" variant={draft?.action === action || (!draft && action === "accept") ? "solid" : "bordered"}
+                        className={`${styles.action} ${draft?.action === action || (!draft && action === "accept") ? styles.primaryAction : ""}`}
+                        aria-pressed={draft?.action === action} isDisabled={saving}
                         onPress={() => setSelected((previous) => {
                           const next = { ...previous };
                           if (draft?.action === action) delete next[itemId];
                           else next[itemId] = { item_id: itemId, offer_id: offerId, action };
                           return next;
                         })}>
-                        {t(`quotation.negotiation.${action}`)}
+                        {t(`quotation.detail.action.${action}`)}
                       </Button>
                     ))}
                   </div>
                   {draft?.action === "counter" && (
                     <Input type="number" min="0.01" max="99999999.99" step="0.01" isRequired
-                      label={t("quotation.unitPriceCurrency", { currency: quote.currency_code })}
+                      label={t("quotation.detail.counterPrice", { currency: quote.currency_code })}
                       value={draft.unit_price ?? ""}
                       onValueChange={(price) => setSelected((previous) => ({ ...previous, [itemId]: { ...draft, unit_price: price } }))}
                       description={draft.unit_price ? t("quotation.negotiation.offerTotal", {
@@ -113,18 +99,18 @@ export default function QuotationNegotiation({ quote, onUpdated }: {
             </>
           );
         }} />
-        {responses.length > 0 && <Button type="submit" color="primary" isLoading={saving}>
+        {responses.length > 0 && <Button type="submit" className={`${styles.action} ${styles.primaryAction}`} isLoading={saving}>
           {t("quotation.negotiation.send")}
         </Button>}
       </form>
       {quote.status === "awaiting_customer_confirmation" && (
-        <div className="space-y-3 rounded-large border border-divider bg-content1 p-4">
+        <div className={`${styles.panel} space-y-3`}>
           <p>{t("quotation.negotiation.partialExplanation")}</p>
           <div className="flex flex-wrap gap-2">
-            <Button color="primary" isLoading={saving} onPress={() => void save(() => confirmPartialQuotation(quote.id, "confirm"))}>
+            <Button className={`${styles.action} ${styles.primaryAction}`} isLoading={saving} onPress={() => void save(() => confirmPartialQuotation(quote.id, "confirm"))}>
               {t("quotation.negotiation.continue")}
             </Button>
-            <Button color="danger" variant="bordered" isDisabled={saving} onPress={() => setShowDecline(true)}>
+            <Button className={`${styles.action} ${styles.destructiveAction}`} variant="bordered" isDisabled={saving} onPress={() => setShowDecline(true)}>
               {t("quotation.negotiation.decline")}
             </Button>
           </div>

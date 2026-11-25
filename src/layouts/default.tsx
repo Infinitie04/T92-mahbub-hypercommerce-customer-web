@@ -63,6 +63,7 @@ export default function DefaultLayout({
   const router = useRouter();
   const checkout = router.pathname === "/cart/checkout";
   const isWatchBuyRoute = router.pathname.startsWith("/watch-and-buy");
+  const isQuotationDetail = router.pathname === "/my-account/quotations/[id]";
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [maintenanceState, setMaintenanceState] = useState(
     maintenanceStore.getState(),
@@ -244,6 +245,7 @@ export default function DefaultLayout({
                   className={
                     checkout ? "w-full grow bg-background text-foreground" : isWatchBuyRoute
                       ? "w-full min-h-dvh grow"
+                      : isQuotationDetail ? "w-full min-h-[80vh] grow bg-[#f7f7f8]"
                       : "w-full max-w-site mx-auto min-h-[80vh] px-4 sm:px-6 grow pb-4"
                   }
                 >

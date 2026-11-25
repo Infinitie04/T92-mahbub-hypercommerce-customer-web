@@ -76,7 +76,8 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
   // Account routes share ONE persistent nav rail (UserLayout). Rendering it here
   // — rather than inside each page — keeps the rail mounted across navigation so
   // only the content pane updates. Pages must NOT wrap themselves in UserLayout.
-  const isAccountRoute = router.pathname.startsWith("/my-account");
+  const isAccountRoute = router.pathname.startsWith("/my-account")
+    && router.pathname !== "/my-account/quotations/[id]";
   const pageElement = <Component {...pageProps} />;
   const content = isAccountRoute ? (
     <UserLayout activeTab={accountTabForPath(router.pathname)}>

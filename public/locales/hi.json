@@ -2464,6 +2464,42 @@
     "change_profile_photo": "प्रोफ़ाइल फ़ोटो बदलें"
   },
   "quotation": {
+    "detail": {
+      "title": "मूल्य प्रस्ताव का विवरण",
+      "identifier": "प्रस्ताव आईडी: {{id}}",
+      "created": "{{date}} को बनाया गया",
+      "itemsTitle": "आपके प्रस्ताव में शामिल आइटम",
+      "itemsDescription": "हर आइटम की कीमत देखें और उस पर जवाब दें।",
+      "deliveryAddress": "डिलीवरी का पता",
+      "changeAddress": "पता बदलें",
+      "priceSummary": "कीमत का सारांश",
+      "extraCharges": "अतिरिक्त शुल्क",
+      "merchandiseAndShipping": "उत्पाद और शिपिंग का कुल",
+      "customerActions": "ग्राहक के लिए विकल्प",
+      "requestNew": "नया मूल्य प्रस्ताव माँगें",
+      "unitPrice": "प्रति इकाई कीमत",
+      "agreedPrice": "सहमति वाली कीमत",
+      "adminPrice": "एडमिन की जवाबी कीमत",
+      "requestedPrice": "ग्राहक की माँगी गई कीमत",
+      "previousPrice": "पिछली कीमत",
+      "perUnit": "{{price}} प्रति इकाई",
+      "priceDecrease": "{{percent}} (प्रति इकाई {{amount}} कम)",
+      "priceIncrease": "{{percent}} (प्रति इकाई {{amount}} ज़्यादा)",
+      "history_other": "बातचीत का इतिहास · {{count}} अपडेट",
+      "history_one": "बातचीत का इतिहास · {{count}} अपडेट",
+      "responseNeeded": "आपका जवाब चाहिए",
+      "counterPrice": "आपकी जवाबी कीमत प्रति इकाई ({{currency}})",
+      "actor": {
+        "admin": "एडमिन",
+        "customer": "ग्राहक",
+        "system": "सिस्टम"
+      },
+      "action": {
+        "accept": "कीमत स्वीकार करें",
+        "counter": "जवाबी प्रस्ताव दें",
+        "reject": "अस्वीकार करें"
+      }
+    },
     "downloadExport": "निर्यात प्रोफ़ॉर्मा डाउनलोड करें",
     "exportDownloadFailed": "प्रोफ़ॉर्मा डाउनलोड नहीं हुआ। फिर कोशिश करें।",
     "placeCod": "कैश ऑन डिलीवरी ऑर्डर दें",
