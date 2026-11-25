@@ -2491,6 +2491,9 @@
       "history_one": "سجل التفاوض · تحديث واحد",
       "responseNeeded": "يلزم ردّك",
       "counterPrice": "السعر المضاد الذي تقترحه لكل وحدة ({{currency}})",
+      "offerTotal": "إجمالي العرض: {{total}}",
+      "submitDecisions": "إرسال قرارات الأصناف",
+      "agreedItems": "الأصناف المتفق عليها",
       "actor": {
         "admin": "المسؤول",
         "customer": "العميل",

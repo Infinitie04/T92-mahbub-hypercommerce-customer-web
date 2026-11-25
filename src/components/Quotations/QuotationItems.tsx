@@ -31,7 +31,7 @@ function DetailPrice({ item, money }: { item: QuotationItem; money: ReturnType<t
       {previous?.unit_price != null && (
         <div className="text-sm text-default-700">
           <div>{t("quotation.detail.previousPrice")}</div>
-          <del className="text-base">{t("quotation.detail.perUnit", { price: money(previous.unit_price) })}</del>
+          <del>{t("quotation.detail.perUnit", { price: money(previous.unit_price) })}</del>
         </div>
       )}
       <div>
@@ -40,7 +40,7 @@ function DetailPrice({ item, money }: { item: QuotationItem; money: ReturnType<t
       </div>
       {previousPrice > 0 && difference !== 0 && (
         <span className={`${styles.badge} ${difference < 0 ? styles.success : styles.warning}`}>
-          <ChangeIcon size={15} aria-hidden="true" />
+          <ChangeIcon size={13} aria-hidden="true" />
           {t(difference < 0 ? "quotation.detail.priceDecrease" : "quotation.detail.priceIncrease", {
             percent: new Intl.NumberFormat(i18n.resolvedLanguage, {
               style: "percent", maximumFractionDigits: 1, signDisplay: "exceptZero",
@@ -61,7 +61,7 @@ function DetailHistory({ history, money }: {
 
   return (
     <details className={styles.history}>
-      <summary><ChevronDown size={18} aria-hidden="true" />{t("quotation.detail.history", { count: history.length })}</summary>
+      <summary><ChevronDown size={16} aria-hidden="true" />{t("quotation.detail.history", { count: history.length })}</summary>
       <ul>
         {[...history].reverse().map((event) => {
           const price = event.unit_price ?? history.find((offer) => offer.id === event.responds_to_offer_id)?.unit_price;
@@ -108,7 +108,7 @@ export default function QuotationItems({ quote, issues, agreedOnly, detail, rend
             <QuotationThumbnail src={item.image} detail={detail} />
             <div className="min-w-0">
               <div className={detail ? styles.productTitle : "break-words font-semibold"}>{item.title}</div>
-              {item.variant_title !== item.title && <div className="text-sm text-default-600">{item.variant_title}</div>}
+              {item.variant_title !== item.title && <div className={`${detail ? "text-xs" : "text-sm"} break-words text-default-600`}>{item.variant_title}</div>}
               {detail && <div className={styles.quantity}>{t("quotation.quantityLabel")}: <strong>{item.quantity}</strong></div>}
             </div>
           </>

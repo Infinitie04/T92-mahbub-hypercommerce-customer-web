@@ -41,15 +41,15 @@ export default function QuotationAddressField({ address, onChange, disabled, err
   return (
     <section className={detail ? styles.panel : "space-y-2 rounded-large border border-divider bg-content1 p-4"}>
       <h2 className={detail ? styles.panelTitle : "font-semibold"}>{t(detail ? "quotation.detail.deliveryAddress" : "address.deliveryAddress")}</h2>
-      <p className={detail ? "break-words leading-snug" : "break-words text-sm text-default-600"}>
+      <p className="break-words text-sm text-default-700">
         {address ? [address.address_line1, address.address_line2, address.landmark, address.city, address.state,
           address.zipcode, address.country].filter(Boolean).join(", ") : t("quotation.selectDelivery")}
       </p>
       {errorMessage && <p role="alert" className="text-sm text-danger">{errorMessage}</p>}
       {onChange && (
-        <Button type="button" size="sm" variant={detail ? "light" : "bordered"}
-          className={detail ? styles.textAction : undefined}
-          endContent={detail ? <ArrowRight size={17} aria-hidden="true" /> : undefined}
+        <Button type="button" size="sm" color={detail ? "primary" : undefined} variant={detail ? "light" : "bordered"}
+          className={detail ? "mt-1 justify-start px-0 text-sm" : undefined}
+          endContent={detail ? <ArrowRight size={15} aria-hidden="true" /> : undefined}
           isDisabled={disabled} onPress={() => {
           setPicked(String(address?.id ?? ""));
           setDialog("pick");

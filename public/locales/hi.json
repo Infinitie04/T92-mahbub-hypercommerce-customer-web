@@ -2489,6 +2489,9 @@
       "history_one": "बातचीत का इतिहास · {{count}} अपडेट",
       "responseNeeded": "आपका जवाब चाहिए",
       "counterPrice": "आपकी जवाबी कीमत प्रति इकाई ({{currency}})",
+      "offerTotal": "प्रस्ताव की कुल राशि: {{total}}",
+      "submitDecisions": "आइटम के फ़ैसले जमा करें",
+      "agreedItems": "सहमति वाले आइटम",
       "actor": {
         "admin": "एडमिन",
         "customer": "ग्राहक",

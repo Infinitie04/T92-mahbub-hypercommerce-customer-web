@@ -245,7 +245,7 @@ export default function DefaultLayout({
                   className={
                     checkout ? "w-full grow bg-background text-foreground" : isWatchBuyRoute
                       ? "w-full min-h-dvh grow"
-                      : isQuotationDetail ? "w-full min-h-[80vh] grow bg-[#f7f7f8]"
+                      : isQuotationDetail ? "w-full min-h-[80vh] grow bg-content2"
                       : "w-full max-w-site mx-auto min-h-[80vh] px-4 sm:px-6 grow pb-4"
                   }
                 >

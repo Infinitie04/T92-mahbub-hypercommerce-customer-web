@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input } from "@/components/ui";
-import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { CircleCheck, CircleX, Clock } from "lucide-react";
 import {
-  confirmPartialQuotation, quotationError, respondToQuotationItems,
+  quotationError, respondToQuotationItems,
   type QuotationDetail, type QuotationResponse,
 } from "@/services/quotations";
 import QuotationItems from "./QuotationItems";
@@ -12,6 +11,8 @@ import { useQuotationMoney } from "./quotationPresentation";
 import styles from "./QuotationDetail.module.css";
 
 const actions = ["accept", "counter", "reject"] as const;
+const actionColors = { accept: "success", counter: "warning", reject: "danger" } as const;
+const activeActionStyles = { accept: styles.success, counter: styles.warning, reject: styles.danger };
 const statusColors = { awaiting_admin: styles.neutral, awaiting_customer: styles.warning, agreed: styles.success, rejected: styles.danger };
 const statusIcons = { awaiting_admin: Clock, awaiting_customer: Clock, agreed: CircleCheck, rejected: CircleX };
 
@@ -24,7 +25,6 @@ export default function QuotationNegotiation({ quote, onUpdated }: {
   const [selected, setSelected] = useState<Record<number, QuotationResponse>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showDecline, setShowDecline] = useState(false);
   const responses = Object.values(selected).filter((response) =>
     quote.items.some((item) => item.can_respond && item.id === response.item_id && item.current_offer_id === response.offer_id),
   );
@@ -60,7 +60,7 @@ export default function QuotationNegotiation({ quote, onUpdated }: {
             <>
               {item.status && (
                 <span className={`${styles.badge} ${statusColors[item.status]}`}>
-                  {StatusIcon && <StatusIcon size={18} aria-hidden="true" />}
+                  {StatusIcon && <StatusIcon size={14} aria-hidden="true" />}
                   {item.status === "awaiting_customer"
                     ? t("quotation.detail.responseNeeded")
                     : t(`quotation.negotiation.itemStatus.${item.status}`)}
@@ -70,58 +70,53 @@ export default function QuotationNegotiation({ quote, onUpdated }: {
                 <fieldset className="space-y-2" disabled={saving}>
                   <legend className="sr-only">{t("quotation.negotiation.responseFor", { item: item.title })}</legend>
                   <div className="grid gap-1.5">
-                    {actions.map((action) => (
-                      <Button key={action} type="button" size="sm" variant={draft?.action === action || (!draft && action === "accept") ? "solid" : "bordered"}
-                        className={`${styles.action} ${draft?.action === action || (!draft && action === "accept") ? styles.primaryAction : ""}`}
-                        aria-pressed={draft?.action === action} isDisabled={saving}
-                        onPress={() => setSelected((previous) => {
-                          const next = { ...previous };
-                          if (draft?.action === action) delete next[itemId];
-                          else next[itemId] = { item_id: itemId, offer_id: offerId, action };
-                          return next;
-                        })}>
-                        {t(`quotation.detail.action.${action}`)}
-                      </Button>
-                    ))}
+                    {actions.map((action) => {
+                      const isSelected = draft?.action === action;
+
+                      return <div key={action} className="grid gap-1.5">
+                        <Button type="button" size="sm" fullWidth color={isSelected ? actionColors[action] : "default"}
+                          variant={isSelected ? "flat" : "bordered"}
+                          className={`${styles.action} ${isSelected ? activeActionStyles[action] : ""}`}
+                          aria-pressed={isSelected} isDisabled={saving}
+                          onPress={() => setSelected((previous) => {
+                            const next = { ...previous };
+                            if (isSelected) delete next[itemId];
+                            else next[itemId] = { item_id: itemId, offer_id: offerId, action };
+                            return next;
+                          })}>
+                          {t(`quotation.detail.action.${action}`)}
+                        </Button>
+                        {action === "counter" && draft?.action === "counter" && (
+                          <div className="space-y-2 rounded-medium border border-divider bg-content2 p-2.5">
+                            <Input type="number" size="sm" min="0.01" max="99999999.99" step="0.01" isRequired
+                              isDisabled={saving} label={t("quotation.detail.counterPrice", { currency: quote.currency_code })}
+                              labelPlacement="outside-top" classNames={{ label: "pb-1 text-sm font-medium" }}
+                              value={draft.unit_price ?? ""}
+                              onValueChange={(price) => setSelected((previous) => ({ ...previous, [itemId]: { ...draft, unit_price: price } }))} />
+                            {draft.unit_price && (
+                              <p className="break-words text-base font-semibold text-foreground tabular-nums">
+                                {t("quotation.detail.offerTotal", { total: money(Number(draft.unit_price) * item.quantity) })}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>;
+                    })}
                   </div>
-                  {draft?.action === "counter" && (
-                    <Input type="number" min="0.01" max="99999999.99" step="0.01" isRequired
-                      label={t("quotation.detail.counterPrice", { currency: quote.currency_code })}
-                      value={draft.unit_price ?? ""}
-                      onValueChange={(price) => setSelected((previous) => ({ ...previous, [itemId]: { ...draft, unit_price: price } }))}
-                      description={draft.unit_price ? t("quotation.negotiation.offerTotal", {
-                        total: money(Number(draft.unit_price) * item.quantity),
-                      }) : undefined}
-                    />
-                  )}
                 </fieldset>
               )}
             </>
           );
         }} />
-        {responses.length > 0 && <Button type="submit" className={`${styles.action} ${styles.primaryAction}`} isLoading={saving}>
-          {t("quotation.negotiation.send")}
-        </Button>}
-      </form>
-      {quote.status === "awaiting_customer_confirmation" && (
-        <div className={`${styles.panel} space-y-3`}>
-          <p>{t("quotation.negotiation.partialExplanation")}</p>
-          <div className="flex flex-wrap gap-2">
-            <Button className={`${styles.action} ${styles.primaryAction}`} isLoading={saving} onPress={() => void save(() => confirmPartialQuotation(quote.id, "confirm"))}>
-              {t("quotation.negotiation.continue")}
-            </Button>
-            <Button className={`${styles.action} ${styles.destructiveAction}`} variant="bordered" isDisabled={saving} onPress={() => setShowDecline(true)}>
-              {t("quotation.negotiation.decline")}
+        {responses.length > 0 && (
+          <div className="flex justify-end">
+            <Button type="submit" color="primary" className={styles.action} isLoading={saving}>
+              {t("quotation.detail.submitDecisions")}
             </Button>
           </div>
-          <ConfirmationModal isOpen={showDecline} onClose={() => setShowDecline(false)}
-            onConfirm={() => save(() => confirmPartialQuotation(quote.id, "decline"))}
-            title={t("quotation.negotiation.decline")}
-            alertDescription={t("quotation.cancelConfirm")}
-            confirmText={t("quotation.negotiation.decline")} cancelText={t("quotation.keepQuotation")} />
-        </div>
-      )}
-      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+        )}
+      </form>
+      {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
     </section>
   );
 }

@@ -7,13 +7,14 @@ import QuotationItems from "@/components/Quotations/QuotationItems";
 import QuotationNegotiation from "@/components/Quotations/QuotationNegotiation";
 import QuotationRequestForm from "@/components/Quotations/QuotationRequestForm";
 import QuotationAddressField from "@/components/Quotations/QuotationAddressField";
+import QuotationAgreedItems from "@/components/Quotations/QuotationAgreedItems";
 import { CheckoutShipping } from "@/views/CheckoutPageView/CheckoutBreakdown";
 import { useQuotationMoney } from "@/components/Quotations/quotationPresentation";
 import { withAuth } from "@/guards/withAuth";
 import { getFormattedDate } from "@/helpers/getters";
 import type { RootState } from "@/lib/redux/store";
 import PageHead from "@/SEO/PageHead";
-import { cancelQuotation, getQuotation, quotationError, updateQuotationAddress } from "@/services/quotations";
+import { cancelQuotation, getQuotation, quotationError, updateQuotationAddress, type QuotationDetail } from "@/services/quotations";
 import { isAxiosError } from "axios";
 import { useState } from "react";
 import Link from "next/link";
@@ -54,6 +55,10 @@ function QuotationDetailPage() {
   ] : [];
   const title = t("quotation.number", { id });
 
+  function refreshQuote(updated?: QuotationDetail) {
+    return updated ? mutate(updated, { revalidate: false }) : mutate();
+  }
+
   async function handleCancel() {
     if (!quote?.can_cancel) return;
 
@@ -81,15 +86,13 @@ function QuotationDetailPage() {
   }
 
   return (
-    <section className={styles.page}>
+    <section className="mx-auto w-full max-w-site px-4 pb-6 text-foreground sm:px-6">
       <PageHead pageTitle={id ? title : t("quotation.history")} />
-      <div className={styles.breadcrumbs}>
-        <MyBreadcrumbs separator="/" maxItems={5} breadcrumbs={[
-          { href: "/my-account", label: t("userLayout.myAccount") },
-          { href: "/my-account/quotations", label: t("quotation.title") },
-          { label: title },
-        ]} />
-      </div>
+      <MyBreadcrumbs separator="/" maxItems={5} breadcrumbs={[
+        { href: "/my-account", label: t("userLayout.myAccount") },
+        { href: "/my-account/quotations", label: t("quotation.title") },
+        { label: title },
+      ]} />
       {isAxiosError(error) && error.response?.status === 404 ? (
         <EmptyState title={t("quotation.notFound")} actionLabel={t("quotation.history")} onAction={() => void router.push("/my-account/quotations")} />
       ) : error ? (
@@ -114,7 +117,7 @@ function QuotationDetailPage() {
                   <span className={`${styles.badge} ${quote.status === "negotiating" || quote.status === "rejected"
                     ? styles.danger : quote.status === "pending" || quote.status === "awaiting_customer_confirmation"
                       ? styles.warning : quote.status === "cancelled" ? styles.neutral : styles.success}`}>
-                    {quote.status === "negotiating" && <Handshake size={20} aria-hidden="true" />}
+                    {quote.status === "negotiating" && <Handshake size={15} aria-hidden="true" />}
                     {t(`quotation.status.${quote.status}`)}
                   </span>
                 </div>
@@ -128,8 +131,7 @@ function QuotationDetailPage() {
                   )}
                 </header>
                 {quote.items.length === 0 ? <p className="px-3 pb-2">{t("quotation.noItems")}</p> : quote.item_negotiation
-                  ? <QuotationNegotiation key={quote.id} quote={quote}
-                      onUpdated={(updated) => updated ? mutate(updated, { revalidate: false }) : mutate()} />
+                  ? <QuotationNegotiation key={quote.id} quote={quote} onUpdated={refreshQuote} />
                   : <QuotationItems quote={quote} detail />}
               </section>
 
@@ -212,28 +214,29 @@ function QuotationDetailPage() {
                     )}
                   </div>
                 )}
+                {quote.item_negotiation && <QuotationAgreedItems key={quote.id} quote={quote} onUpdated={refreshQuote} />}
               </section>
 
               <section className={styles.panel}>
                 <h2 className={styles.panelTitle}>{t("quotation.detail.customerActions")}</h2>
                 <div className={styles.sidebarActions}>
                   {quote.order_slug ? (
-                    <Button as={Link} className={`${styles.action} ${styles.primaryAction}`} fullWidth href={`/my-account/orders/${quote.order_slug}`}>
+                    <Button as={Link} color="primary" className={styles.action} fullWidth href={`/my-account/orders/${quote.order_slug}`}>
                       {t("quotation.viewOrder")}
                     </Button>
                   ) : quote.status === "ready_to_pay" && (
-                    <Button as={Link} className={`${styles.action} ${styles.primaryAction}`} fullWidth href={quotationCheckoutHref(quote.id)}>
+                    <Button as={Link} color="primary" className={styles.action} fullWidth href={quotationCheckoutHref(quote.id)}>
                       {t("quotation.checkout")}
                     </Button>
                   )}
                   {quote.proforma_url && (
-                    <Button as="a" className={styles.action} variant="bordered" fullWidth href={quote.proforma_url}>{t("quotation.downloadExport")}</Button>
+                    <Button as="a" color="default" className={styles.action} variant="bordered" fullWidth href={quote.proforma_url}>{t("quotation.downloadExport")}</Button>
                   )}
-                  <Button className={styles.action} variant="bordered" fullWidth onPress={requote.onOpen}>
+                  <Button color="default" className={styles.action} variant="bordered" fullWidth onPress={requote.onOpen}>
                     {t("quotation.detail.requestNew")}
                   </Button>
                   {quote.can_cancel && (
-                    <Button className={`${styles.action} ${styles.destructiveAction}`} variant="bordered" fullWidth onPress={cancellation.onOpen}>
+                    <Button color="default" size="sm" className={`${styles.action} text-default-600`} variant="light" fullWidth onPress={cancellation.onOpen}>
                       {t("quotation.cancelQuotation")}
                     </Button>
                   )}

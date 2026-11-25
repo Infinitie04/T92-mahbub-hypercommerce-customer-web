@@ -2488,6 +2488,9 @@
       "history_one": "Negotiation history · {{count}} update",
       "responseNeeded": "Your response needed",
       "counterPrice": "Your counter price per unit ({{currency}})",
+      "offerTotal": "Offer total: {{total}}",
+      "submitDecisions": "Submit item decisions",
+      "agreedItems": "Agreed items",
       "actor": {
         "admin": "Admin",
         "customer": "Customer",
