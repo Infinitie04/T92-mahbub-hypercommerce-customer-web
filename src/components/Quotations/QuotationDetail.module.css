@@ -199,35 +199,11 @@
 }
 
 .history {
-  margin-top: 12px;
   overflow: hidden;
   border: 1px solid hsl(var(--heroui-divider));
   border-radius: var(--heroui-radius-medium);
-  font-size: 0.8125rem;
-}
-
-.history summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: hsl(var(--heroui-content2));
-  cursor: pointer;
+  padding-inline: 12px;
   font-size: 0.875rem;
-  font-weight: 600;
-  list-style: none;
-}
-
-.history summary::-webkit-details-marker {
-  display: none;
-}
-
-.history[open] summary svg {
-  transform: rotate(180deg);
-}
-
-.history ul {
-  padding: 0 14px 4px;
 }
 
 .history li {
@@ -236,7 +212,8 @@
   grid-template-columns: minmax(88px, max-content) minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 4px 0 4px 28px;
+  padding-block: 8px;
+  padding-inline-start: 24px;
 }
 
 .history li + li {
@@ -339,7 +316,7 @@
   }
 
   .history li::before {
-    top: 14px;
+    top: 18px;
   }
 
   .history time {

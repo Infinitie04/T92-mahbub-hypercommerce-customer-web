@@ -4,8 +4,9 @@ import type { QuotationDetail, QuotationItemIssue } from "@/services/quotations"
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
+import { ArrowDown, ArrowUp, History } from "lucide-react";
 import { getFormattedDate } from "@/helpers/getters";
+import { Button, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@/components/ui";
 import styles from "./QuotationDetail.module.css";
 
 type QuotationItem = QuotationDetail["items"][number];
@@ -53,38 +54,55 @@ function DetailPrice({ item, money }: { item: QuotationItem; money: ReturnType<t
   );
 }
 
-function DetailHistory({ history, money }: {
+function DetailHistory({ history, itemTitle, money }: {
   history: NonNullable<QuotationItem["history"]>;
+  itemTitle: string;
   money: ReturnType<typeof useQuotationMoney>;
 }) {
   const { t, i18n } = useTranslation();
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const label = t("quotation.detail.history", { count: history.length });
 
   return (
-    <details className={styles.history}>
-      <summary><ChevronDown size={16} aria-hidden="true" />{t("quotation.detail.history", { count: history.length })}</summary>
-      <ul>
-        {[...history].reverse().map((event) => {
-          const price = event.unit_price ?? history.find((offer) => offer.id === event.responds_to_offer_id)?.unit_price;
-          const role = event.actor_role;
+    <>
+      <Button type="button" size="sm" color="default" variant="flat" fullWidth aria-haspopup="dialog"
+        className="mt-3 h-auto min-h-8 justify-start whitespace-normal py-1.5 text-start text-sm"
+        startContent={<History size={16} className="shrink-0" aria-hidden="true" />} onPress={onOpen}>
+        {label}
+      </Button>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="center" size="2xl" scrollBehavior="inside">
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-0.5 pe-10">
+            <span className="text-base font-semibold">{label}</span>
+            <span className="break-words text-sm font-normal text-default-600">{itemTitle}</span>
+          </ModalHeader>
+          <ModalBody className="pb-5">
+            <ol className={styles.history}>
+              {[...history].reverse().map((event) => {
+                const price = event.unit_price ?? history.find((offer) => offer.id === event.responds_to_offer_id)?.unit_price;
+                const role = event.actor_role;
 
-          return (
-            <li key={event.id}>
-              <span className={`${styles.badge} ${role === "admin" ? styles.success : role === "customer" ? styles.danger : styles.neutral}`}>
-                {t(`quotation.detail.actor.${role}`)}
-              </span>
-              <div className="min-w-0 break-words">
-                {t(`quotation.negotiation.event.${role}.${event.action}`)}
-                {price != null && ` · ${t("quotation.detail.perUnit", { price: money(price) })}`}
-                {event.reason && <p>{event.reason}</p>}
-              </div>
-              <time dateTime={event.created_at}>{getFormattedDate(event.created_at, i18n.resolvedLanguage, {
-                day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata",
-              })}</time>
-            </li>
-          );
-        })}
-      </ul>
-    </details>
+                return (
+                  <li key={event.id}>
+                    <span className={`${styles.badge} ${role === "admin" ? styles.success : role === "customer" ? styles.danger : styles.neutral}`}>
+                      {t(`quotation.detail.actor.${role}`)}
+                    </span>
+                    <div className="min-w-0 break-words">
+                      {t(`quotation.negotiation.event.${role}.${event.action}`)}
+                      {price != null && ` · ${t("quotation.detail.perUnit", { price: money(price) })}`}
+                      {event.reason && <p>{event.reason}</p>}
+                    </div>
+                    <time dateTime={event.created_at}>{getFormattedDate(event.created_at, i18n.resolvedLanguage, {
+                      day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata",
+                    })}</time>
+                  </li>
+                );
+              })}
+            </ol>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
 
@@ -141,7 +159,7 @@ export default function QuotationItems({ quote, issues, agreedOnly, detail, rend
               <p key={issue.reason} role="alert" className="rounded-small bg-danger-50 p-2 text-sm text-danger">{issue.reason}</p>
             ))}
             {!detail && renderActions?.(item)}
-            {detail && !!item.history?.length && <DetailHistory history={item.history} money={money} />}
+            {detail && !!item.history?.length && <DetailHistory history={item.history} itemTitle={item.title} money={money} />}
           </li>
         );
       })}
