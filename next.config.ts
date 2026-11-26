@@ -38,7 +38,9 @@ const packageJson = JSON.parse(
   readFileSync(join(process.cwd(), "package.json"), "utf8"),
 );
 const { version = "0" } = packageJson;
-const isExport = process.env.NEXT_PUBLIC_SSR !== "true";
+const useServerRendering = process.env.NEXT_PUBLIC_SSR === "true";
+// Vercel needs a server build to revalidate the manifest after Web Settings change.
+const isExport = !useServerRendering && process.env.VERCEL !== "1";
 
 // The optimizer fetches whatever host it is given, so the allowlist is the
 // bound. Panel host by default; add CDNs through NEXT_PUBLIC_IMAGE_HOSTS.
@@ -64,7 +66,7 @@ const nextConfig: NextConfig = {
   output: isExport ? "export" : undefined,
   trailingSlash: true,
   images: {
-    unoptimized: isExport,
+    unoptimized: !useServerRendering,
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],

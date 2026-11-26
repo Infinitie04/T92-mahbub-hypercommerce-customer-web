@@ -36,7 +36,7 @@ async function fetchPwaSettings(): Promise<Partial<PwaSettings>> {
 function manifestIcon(url: string | undefined, size: 144 | 192 | 512) {
   const sizes = `${size}x${size}`;
   if (url && /^https?:\/\//i.test(url)) return { src: url, sizes };
-  return { src: `/logo-${size}.png?v=t92`, sizes, type: "image/png" };
+  return { src: `/logo-${size}.png?v=t92-white`, sizes, type: "image/png" };
 }
 
 export async function GET() {

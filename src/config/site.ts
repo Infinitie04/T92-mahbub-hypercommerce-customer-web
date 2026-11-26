@@ -10,8 +10,8 @@ export const siteConfig = {
     "Shop wholesale garments from T92 Fashion. Browse the catalog, view bulk pricing, and request a quotation.",
   logo: "/default-logo.png",
   darkLogo: "/default-dark-logo.png",
-  favicon: "/default-favicon.ico?v=t92",
-  appleTouchIcon: "/logo-192.png?v=t92",
+  favicon: "/default-favicon.ico?v=t92-white",
+  appleTouchIcon: "/logo-192.png?v=t92-white",
   navItems: [
     {
       label: "Home",
